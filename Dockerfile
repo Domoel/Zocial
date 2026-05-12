@@ -5,11 +5,10 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN corepack enable \
- && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile || pnpm install
 
 COPY . .
 RUN pnpm build \
