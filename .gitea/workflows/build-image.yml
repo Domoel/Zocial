@@ -1,0 +1,36 @@
+name: Build and Push Enafore Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: zeitfresser
+
+      - name: Generate timestamp
+        id: vars
+        run: echo "TAG=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+            -u "${{ secrets.DOCKER_USERNAME }}" \
+            --password-stdin
+
+      - name: Build image
+        run: |
+          docker build \
+            -t domoel/enafore:latest \
+            -t domoel/enafore:${TAG} \
+            .
+
+      - name: Push image
+        run: |
+          docker push domoel/enafore:latest
+          docker push domoel/enafore:${TAG}
