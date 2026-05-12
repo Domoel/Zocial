@@ -1,0 +1,34 @@
+# Node / Build
+node_modules
+__sapper__
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# CI / Docs
+.github
+README.md
+*.md
+
+# Docker (optional – wir brauchen nginx.conf!)
+# docker/   ❌ NICHT ignorieren, weil nginx.conf drin ist
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode
+.idea
+
+# Misc
+.env
+.env.*
