@@ -2,18 +2,40 @@ name: Build and Push Enafore Image
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build"
+        required: true
+        default: "main"
+        type: choice
+        options:
+          - main
+          - dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        shell: sh
+
     steps:
-      - name: Checkout repository
+      - name: Checkout selected branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Generate timestamp
-        id: vars
         run: echo "TAG=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+
+      - name: Set image tag
+        run: |
+          if [ "${{ inputs.branch }}" = "dev" ]; then
+            echo "IMAGE_TAG=dev" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          fi
 
       - name: Login to Docker Hub
         run: |
@@ -24,11 +46,11 @@ jobs:
       - name: Build image
         run: |
           docker build \
-            -t domoel/enafore:latest \
-            -t domoel/enafore:${TAG} \
+            -t domoel/enfore:${IMAGE_TAG} \
+            -t domoel/enfore:${IMAGE_TAG}-${TAG} \
             .
 
       - name: Push image
         run: |
-          docker push domoel/enafore:latest
-          docker push domoel/enafore:${TAG}
+          docker push domoel/enfore:${IMAGE_TAG}
+          docker push domoel/enfore:${IMAGE_TAG}-${TAG}
