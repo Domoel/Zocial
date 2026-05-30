@@ -40,25 +40,43 @@
           {/each}
         </PageList>
       {/if}
+
     </RadioGroup>
 
-    <h2 class="community-header">
-      {'intl.instanceSettings'}
-    </h2>
+    <div class="instance-settings-section">
+      <h2 class="community-header">
+        {'intl.instanceSettings'}
+      </h2>
 
-    <PageList label="{'intl.instanceSettings'}">
-      {#if isLockedAccount}
+      <PageList label="{'intl.instanceSettings'}">
+        {#if isLockedAccount}
+          <PageListItem
+            href="/requests"
+            label={followRequestsLabel}
+            icon="#fa-user-plus"
+          />
+        {/if}
+
         <PageListItem
-          href="/requests"
-          label={followRequestsLabel}
-          icon="#fa-user-plus"
+          href="/muted"
+          label="{'intl.mutedUsers'}"
+          icon="#fa-volume-off"
         />
-      {/if}
 
-      <PageListItem href="/muted" label="{'intl.mutedUsers'}" icon="#fa-volume-off"/>
-      <PageListItem href="/blocked" label="{'intl.blockedUsers'}" icon="#fa-ban"/>
-      <PageListItem href="/pinned" label="{'intl.pinnedStatuses'}" icon="#fa-thumb-tack"/>
-    </PageList>
+        <PageListItem
+          href="/blocked"
+          label="{'intl.blockedUsers'}"
+          icon="#fa-ban"
+        />
+
+        <PageListItem
+          href="/pinned"
+          label="{'intl.pinnedStatuses'}"
+          icon="#fa-thumb-tack"
+        />
+      </PageList>
+    </div>
+
   </FocusRestoration>
 </div>
 
@@ -78,6 +96,10 @@
 
   .community-header-first {
     margin-top: 0;
+  }
+
+  .instance-settings-section {
+    margin-top: 32px;
   }
 </style>
 
@@ -114,21 +136,31 @@
 
     computed: {
       isLockedAccount: ({ $currentVerifyCredentials }) =>
-        $currentVerifyCredentials && $currentVerifyCredentials.locked,
+        $currentVerifyCredentials &&
+        $currentVerifyCredentials.locked,
 
-      followRequestsLabel: ({ $hasFollowRequests, $numberOfFollowRequests }) => (
+      followRequestsLabel: ({
+        $hasFollowRequests,
+        $numberOfFollowRequests
+      }) => (
         formatIntl('intl.followRequestsLabel', {
           hasFollowRequests: $hasFollowRequests,
           count: $numberOfFollowRequests
         })
       ),
 
-      listsLength: ({ $lists }) => $lists ? $lists.length : 0,
+      listsLength: ({ $lists }) =>
+        $lists ? $lists.length : 0,
 
-      staticPinnablesLength: ({ staticPinnables }) => staticPinnables.length,
+      staticPinnablesLength: ({ staticPinnables }) =>
+        staticPinnables.length,
 
-      numPinnable: ({ listsLength, staticPinnablesLength }) =>
-        listsLength + staticPinnablesLength,
+      numPinnable: ({
+        listsLength,
+        staticPinnablesLength
+      }) => (
+        listsLength + staticPinnablesLength
+      ),
 
       staticPinnables: ({ $bubbleTimelineEnabled }) => [
         {
