@@ -1,5 +1,12 @@
-<SettingsLayout page='settings' label="{'intl.settings'}">
-  <h1>{'intl.settings'}</h1>
+<SettingsLayout page="settings">
+  <h1 class="dynamic-page-title settings-page-title">
+    <SvgIcon className="settings-page-title-icon" href="#fa-gear" />
+    <span>{'intl.settings'}</span>
+  </h1>
+
+  <h2 class="settings-section-title">
+    {'intl.general'}
+  </h2>
 
   <SettingsList>
     <SettingsListRow>
@@ -26,19 +33,56 @@
     </SettingsListRow>
   </SettingsList>
 
+  <CommunitySettingsSection/>
 </SettingsLayout>
+
+<style>
+  .settings-page-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 2em;
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 0 0 28px;
+  }
+
+  .settings-page-title span {
+    position: relative;
+    left: -2px;
+  }
+
+  :global(.settings-page-title-icon) {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    fill: currentColor;
+  }
+
+  .settings-section-title {
+    font-size: 23px;
+    font-weight: 400;
+    line-height: 1.3;
+    margin: 0 0 18px;
+  }
+</style>
+
 <script>
   import SettingsLayout from '../../_components/settings/SettingsLayout.html'
   import SettingsList from '../../_components/settings/SettingsList.html'
   import SettingsListRow from '../../_components/settings/SettingsListRow.html'
   import SettingsListButton from '../../_components/settings/SettingsListButton.html'
+  import CommunitySettingsSection from '../../_components/settings/CommunitySettingsSection.html'
+  import SvgIcon from '../../_components/SvgIcon.html'
 
   export default {
     components: {
       SettingsLayout,
       SettingsList,
       SettingsListRow,
-      SettingsListButton
+      SettingsListButton,
+      SvgIcon,
+      CommunitySettingsSection
     },
     methods: {
       async reload (event) {
