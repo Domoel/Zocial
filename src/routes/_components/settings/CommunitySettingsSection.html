@@ -7,7 +7,7 @@
       length={numPinnable}
       label="{'intl.pinnableTimelines'}">
 
-      <h2 class="community-header">
+      <h2 class="community-header community-header-first">
         {'intl.timelines'}
       </h2>
 
@@ -24,7 +24,6 @@
       </PageList>
 
       {#if listsLength}
-
         <h2 class="community-header">
           {'intl.lists'}
         </h2>
@@ -40,13 +39,11 @@
             />
           {/each}
         </PageList>
-
       {/if}
-
     </RadioGroup>
 
     <h2 class="community-header">
-      Instance settings
+      {'intl.instanceSettings'}
     </h2>
 
     <PageList label="{'intl.instanceSettings'}">
@@ -58,25 +55,10 @@
         />
       {/if}
 
-      <PageListItem
-        href="/muted"
-        label="{'intl.mutedUsers'}"
-        icon="#fa-volume-off"
-      />
-
-      <PageListItem
-        href="/blocked"
-        label="{'intl.blockedUsers'}"
-        icon="#fa-ban"
-      />
-
-      <PageListItem
-        href="/pinned"
-        label="{'intl.pinnedStatuses'}"
-        icon="#fa-thumb-tack"
-      />
+      <PageListItem href="/muted" label="{'intl.mutedUsers'}" icon="#fa-volume-off"/>
+      <PageListItem href="/blocked" label="{'intl.blockedUsers'}" icon="#fa-ban"/>
+      <PageListItem href="/pinned" label="{'intl.pinnedStatuses'}" icon="#fa-thumb-tack"/>
     </PageList>
-
   </FocusRestoration>
 </div>
 
@@ -84,7 +66,18 @@
 
 <style>
   .community-settings-section {
-    margin-top: 30px;
+    margin-top: 32px;
+  }
+
+  .community-header {
+    font-size: 23px;
+    font-weight: 400;
+    line-height: 1.3;
+    margin: 32px 0 18px;
+  }
+
+  .community-header-first {
+    margin-top: 0;
   }
 </style>
 
@@ -94,10 +87,8 @@
   import PageListItem from '../community/PageListItem.html'
   import RadioGroup from '../radio/RadioGroup.html'
   import FocusRestoration from '../FocusRestoration.html'
-
   import { updateListsForInstance } from '../../_actions/lists.js'
   import { updateFollowRequestCountIfLockedAccount } from '../../_actions/followRequests.js'
-
   import { formatIntl } from '../../_utils/formatIntl.js'
 
   export default {
@@ -123,31 +114,21 @@
 
     computed: {
       isLockedAccount: ({ $currentVerifyCredentials }) =>
-        $currentVerifyCredentials &&
-        $currentVerifyCredentials.locked,
+        $currentVerifyCredentials && $currentVerifyCredentials.locked,
 
-      followRequestsLabel: ({
-        $hasFollowRequests,
-        $numberOfFollowRequests
-      }) => (
+      followRequestsLabel: ({ $hasFollowRequests, $numberOfFollowRequests }) => (
         formatIntl('intl.followRequestsLabel', {
           hasFollowRequests: $hasFollowRequests,
           count: $numberOfFollowRequests
         })
       ),
 
-      listsLength: ({ $lists }) =>
-        $lists ? $lists.length : 0,
+      listsLength: ({ $lists }) => $lists ? $lists.length : 0,
 
-      staticPinnablesLength: ({ staticPinnables }) =>
-        staticPinnables.length,
+      staticPinnablesLength: ({ staticPinnables }) => staticPinnables.length,
 
-      numPinnable: ({
-        listsLength,
-        staticPinnablesLength
-      }) => (
-        listsLength + staticPinnablesLength
-      ),
+      numPinnable: ({ listsLength, staticPinnablesLength }) =>
+        listsLength + staticPinnablesLength,
 
       staticPinnables: ({ $bubbleTimelineEnabled }) => [
         {
