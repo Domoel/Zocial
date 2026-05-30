@@ -2,40 +2,15 @@ import { mark, stop } from '../../_utils/marks.js'
 
 function pageToNavObject (page, pinnedListTitle) {
   if (page === '/federated') {
-    return {
-      name: 'federated',
-      href: '/federated',
-      svg: '#fa-globe',
-      label: 'intl.federated'
-    }
+    return { name: 'federated', href: '/federated', svg: '#fa-globe', label: 'intl.federated' }
   } else if (page === '/bubble') {
-    return {
-      name: 'bubble',
-      href: '/bubble',
-      svg: '#fa-circle',
-      label: 'intl.bubble'
-    }
+    return { name: 'bubble', href: '/bubble', svg: '#fa-circle', label: 'intl.bubble' }
   } else if (page === '/direct') {
-    return {
-      name: 'direct',
-      href: '/direct',
-      svg: '#fa-envelope',
-      label: 'intl.directMessages'
-    }
+    return { name: 'direct', href: '/direct', svg: '#fa-envelope', label: 'intl.directMessages' }
   } else if (page === '/favorites') {
-    return {
-      name: 'favorites',
-      href: '/favorites',
-      svg: '#fa-star',
-      label: 'intl.favorites'
-    }
+    return { name: 'favorites', href: '/favorites', svg: '#fa-star', label: 'intl.favorites' }
   } else if (page === '/bookmarks') {
-    return {
-      name: 'bookmarks',
-      href: '/bookmarks',
-      svg: '#fa-bookmark',
-      label: 'intl.bookmarks'
-    }
+    return { name: 'bookmarks', href: '/bookmarks', svg: '#fa-bookmark', label: 'intl.bookmarks' }
   } else if (page && page.startsWith('/lists/')) {
     return {
       name: `lists/${page.split('/').slice(-1)[0]}`,
@@ -45,12 +20,7 @@ function pageToNavObject (page, pinnedListTitle) {
     }
   }
 
-  return {
-    name: 'local',
-    href: '/local',
-    svg: '#fa-users',
-    label: 'intl.local'
-  }
+  return { name: 'local', href: '/local', svg: '#fa-users', label: 'intl.local' }
 }
 
 export function navComputations (store) {
@@ -60,11 +30,14 @@ export function navComputations (store) {
     'pinnedListTitle',
     ['lists', 'pinnedPagesForInstance'],
     (lists, pinnedPagesForInstance) => {
-      const pages = Array.isArray(pinnedPages) ? pinnedPages : [pinnedPages]
+      const pages = Array.isArray(pinnedPagesForInstance)
+        ? pinnedPagesForInstance
+        : [pinnedPagesForInstance]
+
       const listPage = pages.find(page => page && page.startsWith('/lists/'))
 
       if (!listPage) {
-        return
+        return ''
       }
 
       const listId = listPage.split('/').slice(-1)[0]
@@ -77,9 +50,9 @@ export function navComputations (store) {
     'navPages',
     ['pinnedPagesForInstance', 'pinnedListTitle'],
     (pinnedPagesForInstance, pinnedListTitle) => {
-      const pages = Array.isArray(pinnedPages)
-        ? pinnedPages
-        : [pinnedPages || '/bookmarks']
+      const pages = Array.isArray(pinnedPagesForInstance)
+        ? pinnedPagesForInstance
+        : [pinnedPagesForInstance || '/bookmarks']
 
       const pinnedPageObjects = pages
         .filter(Boolean)
@@ -87,31 +60,11 @@ export function navComputations (store) {
         .map(page => pageToNavObject(page, pinnedListTitle))
 
       return [
-        {
-          name: 'home',
-          href: '/',
-          svg: '#logo',
-          label: 'intl.home'
-        },
-        {
-          name: 'notifications',
-          href: '/notifications',
-          svg: '#fa-bell',
-          label: 'intl.notifications'
-        },
+        { name: 'home', href: '/', svg: '#logo', label: 'intl.home' },
+        { name: 'notifications', href: '/notifications', svg: '#fa-bell', label: 'intl.notifications' },
         ...pinnedPageObjects,
-        {
-          name: 'search',
-          href: '/search',
-          svg: '#fa-search',
-          label: 'intl.search'
-        },
-        {
-          name: 'settings',
-          href: '/settings',
-          svg: '#fa-gear',
-          label: 'intl.settings'
-        }
+        { name: 'search', href: '/search', svg: '#fa-search', label: 'intl.search' },
+        { name: 'settings', href: '/settings', svg: '#fa-gear', label: 'intl.settings' }
       ]
     }
   )
