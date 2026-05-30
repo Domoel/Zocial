@@ -1,10 +1,10 @@
-# Contributing to Enafore
+# Contributing to Zocial
 
 ## Building
 
-Enafore requires [Node.js](https://nodejs.org/en/) and [pnpm](https://pnpm.io).
+Zocial requires [Node.js](https://nodejs.org/en/) and [pnpm](https://pnpm.io).
 
-To build Enafore for production, first install dependencies:
+To build Zocial for production, first install dependencies:
 
     pnpm install --frozen-lockfile
 
@@ -18,13 +18,13 @@ Then run:
 
 ### Single-Instance Mode
 
-To build Enafore as a frontend for one instance, set the SINGLE_INSTANCE environment variable.
+To build Zocial as a frontend for one instance, set the SINGLE_INSTANCE environment variable.
 
     SINGLE_INSTANCE=your.domain.tld pnpm build
 
 ### Exporting
 
-Enafore is a static site. When you run `pnpm build`, static files will be
+Zocial is a static site. When you run `pnpm build`, static files will be
 written to `__sapper__/export`.
 
 ## Installing
@@ -43,7 +43,7 @@ Now it's running at `localhost:4002`.
 
 ## Linting
 
-Enafore uses [JavaScript Standard Style](https://standardjs.com/).
+Zocial uses [JavaScript Standard Style](https://standardjs.com/).
 
 Lint:
 

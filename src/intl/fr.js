@@ -1,10 +1,10 @@
 export default {
   // Home page, basic <title> and <description>
-  appName: 'Enafore',
+  appName: 'Zocial',
   appDescription: 'Un client alternatif pour Mastodon, concentré sur la vitesse et la simplicité',
   homeDescription: `
     <p>
-      Enafore est un client web pour
+      Zocial est un client web pour
       <a rel="noopener" target="_blank" href="https://joinmastodon.org">Mastodon</a>,
       dessiné pour la vitesse et la simplicité.
     </p>
@@ -14,7 +14,7 @@ export default {
   logIn: 'Se connecter',
   footer: `
     <p>
-      Enafore est
+      Zocial est
       <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">logiciel open-source</a>
       créé par
       <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
@@ -22,7 +22,7 @@ export default {
       <a rel="noopener" target="_blank"
          href="https://github.com/enafore/enafore/blob/main/LICENSE">License AGPL</a>.
       Lire la <a href="/settings/about#privacy-policy" rel="prefetch">politique de confidentialité</a>.
-      C'est une continuation du projet Enafore créé par
+      C'est une continuation du projet Zocial créé par
       <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>.
     </p>
   `,
@@ -174,7 +174,7 @@ export default {
     ·
     {showInstanceName, select,
       true {{instanceName}}
-      other {Enafore}
+      other {Zocial}
     }
   `,
   pinLabel: `{label} {pinnable, select,
@@ -316,10 +316,10 @@ export default {
   verified: 'Verified',
   // About page
   about: 'Infos',
-  aboutApp: 'Infos sur Enafore',
+  aboutApp: 'Infos sur Zocial',
   aboutAppDescription: `
   <p>
-    Enafore est un logiciel
+    Zocial est un logiciel
     <a rel="noopener" target="_blank"
        href="https://github.com/enafore/enafore">gratuit et open-source</a>
     créé par
@@ -332,12 +332,12 @@ export default {
   <h2 id="privacy-policy">Politique de confidentialité</h2>
 
   <p>
-    Enafore ne garde pas d'informations personelles dans ses serveurs,
+    Zocial ne garde pas d'informations personelles dans ses serveurs,
     y compris les noms, addresses courriel, addresses IP, messages, et photos.
   </p>
 
   <p>
-    Enafore est un site statique. Tous données sont gardées en locale dans le navigateur, et sont partagée qu'avec
+    Zocial est un site statique. Tous données sont gardées en locale dans le navigateur, et sont partagée qu'avec
     les instances auxquelles vous vous connectez.
   </p>
 
@@ -408,8 +408,8 @@ export default {
   notificationFilters: 'Filtres de notifications',
   pushNotifications: 'Filtres de notifications push',
   // Add instance page
-  storageError: `Il semble que Enafore ne peut pas stocker les données en locale. Est-ce que votre navigateur
-          est en mode privé, ou est-ce qu'il bloque les cookies? Enafore garde tous ses données en locale et
+  storageError: `Il semble que Zocial ne peut pas stocker les données en locale. Est-ce que votre navigateur
+          est en mode privé, ou est-ce qu'il bloque les cookies? Zocial garde tous ses données en locale et
           ne peut pas fonctionner sans LocalStorage ou IndexedDB.`,
   javaScriptError: 'Le JavaScript devrait être activé pour continuer.',
   enterInstanceName: "Saisir le nom d'instance",
@@ -430,7 +430,7 @@ export default {
   // Link text
   logInToAnInstancePre: '',
   logInToAnInstanceText: 'Se connecter à une instance',
-  logInToAnInstancePost: 'pour utiliser Enafore.',
+  logInToAnInstancePost: 'pour utiliser Zocial.',
   // Another custom tooltip
   showRingPre: 'Afficher toujours',
   showRingText: "l'anneau de focus",
