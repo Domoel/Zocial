@@ -18,7 +18,7 @@ const persistedState = {
   disableCustomScrollbars:
     ENAFORE_IS_BROWSER && /iP(?:hone|ad|od)/.test(navigator.userAgent),
   bottomNav: false,
-  centerNav: false,
+  centerNav: true,
   disableFollowRequestCount: false,
   hideLongPosts: true,
   disableFavCounts: false,

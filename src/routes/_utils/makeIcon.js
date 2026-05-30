@@ -1,16 +1,9 @@
-export function makeIcon ({ maskable, ios, fg = '#fff' }) {
+export function makeIcon ({ maskable, ios, fg = '#fff', bg = '#111111' }) {
+  const viewBox = maskable ? '0 0 100 100' : '6 6 88 88'
+  const background = maskable
+    ? `<rect width="100" height="100" fill="${bg}"/>`
+    : `<rect width="88" height="88" x="6" y="6" fill="${bg}"${ios ? '' : ' ry="22"'}/>`
+  const mark = `<path fill="${fg}" d="M24 14h52a6 6 0 000 12h-4c-1.3 10-6.5 18-15 24 8.5 6 13.7 14 15 24h4a6 6 0 000 12H24a6 6 0 000-12h4c1.3-10 6.5-18 15-24-8.5-6-13.7-14-15-24h-4a6 6 0 000-12zm16 12c1.6 6.7 5.6 12.3 12 17 6.4-4.7 10.4-10.3 12-17H40zm0 48h24c-1.6-6.7-5.6-12.3-12-17-6.4 4.7-10.4 10.3-12 17z"/>`
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${maskable ? '0 0 100 100' : '6 6 88 88'}">
-  <defs>
-    <linearGradient id="zocialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6633cc" />
-      <stop offset="100%" stop-color="#3399ff" />
-    </linearGradient>
-  </defs>${
-    maskable
-      ? `<rect width="100" height="100" fill="url(#zocialGradient)"/>`
-      : `<rect width="88" height="88" x="6" y="6" fill="url(#zocialGradient)"${
-          ios ? '' : ' ry="22"'
-        }/>`
-  }<path fill="${fg}" d="M 20 20 H 80 V 35 L 40 70 H 80 V 85 H 20 V 70 L 60 35 H 20 V 20 Z"/></svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${background}${mark}</svg>`
 }
