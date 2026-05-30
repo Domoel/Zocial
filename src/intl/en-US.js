@@ -13,9 +13,9 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Zocial is <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">open-source software</a> distributed under the
+      Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source software</a> distributed under the
       <a rel="noopener" target="_blank"
-         href="https://github.com/enafore/enafore/blob/main/LICENSE">AGPL License</a>.
+         href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">AGPL License</a>.
       Here is the <a href="/settings/about#privacy-policy" rel="prefetch">privacy policy</a>.
     </p>
   `,
@@ -350,7 +350,7 @@ export default {
   aboutApp: 'About Zocial',
   aboutAppDescription: `
   <p>
-    Zocial is <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">open-source</a> software.
+    Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source</a> software.
   </p>
 
   <h2 id="privacy-policy">Privacy Policy</h2>
