@@ -1,10 +1,10 @@
-# Enafore
+# Zocial
 
 A fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.
 
-Enafore is available at [enafore.social](https://enafore.social).
+Zocial is available at [zocial.ztfr.eu](https://zocial.ztfr.eu).
 
-See the [user guide](https://github.com/enafore/enafore/blob/main/docs/User-Guide.md) for basic usage. See the [admin guide](https://github.com/enafore/enafore/blob/main/docs/Admin-Guide.md) if Enafore cannot connect to your instance.
+See the [user guide](https://github.com/enafore/enafore/blob/main/docs/User-Guide.md) for basic usage. See the [admin guide](https://github.com/enafore/enafore/blob/main/docs/Admin-Guide.md) if Zocial cannot connect to your instance.
 
 # Testimonials
 > Literally the best Akkoma client\

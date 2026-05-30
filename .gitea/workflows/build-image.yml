@@ -1,4 +1,4 @@
-name: Build and Push Enafore Image
+name: Build and Push Zocial Image
 
 on:
   workflow_dispatch:

@@ -18,6 +18,7 @@
           </p>
         {/if}
       </div>
+    </div>
   </FreeTextLayout>
 </HiddenFromSSR>
 <style>
@@ -32,14 +33,15 @@
   }
 
   :global(.not-logged-in-home-svg) {
-    width: 70px;
-    height: 70px;
-    fill: var(--banner-fill);
-    display: inline-block;
+  width: 70px;
+  height: 70px;
+  color: var(--main-text-color);
+  fill: currentColor;
+  display: inline-block;
   }
 
   .not-logged-in-home h1 {
-    color: var(--banner-fill);
+    color: var(--main-text-color);
     display: inline-block;
     font-size: 3em;
     margin: auto 15px;
@@ -71,7 +73,7 @@
     },
     data: () => {
       return {
-        appName: process.env.UPSTREAM ? 'Enafore' : ENAFORE_IS_BROWSER ? location.hostname : '',
+        appName: process.env.UPSTREAM ? 'Zocial' : ENAFORE_IS_BROWSER ? location.hostname : '',
         singleInstance: process.env.SINGLE_INSTANCE
       }
     },

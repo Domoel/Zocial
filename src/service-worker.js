@@ -108,7 +108,7 @@ self.addEventListener('fetch', event => {
         manifest.theme_color =
           process.env.THEME_COLORS[await getLastTheme()] ||
           manifest.theme_color
-        manifest.name = manifest.short_name = process.env.UPSTREAM ? 'Enafore' : location.hostname
+        manifest.name = manifest.short_name = process.env.UPSTREAM ? 'Zocial' : location.hostname
         if ((await getIconColors()) === 'alt') {
           for (const icon of manifest.icons) {
             icon.src = icon.src.replace(

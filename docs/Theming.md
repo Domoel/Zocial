@@ -1,6 +1,6 @@
 ## Theming
 
-This document describes how to write your own theme for Enafore.
+This document describes how to write your own theme for Zocial.
 
 First, create a file `scss/themes/foobar.scss`, write some SCSS inside and add
 the following at the bottom of `scss/themes/foobar.scss`.

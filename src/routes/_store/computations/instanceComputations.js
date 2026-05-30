@@ -27,7 +27,7 @@ export function instanceComputations (store) {
     null
   )
   computeForInstance(store, 'currentInstanceInfo', 'instanceInfos', null)
-  computeForInstance(store, 'pinnedPage', 'pinnedPages', '/local')
+  computeForInstance(store, 'pinnedPage', 'pinnedPages', '/bookmarks')
   computeForInstance(store, 'lists', 'instanceLists', [])
   computeForInstance(store, 'filters', 'instanceFilters', [])
   computeForInstance(

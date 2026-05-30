@@ -30,7 +30,7 @@
   },
   "icons": [
     {
-      "src": "/icons/favicon.ico",
+      "src": "/icons/favicon.avif",
       "type": "image/x-icon",
       "sizes": "16x16 32x32"
     },

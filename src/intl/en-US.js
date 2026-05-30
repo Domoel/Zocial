@@ -1,10 +1,10 @@
 export default {
   // Home page, basic <title> and <description>
-  appName: 'Enafore',
+  appName: 'Zocial',
   appDescription: 'A fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.',
   homeDescription: `
     <p>
-      Enafore is a fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.
+      Zocial is a fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.
     </p>`,
   homeMultiInstance: `
     <p>
@@ -13,9 +13,9 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Enafore is <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">open-source software</a> distributed under the
+      Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source software</a> distributed under the
       <a rel="noopener" target="_blank"
-         href="https://github.com/enafore/enafore/blob/main/LICENSE">AGPL License</a>.
+         href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">AGPL License</a>.
       Here is the <a href="/settings/about#privacy-policy" rel="prefetch">privacy policy</a>.
     </p>
   `,
@@ -347,27 +347,27 @@ export default {
   verified: 'Verified',
   // About page
   about: 'About',
-  aboutApp: 'About Enafore',
+  aboutApp: 'About Zocial',
   aboutAppDescription: `
   <p>
-    Enafore is <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">open-source</a> software.
+    Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source</a> software.
   </p>
 
   <h2 id="privacy-policy">Privacy Policy</h2>
 
   <p>
-    Enafore does not store any personal information on its servers,
+    Zocial does not store any personal information on its servers,
     including but not limited to names, email addresses,
     IP addresses, posts, and photos.
   </p>
 
   <p>
-    Enafore is a static site hosted on Github Pages. All data is stored locally in your browser and shared with the fediverse
+    Zocial is a static site hosted on Github Pages. All data is stored locally in your browser and shared with the fediverse
     instance(s) you connect to.
   </p>
 
   <p>
-    Approximately once per day Enafore will send a request proxied through your instance so I can collect some general statistics. No personal information is sent, only your instance domain is visible.
+    Approximately once per day Zocial will send a request proxied through your instance so I can collect some general statistics. No personal information is sent, only your instance domain is visible.
   </p>
 
   <p>
@@ -386,13 +386,13 @@ export default {
   </p>
 
   <p>
-    Enafore is licensed under the <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore/blob/main/LICENSE">GNU Affero General Public License</a>.
+    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore/blob/main/LICENSE">GNU Affero General Public License</a>.
   </p>
 
   <h2>Version</h2>
 
   <p>
-    You are running Enafore version <code class="enafore-version"></code>.
+    You are running Zocial version <code class="enafore-version"></code>.
   </p>`,
   logs: 'Logs',
   // Settings
@@ -462,8 +462,8 @@ export default {
   notificationFilters: 'Notification filters',
   pushNotifications: 'Push notifications',
   // Add instance page
-  storageError: `It seems Enafore cannot store data locally. Is your browser in private mode
-          or blocking cookies? Enafore stores all data locally, and requires LocalStorage and
+  storageError: `It seems Zocial cannot store data locally. Is your browser in private mode
+          or blocking cookies? Zocial stores all data locally, and requires LocalStorage and
           IndexedDB to work correctly.`,
   javaScriptError: 'You must enable JavaScript to log in.',
   enterInstanceName: 'Enter instance name',
@@ -484,7 +484,7 @@ export default {
   // Link text
   logInToAnInstancePre: '',
   logInToAnInstanceText: 'Log in to an instance',
-  logInToAnInstancePost: 'to start using Enafore.',
+  logInToAnInstancePost: 'to start using Zocial.',
   // Another custom tooltip
   showRingPre: 'Always show',
   showRingText: 'focus ring',
