@@ -55,7 +55,7 @@ const persistedState = {
   lastPings: {},
   reduceMotion:
     !ENAFORE_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,
-  underlineLinks: false,
+  underlineLinks: true,
   iconColors: '',
   lastContentTypes: {}
 }

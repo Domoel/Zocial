@@ -47,7 +47,7 @@ if (bottomNav) {
     .setAttribute('media', 'all') // enables the style
 }
 
-if (centerNav) {
+if (centerNav !== false) {
   document.getElementById('theCenterNavStyle')
     .setAttribute('media', 'all') // enables the style
 }
