@@ -1,18 +1,20 @@
 <HiddenFromSSR>
-  <div></div>
+  <FreeTextLayout>
+    <h1>{'intl.community'}</h1>
+    <p>
+      <a href="/settings">{'intl.settings'}</a>
+    </p>
+  </FreeTextLayout>
 </HiddenFromSSR>
 
 <script>
   import HiddenFromSSR from '../../_components/HiddenFromSSR.html'
-  import { goto } from '../../../__sapper__/client.js'
+  import FreeTextLayout from '../../_components/FreeTextLayout.html'
 
   export default {
     components: {
-      HiddenFromSSR
-    },
-
-    oncreate () {
-      goto('/settings')
+      HiddenFromSSR,
+      FreeTextLayout
     }
   }
 </script>
