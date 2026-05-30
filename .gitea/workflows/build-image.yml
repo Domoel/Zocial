@@ -46,11 +46,11 @@ jobs:
       - name: Build image
         run: |
           docker build \
-            -t domoel/enfore:${IMAGE_TAG} \
-            -t domoel/enfore:${IMAGE_TAG}-${TAG} \
+            -t domoel/enafore:${IMAGE_TAG} \
+            -t domoel/enafore:${IMAGE_TAG}-${TAG} \
             .
 
       - name: Push image
         run: |
-          docker push domoel/enfore:${IMAGE_TAG}
-          docker push domoel/enfore:${IMAGE_TAG}-${TAG}
+          docker push domoel/enafore:${IMAGE_TAG}
+          docker push domoel/enafore:${IMAGE_TAG}-${TAG}
