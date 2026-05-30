@@ -26,19 +26,23 @@
     </SettingsListRow>
   </SettingsList>
 
+  <CommunitySettingsSection/>
 </SettingsLayout>
+
 <script>
   import SettingsLayout from '../../_components/settings/SettingsLayout.html'
   import SettingsList from '../../_components/settings/SettingsList.html'
   import SettingsListRow from '../../_components/settings/SettingsListRow.html'
   import SettingsListButton from '../../_components/settings/SettingsListButton.html'
+  import CommunitySettingsSection from '../../_components/settings/CommunitySettingsSection.html'
 
   export default {
     components: {
       SettingsLayout,
       SettingsList,
       SettingsListRow,
-      SettingsListButton
+      SettingsListButton,
+      CommunitySettingsSection
     },
     methods: {
       async reload (event) {

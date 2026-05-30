@@ -8,7 +8,7 @@
       <RadioGroupButton
         id="pinnables"
         className="pinnable-button"
-        checked={$pinnedPage === href}
+        checked={$pinnedPagesForInstance && $pinnedPagesForInstance.includes(href)}
         label={pinLabel}
         index={pinIndex}
         on:click="onPinClick(event)"
@@ -144,10 +144,29 @@
     methods: {
       onPinClick (e) {
         e.preventDefault()
-        const { currentInstance, pinnedPages } = this.store.get()
+        const { currentInstance, pinnedPages = {} } = this.store.get()
         const { href } = this.get()
-        pinnedPages[currentInstance] = href
-        this.store.set({ pinnedPages })
+
+        let currentPinnedPages = pinnedPages[currentInstance] || ['/bookmarks', '/federated']
+
+        if (!Array.isArray(currentPinnedPages)) {
+          currentPinnedPages = [currentPinnedPages]
+        }
+
+        if (currentPinnedPages.includes(href)) {
+          currentPinnedPages = currentPinnedPages.filter(page => page !== href)
+        } else {
+          currentPinnedPages = [...currentPinnedPages, href].slice(-2)
+        }
+
+        pinnedPages[currentInstance] = currentPinnedPages
+
+        this.store.set({
+          pinnedPages: {
+            ...pinnedPages,
+            [currentInstance]: currentPinnedPages
+          }
+        })
         this.store.save()
       }
     }

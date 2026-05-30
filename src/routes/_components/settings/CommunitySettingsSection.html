@@ -1,0 +1,188 @@
+{#if $isUserLoggedIn}
+
+<div class="community-settings-section">
+  <FocusRestoration realm="settings-community">
+    <RadioGroup
+      id="pinnables"
+      length={numPinnable}
+      label="{'intl.pinnableTimelines'}">
+
+      <h2 class="community-header">
+        {'intl.timelines'}
+      </h2>
+
+      <PageList label="{'intl.timelines'}">
+        {#each staticPinnables as staticPinnable, i}
+          <PageListItem
+            href={staticPinnable.href}
+            label={staticPinnable.label}
+            icon={staticPinnable.icon}
+            pinnable="true"
+            pinIndex={i}
+          />
+        {/each}
+      </PageList>
+
+      {#if listsLength}
+
+        <h2 class="community-header">
+          {'intl.lists'}
+        </h2>
+
+        <PageList label="{'intl.lists'}">
+          {#each $lists as list, i}
+            <PageListItem
+              href="/lists/{list.id}"
+              label={list.title}
+              icon="#fa-bars"
+              pinnable="true"
+              pinIndex={staticPinnablesLength + i}
+            />
+          {/each}
+        </PageList>
+
+      {/if}
+
+    </RadioGroup>
+
+    <h2 class="community-header">
+      Instance settings
+    </h2>
+
+    <PageList label="{'intl.instanceSettings'}">
+      {#if isLockedAccount}
+        <PageListItem
+          href="/requests"
+          label={followRequestsLabel}
+          icon="#fa-user-plus"
+        />
+      {/if}
+
+      <PageListItem
+        href="/muted"
+        label="{'intl.mutedUsers'}"
+        icon="#fa-volume-off"
+      />
+
+      <PageListItem
+        href="/blocked"
+        label="{'intl.blockedUsers'}"
+        icon="#fa-ban"
+      />
+
+      <PageListItem
+        href="/pinned"
+        label="{'intl.pinnedStatuses'}"
+        icon="#fa-thumb-tack"
+      />
+    </PageList>
+
+  </FocusRestoration>
+</div>
+
+{/if}
+
+<style>
+  .community-settings-section {
+    margin-top: 30px;
+  }
+</style>
+
+<script>
+  import { store } from '../../_store/store.js'
+  import PageList from '../community/PageList.html'
+  import PageListItem from '../community/PageListItem.html'
+  import RadioGroup from '../radio/RadioGroup.html'
+  import FocusRestoration from '../FocusRestoration.html'
+
+  import { updateListsForInstance } from '../../_actions/lists.js'
+  import { updateFollowRequestCountIfLockedAccount } from '../../_actions/followRequests.js'
+
+  import { formatIntl } from '../../_utils/formatIntl.js'
+
+  export default {
+    async oncreate () {
+      const { currentInstance } = this.store.get()
+
+      if (currentInstance) {
+        await Promise.all([
+          updateListsForInstance(currentInstance),
+          updateFollowRequestCountIfLockedAccount(currentInstance)
+        ])
+      }
+    },
+
+    store: () => store,
+
+    components: {
+      PageList,
+      PageListItem,
+      RadioGroup,
+      FocusRestoration
+    },
+
+    computed: {
+      isLockedAccount: ({ $currentVerifyCredentials }) =>
+        $currentVerifyCredentials &&
+        $currentVerifyCredentials.locked,
+
+      followRequestsLabel: ({
+        $hasFollowRequests,
+        $numberOfFollowRequests
+      }) => (
+        formatIntl('intl.followRequestsLabel', {
+          hasFollowRequests: $hasFollowRequests,
+          count: $numberOfFollowRequests
+        })
+      ),
+
+      listsLength: ({ $lists }) =>
+        $lists ? $lists.length : 0,
+
+      staticPinnablesLength: ({ staticPinnables }) =>
+        staticPinnables.length,
+
+      numPinnable: ({
+        listsLength,
+        staticPinnablesLength
+      }) => (
+        listsLength + staticPinnablesLength
+      ),
+
+      staticPinnables: ({ $bubbleTimelineEnabled }) => [
+        {
+          href: '/local',
+          label: 'intl.localTimeline',
+          icon: '#fa-users'
+        },
+        ...($bubbleTimelineEnabled
+          ? [{
+              href: '/bubble',
+              label: 'intl.bubbleTimeline',
+              icon: '#fa-circle'
+            }]
+          : []),
+        {
+          href: '/federated',
+          label: 'intl.federatedTimeline',
+          icon: '#fa-globe'
+        },
+        {
+          href: '/favorites',
+          label: 'intl.favorites',
+          icon: '#fa-star'
+        },
+        {
+          href: '/direct',
+          label: 'intl.directMessages',
+          icon: '#fa-envelope'
+        },
+        {
+          href: '/bookmarks',
+          label: 'intl.bookmarks',
+          icon: '#fa-bookmark'
+        }
+      ]
+    }
+  }
+</script>
