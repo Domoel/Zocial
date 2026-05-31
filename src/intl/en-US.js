@@ -350,21 +350,17 @@ export default {
   aboutApp: 'About Zocial',
   aboutAppDescription: `
   <p>
-    Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source</a> software.
+    Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source</a> software and a fork of <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">Enafore</a>, created by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">Dome</a>.
   </p>
 
   <h2 id="privacy-policy">Privacy Policy</h2>
 
   <p>
-    Zocial does not store any personal information on its servers,
-    including but not limited to names, email addresses,
-    IP addresses, posts, and photos.
+    Zocial does not store any personal information on its servers, including but not limited to names, email addresses, IP addresses, posts, and photos.
   </p>
 
   <p>
-    Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a
-    Docker image and can be deployed using an nginx web server. All data is stored locally in your
-    browser and shared with the fediverse instance(s) you connect to.
+    Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a Docker image and can be deployed using an nginx web  server. All data is stored locally in your browser and shared with the fediverse instance(s) you connect to.
   </p>
 
   <p>
@@ -378,7 +374,7 @@ export default {
   </p>
 
   <p>
-    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">GNU Affero General Public License</a>.
+    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> 
   </p>
 
   <h2>Version</h2>
