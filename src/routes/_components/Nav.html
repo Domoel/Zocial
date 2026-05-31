@@ -91,6 +91,12 @@
       const navShortcuts = await importNavShortcuts()
       this.set({ navShortcuts })
     },
+    ondestroy () {
+      if (this._touchTimer) {
+        clearTimeout(this._touchTimer)
+        this._touchTimer = null
+      }
+    },
     store: () => store,
     components: {
       NavItem

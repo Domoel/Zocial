@@ -1,4 +1,4 @@
-<a ref:cardlink href={url} class="status-card" target="_blank" rel="nofollow noopener ugc">
+<a ref:cardlink href={url} class="status-card" target={isInternal ? '_self' : '_blank'} rel={isInternal ? 'prefetch' : 'nofollow noopener ugc'} on:click="handleClick(event)">
     <strong class="card-title" title={unescapedTitle}>
      {unescapedTitle}
     </strong>
@@ -6,7 +6,7 @@
     <div class="card-content">
   {#if imageUrl}
     <div class="status-card-image-container">
-      <LazyImage src={imageUrl} ariaHidden={true} />
+      <LazyImage src={imageUrl} ariaHidden={true} on:load="fire('recalculateHeight')" />
     </div>
   {/if}
     <span class="card-description">
@@ -90,6 +90,7 @@
   import LazyImage from '../LazyImage.html'
   import Shortcut from '../shortcut/Shortcut.html'
   import { unescape } from '../../_thirdparty/unescape/unescape.js'
+  import { goto } from '../../../../__sapper__/client.js'
 
   export default {
     components: {
@@ -97,22 +98,32 @@
       LazyImage
     },
     computed: {
-      card: ({ originalStatus }) => originalStatus.card,
+      card: ({ originalStatus, clientSideCard }) => originalStatus.card || clientSideCard,
+      isInternal: ({ card }) => !!(card && card.url && card.url.startsWith('/')),
       title: ({ card }) => card.title,
       unescapedTitle: ({ title }) => title && unescape(title),
       url: ({ card }) => card.url,
-      hostname: ({ url }) => URL ? new URL(url).hostname : '',
+      hostname: ({ url }) => { try { return url ? new URL(url).hostname : '' } catch (e) { return '' } },
       description: ({ card, hostname }) => card.description || card.provider_name || hostname,
       unescapedDescription: ({ description }) => description && unescape(description),
       imageUrl: ({ card }) => card.image
     },
     methods: {
+      handleClick (event) {
+        const { isInternal, url } = this.get()
+        if (isInternal && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
+          event.preventDefault()
+          goto(url)
+        }
+      },
       open () {
-        if (this.refs.cardlink) {
+        const { isInternal, url } = this.get()
+        if (isInternal) {
+          goto(url)
+        } else if (this.refs.cardlink) {
           this.refs.cardlink.click()
         }
       }
-
     }
   }
 </script>

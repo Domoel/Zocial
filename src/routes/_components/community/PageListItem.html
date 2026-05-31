@@ -147,7 +147,7 @@
         const { currentInstance, pinnedPages = {} } = this.store.get()
         const { href } = this.get()
 
-        let currentPinnedPages = pinnedPages[currentInstance] || ['/bookmarks', '/federated']
+        let currentPinnedPages = pinnedPages[currentInstance] || ['/federated', '/bookmarks']
 
         if (!Array.isArray(currentPinnedPages)) {
           currentPinnedPages = [currentPinnedPages]

@@ -527,6 +527,7 @@ export default {
   hideSensitiveMedia: 'Ocultar multimedia sensible',
   clickToShowSensitive: 'Contenido sensible. Haz clic para mostrar.',
   longPost: 'Publicación larga',
+  longPostLengthLabel: 'Umbral de colapso (caracteres)',
   // Accessible status labels
   accountRebloggedYou: '{account} reenvió tu toot',
   accountFavoritedYou: '{account} marcó como favorito tu toot',

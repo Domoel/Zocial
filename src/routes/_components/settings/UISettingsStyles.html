@@ -12,6 +12,27 @@
     padding: 5px 0;
   }
 
+  :global(.setting-group-text) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 5px 0;
+  }
+
+  :global(.setting-group-text input[type="number"],
+          .setting-group-text input[type="url"],
+          .setting-group-text input[type="text"]) {
+    width: 100%;
+    max-width: 160px;
+    box-sizing: border-box;
+    font-size: 0.95em;
+  }
+
+  :global(.setting-group-disabled) {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
   :global(.free-text .ui-settings h3) {
     margin: 16px 0 4px;
     font-size: 1.4em;

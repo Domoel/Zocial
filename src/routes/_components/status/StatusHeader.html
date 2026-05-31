@@ -205,12 +205,12 @@
       icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag }) => {
         if (timelineType === 'pinned') {
           return '#fa-thumb-tack'
-        } else if (matchingHashtag) {
-          return '#fa-hashtag'
         } else if (status && status.reblog) {
           return '#fa-retweet'
         } else if (inReplyToAccount) {
           return '#fa-reply'
+        } else if (matchingHashtag) {
+          return '#fa-hashtag'
         } else if (notificationInfo) {
           return notificationInfo.icon
         } else {
@@ -244,10 +244,10 @@
       emojiReaction: ({ notificationInfo }) => {
         if (notificationInfo && notificationInfo.reaction) { return notificationInfo.html }
       },
-      avatarHidden: ({ timelineType, notificationInfo, icon, matchingHashtag }) =>
+      avatarHidden: ({ timelineType, notificationInfo, icon, matchingHashtag, inReplyToAccount }) =>
         icon === '#fa-question' ||
         timelineType === 'pinned' ||
-        !!matchingHashtag ||
+        (!inReplyToAccount && !!matchingHashtag) ||
         (notificationInfo && notificationInfo.poll)
           ? 'hidden'
           : ''

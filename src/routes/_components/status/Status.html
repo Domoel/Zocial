@@ -37,7 +37,7 @@
   <!-- Apparently it's possible for spoilered content to sometimes have embeds, but I can't figure out how.
        Don't bother optimizing this with the preloadHiddenContent. -->
   {#if !nextGrouped && showCard && showContent}
-    <StatusCard {...params} />
+    <StatusCard {...params} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && showMedia }
     <StatusMediaAttachments {...params} on:recalculateHeight />
@@ -204,6 +204,7 @@
   import { tryToFocusElement } from '../../_utils/tryToFocusElement.js'
   import { on } from '../../_utils/eventBus.ts'
   import { database } from '../../_database/database.js'
+  import { extractFirstExternalLink, resolveCardForUrl } from '../../_utils/resolveCardForUrl.js'
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
@@ -252,13 +253,32 @@
           }
         }).catch(() => {})
       }
+
+      // Client-side card: resolve first external link if server provides no card
+      const { $hideCards } = this.store.get()
+      if (!$hideCards && !_origStatus.card && _origStatus.content) {
+        const firstUrl = extractFirstExternalLink(_origStatus.content)
+        if (firstUrl) {
+          const { currentInstance, accessToken } = this.store.get()
+          if (currentInstance && accessToken) {
+            resolveCardForUrl(firstUrl, currentInstance, accessToken).then(card => {
+              try { this.set({ clientSideCard: card }) } catch (e) {}
+            }).catch(() => {})
+          }
+        }
+      }
     },
     onupdate ({ changed, previous, current }) {
-      if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped)) {
+      if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped || changed.clientSideCard)) {
         // this sucks but otherwise svelte fucks up the list 🙃
-        setTimeout(() => {
-          this.fire('recalculateHeight')
-        })
+        if (changed.clientSideCard) {
+          // double-RAF: waits for the browser to fully paint the card before measuring height
+          requestAnimationFrame(() => requestAnimationFrame(() => this.fire('recalculateHeight')))
+        } else {
+          setTimeout(() => {
+            this.fire('recalculateHeight')
+          })
+        }
       }
     },
     components: {
@@ -289,6 +309,7 @@
       quotedBy: null,
       overrideOriginalStatus: null,
       inReplyToAccount: null,
+      clientSideCard: null,
       timelineType: null,
       timelineValue: null,
       index: null,
@@ -362,14 +383,16 @@
       accountForShortcut: ({ originalAccount, notification }) => notification ? notification.account : originalAccount,
       visibility: ({ originalStatus }) => originalStatus.visibility,
       plainTextContent: ({ originalStatus }) => originalStatus.plainTextContent || '',
-      plainTextContentOverLength: ({ plainTextContent, $hideLongPosts }) => $hideLongPosts && (
+      plainTextContentOverLength: ({ plainTextContent, $hideLongPosts, $longPostLength }) => {
+        if (!$hideLongPosts) return false
         // measureText() is expensive, so avoid doing it when possible.
         // Also measureText() typically only makes text shorter, not longer, so we can measure the raw length
         // as a shortcut. (The only case where it makes text longer is with short URLs which get expanded to a longer
         // placeholder.) This isn't 100% accurate, but we don't need perfect accuracy here because this is just
         // to show a "long post" content warning.
-        plainTextContent.length > LONG_POST_LENGTH && measureText(plainTextContent) > LONG_POST_LENGTH
-      ),
+        const limit = ($longPostLength > 0 ? $longPostLength : LONG_POST_LENGTH)
+        return plainTextContent.length > limit && measureText(plainTextContent) > limit
+      },
       spoilerText: ({ originalStatus, plainTextContentOverLength }) => originalStatus.spoiler_text,
       computedSpoilerText: ({ spoilerText, plainTextContentOverLength }) => (
         spoilerText || (plainTextContentOverLength && LONG_POST_TEXT)
@@ -389,12 +412,11 @@
       ),
       spoilerShown: ({ $spoilersShown, uuid, $showAllSpoilers }) => (typeof $spoilersShown[uuid] === 'undefined' ? !!$showAllSpoilers : !!$spoilersShown[uuid]),
       replyShown: ({ $repliesShown, uuid }) => !!$repliesShown[uuid],
-      showCard: ({ originalStatus, showMedia, $hideCards, showQuote }) => (
+      showCard: ({ originalStatus, showMedia, $hideCards, showQuote, clientSideCard }) => (
         !$hideCards &&
         !showMedia &&
         !showQuote &&
-        originalStatus.card &&
-        originalStatus.card.title
+        ((originalStatus.card && originalStatus.card.title) || clientSideCard)
       ),
       showPoll: ({ originalStatus }) => (
         originalStatus.poll
@@ -451,8 +473,8 @@
         }
         const followed = $followedHashtagsForInstance
         if (!followed || !followed.length) return null
-        const followedNames = new Set(followed.map(t => t.name.toLowerCase()))
-        const match = originalStatus.tags.find(tag => followedNames.has(tag.name.toLowerCase()))
+        const followedNames = new Set(followed.filter(t => t && t.name).map(t => t.name.toLowerCase()))
+        const match = originalStatus.tags.find(tag => tag && tag.name && followedNames.has(tag.name.toLowerCase()))
         return match ? match.name : null
       },
       showHeader: ({ notificationInfo, status, timelineType, inReplyToAccount, matchingHashtag }) => (
@@ -526,7 +548,7 @@
         originalAccount, originalAccountId, visibility,
         replyVisibility, spoilerText, computedSpoilerText, originalStatus, originalStatusId, inReplyToId,
         enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl,
-        inReplyToAccount, matchingHashtag
+        inReplyToAccount, matchingHashtag, clientSideCard
       }) => ({
         notification,
         notificationId,
@@ -553,7 +575,8 @@
         localOnly,
         originalStatusCanonicalUrl,
         inReplyToAccount,
-        matchingHashtag
+        matchingHashtag,
+        clientSideCard
       })
     }
   }

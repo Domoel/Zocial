@@ -502,6 +502,7 @@ export default {
   hideSensitiveMedia: 'Cacher la média sensible',
   clickToShowSensitive: 'Image sensible. Cliquer pour afficher.',
   longPost: 'Pouet long',
+  longPostLengthLabel: 'Seuil de réduction (caractères)',
   // Accessible status labels
   accountRebloggedYou: '{account} a partagé votre pouet',
   accountFavoritedYou: '{account} a mis votre pouet en favori',

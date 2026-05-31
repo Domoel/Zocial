@@ -3,9 +3,8 @@ import { getFollowedTags, followTag, unfollowTag } from '../_api/followedTags.js
 
 export async function setupFollowedHashtagsForInstance (instanceName) {
   const { loggedInInstances, instanceFollowedHashtags } = store.get()
-  if (instanceFollowedHashtags[instanceName]) {
-    return // already loaded
-  }
+  if (!loggedInInstances[instanceName]) return
+  if (instanceFollowedHashtags[instanceName]) return // already loaded
   const accessToken = loggedInInstances[instanceName].access_token
   try {
     const tags = await getFollowedTags(instanceName, accessToken)
@@ -19,6 +18,7 @@ export async function setupFollowedHashtagsForInstance (instanceName) {
 
 export async function refreshFollowedHashtagsForInstance (instanceName) {
   const { loggedInInstances } = store.get()
+  if (!loggedInInstances[instanceName]) return
   const accessToken = loggedInInstances[instanceName].access_token
   const tags = await getFollowedTags(instanceName, accessToken)
   const { instanceFollowedHashtags } = store.get()
