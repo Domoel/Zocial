@@ -51,6 +51,7 @@ const persistedState = {
   ignoreBlurhash: false,
   omitEmojiInDisplayNames: undefined,
   pinnedPages: {},
+  navTabOrder: {},
   pushSubscriptions: {},
   lastPings: {},
   reduceMotion:
