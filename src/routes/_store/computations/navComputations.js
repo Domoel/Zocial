@@ -48,8 +48,8 @@ export function navComputations (store) {
 
   store.compute(
     'navPages',
-    ['pinnedPagesForInstance', 'pinnedListTitle'],
-    (pinnedPagesForInstance, pinnedListTitle) => {
+    ['pinnedPagesForInstance', 'pinnedListTitle', 'navTabOrderForInstance'],
+    (pinnedPagesForInstance, pinnedListTitle, navTabOrderForInstance) => {
       const pages = Array.isArray(pinnedPagesForInstance)
         ? pinnedPagesForInstance
         : [pinnedPagesForInstance || '/bookmarks']
@@ -59,13 +59,25 @@ export function navComputations (store) {
         .slice(0, 2)
         .map(page => pageToNavObject(page, pinnedListTitle))
 
-      return [
+      const defaultOrder = [
         { name: 'home', href: '/', svg: '#logo', label: 'intl.home' },
-        { name: 'notifications', href: '/notifications', svg: '#fa-bell', label: 'intl.notifications' },
         ...pinnedPageObjects,
+        { name: 'notifications', href: '/notifications', svg: '#fa-bell', label: 'intl.notifications' },
         { name: 'search', href: '/search', svg: '#fa-search', label: 'intl.search' },
         { name: 'settings', href: '/settings', svg: '#fa-gear', label: 'intl.settings' }
       ]
+
+      if (!navTabOrderForInstance) {
+        return defaultOrder
+      }
+
+      const byName = Object.fromEntries(defaultOrder.map(tab => [tab.name, tab]))
+      const ordered = navTabOrderForInstance
+        .filter(name => name in byName)
+        .map(name => byName[name])
+      const orderedNames = new Set(navTabOrderForInstance)
+      const remaining = defaultOrder.filter(tab => !orderedNames.has(tab.name))
+      return [...ordered, ...remaining]
     }
   )
 

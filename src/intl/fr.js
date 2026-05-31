@@ -520,6 +520,7 @@ export default {
   themeMajesty: 'Majesté',
   themeGecko: 'Gecko',
   themeGrayscale: 'Echelle gris',
+  themeZocial: 'Zocial',
   themeOzark: 'Ozark',
   themeCobalt: 'Cobalt',
   themeSorcery: 'Sorcellerie',

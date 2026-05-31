@@ -1,7 +1,19 @@
 <nav id="main-nav" class="main-nav">
 	<ul class="main-nav-ul">
-    {#each $navPages as navPage (navPage.href)}
-      <li class="main-nav-li">
+    {#each $navPages as navPage, i (navPage.href)}
+      <li
+        class="main-nav-li{dragIndex === i ? ' is-dragging' : ''}{overIndex === i && dragIndex !== i ? ' drag-over' : ''}{touchHeld === i ? ' touch-held' : ''}"
+        draggable="true"
+        data-index="{i}"
+        on:dragstart="onDragStart(event, i)"
+        on:dragend="onDragEnd()"
+        on:dragover="onDragOver(event, i)"
+        on:drop="onDrop(i)"
+        on:touchstart="onTouchStart(event, i)"
+        on:touchmove="onTouchMove(event)"
+        on:touchend="onTouchEnd(event)"
+        on:touchcancel="onTouchCancel()"
+      >
         <NavItem
           {page}
           name={navPage.name}
@@ -40,11 +52,32 @@
 
   .main-nav-li {
     display: flex;
+    transition: opacity 0.15s, transform 0.15s;
+    cursor: grab;
+  }
+
+  .main-nav-li.is-dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+  }
+
+  .main-nav-li.drag-over {
+    box-shadow: inset 2px 0 0 var(--anchor-text);
+  }
+
+  .main-nav-li.touch-held {
+    opacity: 0.6;
+    transform: scale(0.92);
   }
 
   @media (max-width: 991px) {
     .main-nav-li {
       flex: 1;
+    }
+
+    .main-nav-li.drag-over {
+      background: var(--nav-bg);
+      box-shadow: inset 2px 0 0 var(--anchor-text);
     }
   }
 </style>
@@ -63,7 +96,109 @@
       NavItem
     },
     data: () => ({
-      navShortcuts: undefined
-    })
+      navShortcuts: undefined,
+      dragIndex: null,
+      overIndex: null,
+      touchHeld: null,
+      _touchTimer: null,
+      _touchDragActive: false,
+      _touchDragIndex: null,
+      _touchStartX: 0,
+      _touchStartY: 0
+    }),
+    methods: {
+      onDragStart (event, index) {
+        this.set({ dragIndex: index, overIndex: null })
+        event.dataTransfer.effectAllowed = 'move'
+      },
+      onDragEnd () {
+        this.set({ dragIndex: null, overIndex: null })
+      },
+      onDragOver (event, index) {
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'move'
+        const { dragIndex } = this.get()
+        if (dragIndex !== null && dragIndex !== index) {
+          this.set({ overIndex: index })
+        }
+      },
+      onDrop (toIndex) {
+        const { dragIndex } = this.get()
+        if (dragIndex !== null && dragIndex !== toIndex) {
+          this._reorderTabs(dragIndex, toIndex)
+        }
+        this.set({ dragIndex: null, overIndex: null })
+      },
+
+      onTouchStart (event, index) {
+        const touch = event.touches[0]
+        const timer = setTimeout(() => {
+          if (navigator.vibrate) navigator.vibrate(40)
+          this.set({ touchHeld: index, overIndex: index })
+          this._touchDragActive = true
+          this._touchDragIndex = index
+        }, 500)
+        this._touchTimer = timer
+        this._touchDragActive = false
+        this._touchDragIndex = null
+        this._touchStartX = touch.clientX
+        this._touchStartY = touch.clientY
+      },
+      onTouchMove (event) {
+        const touch = event.touches[0]
+
+        if (!this._touchDragActive) {
+          const dx = Math.abs(touch.clientX - this._touchStartX)
+          const dy = Math.abs(touch.clientY - this._touchStartY)
+          if (dx > 8 || dy > 8) {
+            clearTimeout(this._touchTimer)
+            this._touchTimer = null
+          }
+          return
+        }
+
+        event.preventDefault()
+
+        const elements = document.elementsFromPoint(touch.clientX, touch.clientY)
+        const navLi = elements.find(el => el.classList.contains('main-nav-li'))
+        if (navLi) {
+          const idx = parseInt(navLi.dataset.index, 10)
+          if (!isNaN(idx) && idx !== this._touchDragIndex) {
+            this.set({ overIndex: idx })
+          }
+        }
+      },
+      onTouchEnd (event) {
+        clearTimeout(this._touchTimer)
+        this._touchTimer = null
+
+        const { overIndex } = this.get()
+        if (this._touchDragActive && this._touchDragIndex !== null && overIndex !== null && this._touchDragIndex !== overIndex) {
+          event.preventDefault()
+          this._reorderTabs(this._touchDragIndex, overIndex)
+        }
+
+        this._touchDragActive = false
+        this._touchDragIndex = null
+        this.set({ touchHeld: null, overIndex: null })
+      },
+      onTouchCancel () {
+        clearTimeout(this._touchTimer)
+        this._touchTimer = null
+        this._touchDragActive = false
+        this._touchDragIndex = null
+        this.set({ touchHeld: null, overIndex: null })
+      },
+
+      _reorderTabs (fromIndex, toIndex) {
+        const { navPages, currentInstance, navTabOrder } = store.get()
+        const newOrder = navPages.map(p => p.name)
+        const [moved] = newOrder.splice(fromIndex, 1)
+        newOrder.splice(toIndex, 0, moved)
+        store.set({
+          navTabOrder: Object.assign({}, navTabOrder, { [currentInstance]: newOrder })
+        })
+      }
+    }
   }
 </script>

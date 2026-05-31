@@ -1,0 +1,31 @@
+@use "sass:color";
+
+// Zocial dark theme — Dracula-inspired purple accent on deep navy background
+$main-theme-color: #bd93f9;
+$main-bg-color: #2f313d;
+$body-bg-color: #1e1f29;
+$anchor-color: $main-theme-color;
+$main-text-color: #f7f7fa;
+$border-color: color.adjust($body-bg-color, $lightness: 12%);
+$secondary-text-color: #f7f7fa;
+$toast-border: color.adjust($main-bg-color, $lightness: 10%);
+$toast-bg: $main-bg-color;
+$focus-outline: color.adjust($main-theme-color, $lightness: 20%);
+$compose-background: color.adjust($main-theme-color, $lightness: 52%);
+
+@import "./_base.scss";
+@import "./_dark.scss";
+@import "./_dark_navbar.scss";
+@import "./_dark_scrollbars.scss";
+
+:root {
+  accent-color: #{$main-theme-color};
+
+  --button-primary-bg: #{$main-theme-color};
+  --button-primary-text: #1e1f29;
+
+  --deemphasized-text-color: #8b949e;
+  --very-deemphasized-text-color: #{color.adjust(#8b949e, $lightness: -12%)};
+
+  --nav-indicator-bg-active: #{color.mix(#f7f7fa, $main-theme-color, 40%)};
+}
