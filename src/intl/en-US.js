@@ -435,6 +435,7 @@ export default {
   hideFollowerCount: 'Hide follower counts (capped at 10)',
   hideReblogCount: 'Hide boost counts',
   hideFavoriteCount: 'Hide favorite and reaction counts',
+  hideReplyCount: 'Hide reply counts',
   hideUnread: 'Hide unread notifications count (i.e. the red dot)',
   disableNotificationSound: 'Disable notification sounds',
   // The quality that makes something seem important or interesting because it seems to be happening now

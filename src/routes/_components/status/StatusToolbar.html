@@ -1,12 +1,27 @@
 <div class="status-toolbar {isStatusInOwnThread ? 'status-in-own-thread' : ''} {isStatusInNotification ? 'status-in-notification' : '' }" ref:node>
-  <IconButton className="status-toolbar-reply-button" label={replyLabel} pressedLabel="{'intl.closeReply'}"
-    pressable={true} pressed={replyShown} href={replyIcon} clickListener={false} elementId={replyKey} />
-  <IconButton label={reblogLabel} pressedLabel="Unboost" pressable={!reblogDisabled} pressed={reblogged}
-    checked={reblogged} disabled={reblogDisabled} href={reblogIcon} clickListener={false} elementId={reblogKey}
-    ref:reblogIcon rightClickListener={hasQuote} on:rightClick="openQuoteDialog()" />
-  <IconButton label="{'intl.favorite'}" pressedLabel="{'intl.unfavorite'}" pressable={true} pressed={favorited}
-    checked={favorited} href="#fa-star" clickListener={false} elementId={favoriteKey} ref:favoriteIcon
-    rightClickListener={hasReactions} on:rightClick="pickEmojiReaction()" />
+  <div class="toolbar-btn-wrap">
+    <IconButton className="status-toolbar-reply-button" label={replyLabel} pressedLabel="{'intl.closeReply'}"
+      pressable={true} pressed={replyShown} href={replyIcon} clickListener={false} elementId={replyKey} />
+    {#if showCounts && repliesCount}
+      <span class="toolbar-count">{repliesCount}</span>
+    {/if}
+  </div>
+  <div class="toolbar-btn-wrap">
+    <IconButton label={reblogLabel} pressedLabel="Unboost" pressable={!reblogDisabled} pressed={reblogged}
+      checked={reblogged} disabled={reblogDisabled} href={reblogIcon} clickListener={false} elementId={reblogKey}
+      ref:reblogIcon rightClickListener={hasQuote} on:rightClick="openQuoteDialog()" />
+    {#if showCounts && reblogsCount}
+      <span class="toolbar-count">{reblogsCount}</span>
+    {/if}
+  </div>
+  <div class="toolbar-btn-wrap">
+    <IconButton label="{'intl.favorite'}" pressedLabel="{'intl.unfavorite'}" pressable={true} pressed={favorited}
+      checked={favorited} href="#fa-star" clickListener={false} elementId={favoriteKey} ref:favoriteIcon
+      rightClickListener={hasReactions} on:rightClick="pickEmojiReaction()" />
+    {#if showCounts && favsCount}
+      <span class="toolbar-count">{favsCount}</span>
+    {/if}
+  </div>
   <IconButton label="{'intl.bookmarkStatus'}" pressedLabel="{'intl.unbookmarkStatus'}" pressable={true} pressed={bookmarked}
     checked={bookmarked} href="#fa-bookmark" clickListener={false} elementId={bookmarkKey} ref:bookmarkIcon />
   <IconButton label="{'intl.moreOptions'}" href="#fa-ellipsis-h" clickListener={false} elementId={optionsKey} />
@@ -30,6 +45,18 @@
     display: flex;
     justify-content: space-between;
     pointer-events: none;
+  }
+
+  .toolbar-btn-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  .toolbar-count {
+    font-size: 0.75em;
+    color: var(--deemphasized-text-color);
+    margin-inline-start: 2px;
+    min-width: 1ch;
   }
 
   .status-toolbar.status-in-own-thread {
@@ -249,7 +276,11 @@
       optionsKey: ({ uuid }) => `options-${uuid}`,
       bookmarkKey: ({ uuid }) => `bookmark-${uuid}`,
       hasReactions: ({ originalStatus }) => Boolean(originalStatus.reactions || originalStatus.emoji_reactions),
-      hasQuote: ({ originalStatus }) => 'quote' in originalStatus
+      hasQuote: ({ originalStatus }) => 'quote' in originalStatus,
+      showCounts: ({ isStatusInOwnThread }) => !isStatusInOwnThread,
+      repliesCount: ({ $disableReplyCounts, originalStatus }) => $disableReplyCounts ? 0 : (originalStatus.replies_count || 0),
+      reblogsCount: ({ $disableReblogCounts, originalStatus }) => $disableReblogCounts ? 0 : (originalStatus.reblogs_count || 0),
+      favsCount: ({ $disableFavCounts, originalStatus }) => $disableFavCounts ? 0 : (originalStatus.favourites_count || 0)
     }
   }
 </script>

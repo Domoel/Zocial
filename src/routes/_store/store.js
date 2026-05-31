@@ -36,6 +36,7 @@ const persistedState = {
     }
   })(),
   disableReblogCounts: false,
+  disableReplyCounts: false,
   disableRelativeTimestamps: false,
   disableTapOnStatus: false,
   enableGrayscale: false,
