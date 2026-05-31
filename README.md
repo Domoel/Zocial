@@ -12,6 +12,16 @@ Zocial
 A beautifully refined fediverse client — built for the edges of the Mastodon ecosystem.
 </h4>
 
+<h6 align="center">
+  <a href="https://ztfr.eu">🏰 Website</a>
+  ·
+  <a href="https://ztfr.eu/matrix">📰 Matrix Community</a>
+  ·
+  <a href="https://social.ztfr.eu/@dome">🐘 Mastodon</a> 
+  ·
+  <a href="https://look.ztfr.eu/#/#support:ztfr.eu">💬 Support</a> 
+</h6>
+
 Zocial is a fork of Zocial is a fork of <a href="https://github.com/enafore/enafore">Enafore</a>,  itself born from the legendary Pinafore. Where Enafore focuses on broad compatibility, Zocial goes a step further — polishing the rough edges, adding quality-of-life features, and tuning the experience for servers running **Akkoma**, **glitch-soc**, and **Iceshrimp**. It's fast, keyboard-friendly, and works beautifully on both desktop and mobile.
 
 ---
