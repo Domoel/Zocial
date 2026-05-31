@@ -42,7 +42,7 @@
           href="/accounts/{replyTargetAccount.id}"
           rel="prefetch"
           title="{'@' + replyTargetAccount.acct}"
-          ><Avatar account={replyTargetAccount} size="extra-small" /><AccountDisplayName account={replyTargetAccount} /><span class="status-header-reply-acct">{'@' + replyTargetAccount.acct}</span></a
+          ><Avatar account={replyTargetAccount} size="extra-small" /><AccountDisplayName account={replyTargetAccount} /></
         >{/if}</span
       >
       {/if}
@@ -143,10 +143,6 @@
     border-radius: 4px;
   }
 
-  .status-header-reply-acct {
-    font-size: 0.85em;
-    opacity: 0.8;
-  }
 
   .status-in-notification .status-header-action,
   .status-in-notification .status-header-author,
