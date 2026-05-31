@@ -38,7 +38,7 @@
           rel="prefetch"
           >{'@' + targetAccount.acct}</a
         >{/if}{#if replyTargetAccount}{" "}<a
-          class="status-header-reply-target {isStatusInNotification ? 'is-in-notification' : ''}"
+          class="status-header-reply-target"
           href="/accounts/{replyTargetAccount.id}"
           rel="prefetch"
           title="{'@' + replyTargetAccount.acct}"
@@ -124,7 +124,10 @@
   .status-header-action,
   .status-header-author,
   .status-header-author:visited,
-  .status-header-author:hover {
+  .status-header-author:hover,
+  .status-header-reply-target,
+  .status-header-reply-target:visited,
+  .status-header-reply-target:hover {
     color: var(--deemphasized-text-color);
   }
 
@@ -133,7 +136,6 @@
     align-items: center;
     gap: 4px;
     vertical-align: middle;
-    color: var(--deemphasized-text-color);
   }
 
   .status-header-reply-target :global(.avatar) {
@@ -143,15 +145,13 @@
     border-radius: 4px;
   }
 
-
   .status-in-notification .status-header-action,
   .status-in-notification .status-header-author,
   .status-in-notification .status-header-author:visited,
-  .status-in-notification .status-header-author:hover {
-    color: var(--body-text-color);
-  }
-
-  .status-header-reply-target.is-in-notification {
+  .status-in-notification .status-header-author:hover,
+  .status-in-notification .status-header-reply-target,
+  .status-in-notification .status-header-reply-target:visited,
+  .status-in-notification .status-header-reply-target:hover {
     color: var(--body-text-color);
   }
 
