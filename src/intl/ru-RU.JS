@@ -18,12 +18,12 @@ export default {
   footer: `
     <p>
       Zocial — это
-      <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">программное обеспечение с открытым исходным кодом</a>
+      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">программное обеспечение с открытым исходным кодом</a>
       созданное
       <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>
       и распространяемое под лицензией
       <a rel="noopener" target="_blank"
-         href="https://github.com/enafore/enafore/blob/main/LICENSE">AGPL License</a>.
+         href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">AGPL License</a>.
       Здесь <a href="/settings/about#privacy-policy" rel="prefetch">политика конфиденциальности</a>.
       Это продолжение проекта Zocial, созданного <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>.
     </p>
@@ -330,10 +330,10 @@ export default {
   aboutAppDescription: `
   <p>
     Zocial — это
-    <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">программное обеспечение с открытым исходным кодом</a>.
+    <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">программное обеспечение с открытым исходным кодом</a>.
     и распространяемое под лицензией
     <a rel="noopener" target="_blank"
-      href="https://github.com/enafore/enafore/blob/main/LICENSE">AGPL License</a>.
+      href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">AGPL License</a>.
     Это продолжение проекта Zocial, созданного <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>.
   </p>
 

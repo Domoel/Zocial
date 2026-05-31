@@ -386,7 +386,7 @@ export default {
   </p>
 
   <p>
-    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore/blob/main/LICENSE">GNU Affero General Public License</a>.
+    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">GNU Affero General Public License</a>.
   </p>
 
   <h2>Version</h2>
