@@ -1,4 +1,4 @@
-<div class="status-content-wrapper">
+<div class="status-content-wrapper" on:click="onWrapperClick(event)">
   <div class={computedClass} ref:node>
     {@html massagedContent}
   </div>
@@ -17,11 +17,6 @@
   .status-content-wrapper {
     grid-area: content;
     width: 100%;
-  }
-
-  .status-content.status-in-own-thread {
-    font-size: 1.69em;
-    padding: 20px 10px 20px 5px;
   }
 
   .status-content.shown {
@@ -101,6 +96,8 @@
   import { store } from '../../_store/store.js'
   import { classname } from '../../_utils/classname.js'
   import { katexify } from '../../_utils/katexify.js'
+  import { search } from '../../_api/search.js'
+  import { goto } from '../../../../__sapper__/client.js'
 
   export default {
     onupdate ({ changed }) {
@@ -127,6 +124,36 @@
           : content
     },
     methods: {
+      async onWrapperClick (event) {
+        const anchor = event.target.closest('a[target="_blank"]')
+        if (!anchor) return
+        const href = anchor.href
+        if (!href || !href.startsWith('http')) return
+        // Let modifier-key clicks open in a new tab as usual
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
+        event.preventDefault()
+
+        const { currentInstance, accessToken } = store.get()
+        if (!currentInstance || !accessToken) {
+          window.open(href, '_blank', 'noopener noreferrer')
+          return
+        }
+        try {
+          const results = await search(currentInstance, accessToken, href, /* resolve */ true, /* limit */ 1)
+          if (results.statuses && results.statuses[0]) {
+            goto(`/statuses/${results.statuses[0].id}`)
+            return
+          }
+          if (results.accounts && results.accounts[0]) {
+            goto(`/accounts/${results.accounts[0].id}`)
+            return
+          }
+        } catch (e) { /* resolution failed */ }
+
+        // Fallback: open in new tab
+        window.open(href, '_blank', 'noopener noreferrer')
+      },
       katexify () {
         const renderPromise = katexify(this.refs.node)
         if (renderPromise) {
