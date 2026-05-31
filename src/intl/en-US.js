@@ -631,6 +631,7 @@ export default {
   cannotReblogDirectMessage: 'Cannot be boosted because this is a direct message',
   reblog: 'Boost',
   reply: 'Reply',
+  replyTo: 'Reply to',
   replyToThread: 'Reply to thread',
   favorite: 'Favorite',
   unfavorite: 'Unfavorite',

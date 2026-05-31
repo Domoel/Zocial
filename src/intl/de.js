@@ -543,6 +543,7 @@ export default {
   cannotReblogDirectMessage: 'Kann nicht geboostet werden, da dies eine Direktnachricht ist',
   reblog: 'Boost',
   reply: 'Antworten',
+  replyTo: 'Antwort an',
   replyToThread: 'Auf Unterhaltung antworten',
   favorite: 'Favorisieren',
   unfavorite: 'Favorisieren aufheben',

@@ -551,6 +551,7 @@ export default {
   cannotReblogDirectMessage: 'Impossible de partager car ce pouet est direct',
   reblog: 'Partager',
   reply: 'Répondre',
+  replyTo: 'En réponse à',
   replyToThread: 'Répondre au discussion',
   favorite: 'Mettre en favori',
   unfavorite: 'Ne plus mettre en favori',

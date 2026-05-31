@@ -577,6 +577,7 @@ export default {
   cannotReblogDirectMessage: 'No se puede reenviar porque es un mensaje directo',
   reblog: 'Reenviar',
   reply: 'Responder',
+  replyTo: 'En respuesta a',
   replyToThread: 'Responder al hilo',
   favorite: 'Favorito',
   unfavorite: 'No favorito',

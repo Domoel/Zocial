@@ -37,6 +37,12 @@
           href="/accounts/{targetAccount.id}"
           rel="prefetch"
           >{'@' + targetAccount.acct}</a
+        >{/if}{#if replyTargetAccount}{" "}<a
+          class="status-header-reply-target"
+          href="/accounts/{replyTargetAccount.id}"
+          rel="prefetch"
+          title="{'@' + replyTargetAccount.acct}"
+          ><Avatar account={replyTargetAccount} size="extra-small" /><AccountDisplayName account={replyTargetAccount} /><span class="status-header-reply-acct">{'@' + replyTargetAccount.acct}</span></a
         >{/if}</span
       >
       {/if}
@@ -122,6 +128,26 @@
     color: var(--deemphasized-text-color);
   }
 
+  .status-header-reply-target {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    vertical-align: middle;
+    color: var(--deemphasized-text-color);
+  }
+
+  .status-header-reply-target :global(.avatar) {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border-radius: 4px;
+  }
+
+  .status-header-reply-acct {
+    font-size: 0.85em;
+    opacity: 0.8;
+  }
+
   .status-in-notification .status-header-action,
   .status-in-notification .status-header-author,
   .status-in-notification .status-header-author:visited,
@@ -167,26 +193,33 @@
       avatarElementId: ({ uuid }) => `status-header-avatar-${uuid}`,
       targetAccount: ({ notificationInfo }) =>
         notificationInfo && notificationInfo.move && notificationInfo.target,
-      icon: ({ notificationInfo, timelineType, status }) => {
+      replyTargetAccount: ({ inReplyToAccount }) => inReplyToAccount || null,
+      icon: ({ notificationInfo, timelineType, status, inReplyToAccount }) => {
         if (timelineType === 'pinned') {
           return '#fa-thumb-tack'
         } else if (status && status.reblog) {
           return '#fa-retweet'
+        } else if (inReplyToAccount) {
+          return '#fa-reply'
         } else if (notificationInfo) {
           return notificationInfo.icon
         } else {
           return null
         }
       },
-      actionText: ({ notificationInfo, status }) => {
+      actionText: ({ notificationInfo, status, inReplyToAccount }) => {
         if (status && status.reblog) {
           return 'intl.reblogged'
+        } else if (inReplyToAccount) {
+          return 'intl.replyTo'
         } else if (notificationInfo) {
           return notificationInfo.actionText
         }
       },
-      standalone: ({ notificationInfo, status }) => {
+      standalone: ({ notificationInfo, status, inReplyToAccount }) => {
         if (status && status.reblog) {
+          return false
+        } else if (inReplyToAccount) {
           return false
         } else if (notificationInfo) {
           return notificationInfo.standalone

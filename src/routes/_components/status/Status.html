@@ -202,6 +202,7 @@
   import { addEmojiTooltips } from '../../_utils/addEmojiTooltips.js'
   import { tryToFocusElement } from '../../_utils/tryToFocusElement.js'
   import { on } from '../../_utils/eventBus.ts'
+  import { database } from '../../_database/database.js'
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
@@ -236,6 +237,17 @@
         })
       }
       scheduleIdleTask(() => addEmojiTooltips(this.refs.article))
+
+      // Async: load the replied-to account for the reply header indicator
+      const { status: _status, originalStatus: _origStatus } = this.get()
+      if (!_status.reblog && _origStatus.in_reply_to_id) {
+        const { currentInstance } = this.store.get()
+        database.getStatus(currentInstance, _origStatus.in_reply_to_id).then(parentStatus => {
+          if (parentStatus) {
+            try { this.set({ inReplyToAccount: parentStatus.account }) } catch (e) {}
+          }
+        }).catch(() => {})
+      }
     },
     onupdate ({ changed, previous, current }) {
       if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped)) {
@@ -272,6 +284,7 @@
       enableShortcuts: null,
       quotedBy: null,
       overrideOriginalStatus: null,
+      inReplyToAccount: null,
       timelineType: null,
       timelineValue: null,
       index: null,
@@ -428,10 +441,11 @@
               showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll
             )
           ),
-      showHeader: ({ notificationInfo, status, timelineType }) => (
+      showHeader: ({ notificationInfo, status, timelineType, inReplyToAccount }) => (
         notificationInfo ||
         status.reblog ||
-        timelineType === 'pinned'
+        timelineType === 'pinned' ||
+        !!inReplyToAccount
       ),
       hasReactions: ({ quotedBy, originalStatus }) => quotedBy ? false : ((originalStatus.reactions || originalStatus.emoji_reactions) || []).length > 0,
       className: ({ visibility, timelineType, isStatusInOwnThread, $underlineLinks, $disableTapOnStatus, quotedBy, treeMetadata, nextGrouped, prevGrouped }) => (classname(
@@ -496,7 +510,8 @@
         account, accountId, uuid, isStatusInNotification, isStatusInOwnThread,
         originalAccount, originalAccountId, visibility,
         replyVisibility, spoilerText, computedSpoilerText, originalStatus, originalStatusId, inReplyToId,
-        enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl
+        enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl,
+        inReplyToAccount
       }) => ({
         notification,
         notificationId,
@@ -521,7 +536,8 @@
         shortcutScope,
         originalStatusEmojis,
         localOnly,
-        originalStatusCanonicalUrl
+        originalStatusCanonicalUrl,
+        inReplyToAccount
       })
     }
   }
