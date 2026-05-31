@@ -362,12 +362,9 @@ export default {
   </p>
 
   <p>
-    Zocial is a static site hosted on Github Pages. All data is stored locally in your browser and shared with the fediverse
-    instance(s) you connect to.
-  </p>
-
-  <p>
-    Approximately once per day Zocial will send a request proxied through your instance so I can collect some general statistics. No personal information is sent, only your instance domain is visible.
+    Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a
+    Docker image and can be deployed using an nginx web server. All data is stored locally in your
+    browser and shared with the fediverse instance(s) you connect to.
   </p>
 
   <p>
@@ -378,11 +375,6 @@ export default {
 
   <p>
     Icons provided by <a rel="noopener" target="_blank" href="http://fontawesome.io/">Font Awesome</a>.
-  </p>
-
-  <p>
-    Logo thanks to "sailboat" by Gregor Cresnar from
-    <a rel="noopener" target="_blank" href="https://thenounproject.com/">the Noun Project</a>.
   </p>
 
   <p>
