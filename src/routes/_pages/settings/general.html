@@ -72,6 +72,16 @@
              bind:checked="$hideLongPosts" on:change="onChange(event)">
       {'intl.hideLongPosts'}
     </label>
+    <div class="setting-group setting-group-text {$hideLongPosts ? '' : 'setting-group-disabled'}">
+      <label for="long-post-length">{'intl.longPostLengthLabel'}</label>
+      <input type="number" id="long-post-length"
+             bind:value="$longPostLength"
+             on:change="onChange(event)"
+             min="100"
+             max="10000"
+             step="100"
+             disabled={!$hideLongPosts}>
+    </div>
   </form>
 
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>

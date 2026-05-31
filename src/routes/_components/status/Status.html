@@ -378,13 +378,13 @@
       accountForShortcut: ({ originalAccount, notification }) => notification ? notification.account : originalAccount,
       visibility: ({ originalStatus }) => originalStatus.visibility,
       plainTextContent: ({ originalStatus }) => originalStatus.plainTextContent || '',
-      plainTextContentOverLength: ({ plainTextContent, $hideLongPosts }) => $hideLongPosts && (
+      plainTextContentOverLength: ({ plainTextContent, $hideLongPosts, $longPostLength }) => $hideLongPosts && (
         // measureText() is expensive, so avoid doing it when possible.
         // Also measureText() typically only makes text shorter, not longer, so we can measure the raw length
         // as a shortcut. (The only case where it makes text longer is with short URLs which get expanded to a longer
         // placeholder.) This isn't 100% accurate, but we don't need perfect accuracy here because this is just
         // to show a "long post" content warning.
-        plainTextContent.length > LONG_POST_LENGTH && measureText(plainTextContent) > LONG_POST_LENGTH
+        (() => { const limit = ($longPostLength > 0 ? $longPostLength : LONG_POST_LENGTH); return plainTextContent.length > limit && measureText(plainTextContent) > limit })()
       ),
       spoilerText: ({ originalStatus, plainTextContentOverLength }) => originalStatus.spoiler_text,
       computedSpoilerText: ({ spoilerText, plainTextContentOverLength }) => (

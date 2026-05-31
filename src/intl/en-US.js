@@ -425,6 +425,7 @@ export default {
   reload: 'Reload',
   disableFollowRequestCount: 'Hide follow request count',
   hideLongPosts: 'Collapse long posts without content warnings',
+  longPostLengthLabel: 'Collapse threshold (characters)',
   // Wellness settings
   wellness: 'Wellness',
   wellnessDescription: `Wellness settings are designed to reduce the addictive or anxiety-inducing aspects of social media.

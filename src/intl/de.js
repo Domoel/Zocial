@@ -494,6 +494,7 @@ export default {
   hideSensitiveMedia: 'Sensible Inhalte verbergen',
   clickToShowSensitive: 'Sensible Inhalte. Klicke zum Anzeigen.',
   longPost: 'Langer Beitrag',
+  longPostLengthLabel: 'Kürzungsschwelle (Zeichen)',
   // Accessible status labels
   accountRebloggedYou: '{account} hat Deinen Tröt geboostet',
   accountFavoritedYou: '{account} hat Deinen Tröt favorisiert',
