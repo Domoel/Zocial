@@ -1,5 +1,5 @@
 <div
-  class="status-header {isStatusInNotification ? 'status-in-notification' : ''} {standalone ? 'header-is-standalone' : ''}"
+  class="status-header {isStatusInNotification || (notificationInfo && inReplyToAccount) ? 'status-in-notification' : ''} {standalone ? 'header-is-standalone' : ''}"
 >
   <div class="status-header-avatar {avatarHidden}">
     <a
