@@ -8,7 +8,7 @@ import { isKaiOS } from '../_utils/userAgent/isKaiOS.js'
 const persistedState = {
   alwaysShowFocusRing: false,
   autoplayGifs: !(
-    !ENAFORE_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches
+    !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches
   ),
   composeData: {},
   currentInstance: null,
@@ -16,7 +16,7 @@ const persistedState = {
   currentRegisteredInstance: undefined,
   // we disable scrollbars by default on iOS
   disableCustomScrollbars:
-    ENAFORE_IS_BROWSER && /iP(?:hone|ad|od)/.test(navigator.userAgent),
+    ZOCIAL_IS_BROWSER && /iP(?:hone|ad|od)/.test(navigator.userAgent),
   bottomNav: false,
   centerNav: true,
   disableFollowRequestCount: false,
@@ -36,6 +36,7 @@ const persistedState = {
     }
   })(),
   disableReblogCounts: false,
+  disableReplyCounts: false,
   disableRelativeTimestamps: false,
   disableTapOnStatus: false,
   enableGrayscale: false,
@@ -56,7 +57,7 @@ const persistedState = {
   pushSubscriptions: {},
   lastPings: {},
   reduceMotion:
-    !ENAFORE_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,
+    !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,
   underlineLinks: true,
   iconColors: '',
   lastContentTypes: {}
@@ -70,11 +71,11 @@ const nonPersistedState = {
   instanceInfos: {},
   instanceLists: {},
   instanceFilters: {},
-  online: !ENAFORE_IS_BROWSER || navigator.onLine,
+  online: !ZOCIAL_IS_BROWSER || navigator.onLine,
   pinnedStatuses: {},
   polls: {},
   pushNotificationsSupport:
-    ENAFORE_IS_BROWSER &&
+    ZOCIAL_IS_BROWSER &&
     'serviceWorker' in navigator &&
     'PushManager' in window &&
     'getKey' in PushSubscription.prototype,
@@ -106,6 +107,6 @@ mixins(PinaforeStore)
 computations(store)
 observers(store)
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   window.__store = store // for debugging
 }

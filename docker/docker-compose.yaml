@@ -1,0 +1,7 @@
+services:
+  zocial:
+    image: domoel/enafore:latest
+    env_file: .env
+    ports:
+      - "${PORT:-80}:80"
+    restart: unless-stopped

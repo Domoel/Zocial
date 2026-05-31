@@ -3,7 +3,7 @@ import { emit } from './eventBus.ts'
 
 // Force online/offline state. Needed for integration tests.
 // It would be nice not to actually ship this in production, but *shrug*
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   const globalFetch = window.fetch
 
   window.__forceOnline = online => {

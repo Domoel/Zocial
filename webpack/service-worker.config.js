@@ -39,11 +39,11 @@ export default {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(mode),
-      ENAFORE_ENV: JSON.stringify(mode),
+      ZOCIAL_ENV: JSON.stringify(mode),
       'process.env.SAPPER_TIMESTAMP': process.env.SAPPER_TIMESTAMP || Date.now(),
       'process.env.LOCALE': JSON.stringify(LOCALE),
-      ENAFORE_IS_SERVICE_WORKER: 'true',
-      ENAFORE_IS_BROWSER: 'true',
+      ZOCIAL_IS_SERVICE_WORKER: 'true',
+      ZOCIAL_IS_BROWSER: 'true',
       'process.env.THEME_COLORS': JSON.stringify(inlineThemeColors),
       'process.env.UPSTREAM': isUpstream,
       'process.env.SINGLE_INSTANCE': JSON.stringify(process.env.SINGLE_INSTANCE)

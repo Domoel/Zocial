@@ -120,8 +120,8 @@
       "Worker",
       "Audio",
       "HTMLElement",
-      "ENAFORE_IS_BROWSER",
-      "ENAFORE_VERSION"
+      "ZOCIAL_IS_BROWSER",
+      "ZOCIAL_VERSION"
     ]
   },
   "prettier": {

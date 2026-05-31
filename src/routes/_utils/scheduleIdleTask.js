@@ -16,7 +16,7 @@ function getRIC () {
 }
 
 function getIsInputPending () {
-  return ENAFORE_IS_BROWSER && navigator.scheduling && navigator.scheduling.isInputPending
+  return ZOCIAL_IS_BROWSER && navigator.scheduling && navigator.scheduling.isInputPending
     ? () => navigator.scheduling.isInputPending()
     : () => false // just assume input is not pending on browsers that don't support this
 }

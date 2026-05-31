@@ -1,7 +1,7 @@
-const style = ENAFORE_IS_BROWSER && document.getElementById('theBottomNavStyle')
+const style = ZOCIAL_IS_BROWSER && document.getElementById('theBottomNavStyle')
 
 export function bottomNavObservers (store) {
-  if (!ENAFORE_IS_BROWSER) {
+  if (!ZOCIAL_IS_BROWSER) {
     return
   }
 

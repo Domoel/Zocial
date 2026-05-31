@@ -12,7 +12,7 @@ function wrapper (type) {
   }
 }
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   history.pushState = wrapper('pushState')
   history.replaceState = wrapper('replaceState')
 }

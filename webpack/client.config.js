@@ -127,19 +127,19 @@ export default {
     new VirtualModulesPlugin(),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(mode),
-      ENAFORE_ENV: JSON.stringify(mode),
+      ZOCIAL_ENV: JSON.stringify(mode),
       'process.env.INLINE_SVGS': JSON.stringify(inlineSvgs),
       'process.env.URL_REGEX': urlRegex().toString(),
       'process.env.LOCALE': JSON.stringify(LOCALE),
       'process.env.EMOJI_PICKER_I18N': emojiPickerI18n
         ? JSON.stringify(emojiPickerI18n)
         : 'undefined',
-      ENAFORE_VERSION: JSON.stringify(version),
-      ENAFORE_IS_SERVICE_WORKER: 'false',
-      ENAFORE_IS_BROWSER: 'true',
+      ZOCIAL_VERSION: JSON.stringify(version),
+      ZOCIAL_IS_SERVICE_WORKER: 'false',
+      ZOCIAL_IS_BROWSER: 'true',
       'process.env.THEME_COLORS': 'null',
       'process.env.UPSTREAM': isUpstream,
-      'process.env.SINGLE_INSTANCE': JSON.stringify(process.env.SINGLE_INSTANCE)
+      'process.env.SINGLE_INSTANCE': JSON.stringify(process.env.SINGLE_INSTANCE || '')
     }),
     new CircularDependencyPlugin({
       exclude: /node_modules/,

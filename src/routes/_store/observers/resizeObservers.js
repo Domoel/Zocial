@@ -1,7 +1,7 @@
 import { registerResizeListener } from '../../_utils/resize.js'
 
 export function resizeObservers (store) {
-  if (!ENAFORE_IS_BROWSER) {
+  if (!ZOCIAL_IS_BROWSER) {
     return
   }
 

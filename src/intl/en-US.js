@@ -350,24 +350,17 @@ export default {
   aboutApp: 'About Zocial',
   aboutAppDescription: `
   <p>
-    Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source</a> software.
+    Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">open-source</a> software and a fork of <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">Enafore</a>, created by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">Dome</a>.
   </p>
 
   <h2 id="privacy-policy">Privacy Policy</h2>
 
   <p>
-    Zocial does not store any personal information on its servers,
-    including but not limited to names, email addresses,
-    IP addresses, posts, and photos.
+    Zocial does not store any personal information on its servers, including but not limited to names, email addresses, IP addresses, posts, and photos.
   </p>
 
   <p>
-    Zocial is a static site hosted on Github Pages. All data is stored locally in your browser and shared with the fediverse
-    instance(s) you connect to.
-  </p>
-
-  <p>
-    Approximately once per day Zocial will send a request proxied through your instance so I can collect some general statistics. No personal information is sent, only your instance domain is visible.
+    Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/enafore">Docker Image</a> and can be deployed using an nginx web  server. All data is stored locally in your browser and shared with the fediverse instance(s) you connect to.
   </p>
 
   <p>
@@ -381,12 +374,7 @@ export default {
   </p>
 
   <p>
-    Logo thanks to "sailboat" by Gregor Cresnar from
-    <a rel="noopener" target="_blank" href="https://thenounproject.com/">the Noun Project</a>.
-  </p>
-
-  <p>
-    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore/blob/main/LICENSE">GNU Affero General Public License</a>.
+    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> 
   </p>
 
   <h2>Version</h2>
@@ -435,6 +423,7 @@ export default {
   hideFollowerCount: 'Hide follower counts (capped at 10)',
   hideReblogCount: 'Hide boost counts',
   hideFavoriteCount: 'Hide favorite and reaction counts',
+  hideReplyCount: 'Hide reply counts',
   hideUnread: 'Hide unread notifications count (i.e. the red dot)',
   disableNotificationSound: 'Disable notification sounds',
   // The quality that makes something seem important or interesting because it seems to be happening now

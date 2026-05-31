@@ -21,8 +21,8 @@ RUN pnpm install
 # Copy source
 COPY . .
 
-# Build application
-RUN pnpm run build \
+# Bake in a placeholder — replaced at container start via entrypoint.sh
+RUN SINGLE_INSTANCE=__ZOCIAL_INSTANCE__ pnpm run build \
  && cp __sapper__/export/service-worker-index.html __sapper__/export/404.html
 
 # -----------------------------
@@ -30,8 +30,10 @@ RUN pnpm run build \
 # -----------------------------
 FROM nginx:1.27-alpine
 
-# Copy nginx config
+# Copy nginx config and entrypoint
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Copy built app
 COPY --from=build /app/__sapper__/export /usr/share/nginx/html
@@ -39,9 +41,9 @@ COPY --from=build /app/__sapper__/export /usr/share/nginx/html
 # Expose port
 EXPOSE 80
 
-# Healthcheck (optional but useful)
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Replace placeholder at startup, then hand off to nginx
+ENTRYPOINT ["/entrypoint.sh"]

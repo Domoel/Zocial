@@ -32,7 +32,7 @@ export function scheduleInterval (callback, delay, runOnActive) {
     startPolling()
   }
 
-  if (ENAFORE_IS_BROWSER) {
+  if (ZOCIAL_IS_BROWSER) {
     startPolling()
 
     lifecycle.addEventListener('statechange', e => {

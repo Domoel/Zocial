@@ -1,9 +1,9 @@
 import { get } from './lodash-lite.js'
 
-const hasPointerEvents = ENAFORE_IS_BROWSER && typeof PointerEvent === 'function'
+const hasPointerEvents = ZOCIAL_IS_BROWSER && typeof PointerEvent === 'function'
 
 // Epiphany browser reports that it's a touch device even though it's not
-const isTouchDevice = ENAFORE_IS_BROWSER && 'ontouchstart' in document && !/Epiphany/.test(navigator.userAgent)
+const isTouchDevice = ZOCIAL_IS_BROWSER && 'ontouchstart' in document && !/Epiphany/.test(navigator.userAgent)
 
 let pointerDown
 let pointerUp

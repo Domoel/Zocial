@@ -20,8 +20,6 @@
 <script>
   import { store } from './_store/store.js'
   import { observe } from 'svelte-extras'
-  import { checkStats } from './_actions/stats.js'
-  import { scheduleIdleTask } from './_utils/scheduleIdleTask.js'
 
   export default {
     components: {
@@ -29,21 +27,20 @@
       InformationalFooter: './_components/InformationalFooter.html'
     },
     oncreate () {
-      if (ENAFORE_IS_BROWSER && process.env.NODE_ENV !== 'production') {
+      if (ZOCIAL_IS_BROWSER && process.env.NODE_ENV !== 'production') {
         window.layoutObject = this
       }
 
       this.observe('page', page => {
         console.log('currentPage', page)
         this.store.set({ currentPage: page })
-        if (ENAFORE_IS_BROWSER && location.hostname === 'enafore.social') scheduleIdleTask(checkStats)
       })
     },
     store: () => store,
     computed: {
       page: ({ child }) => child.props.path.slice(1) || 'home',
       infiniteScrollPage: ({ $isUserLoggedIn, page }) => $isUserLoggedIn && !page.startsWith('settings'),
-      canonical: ({ path }) => (ENAFORE_IS_BROWSER ? location.origin + path : process.env.UPSTREAM ? 'https://enafore.social' + path : null)
+      canonical: ({ path }) => (ZOCIAL_IS_BROWSER ? location.origin + path : process.env.UPSTREAM ? 'https://enafore.social' + path : null)
     },
     methods: {
       observe

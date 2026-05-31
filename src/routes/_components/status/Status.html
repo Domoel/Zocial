@@ -109,7 +109,6 @@
   }
 
   .status-article.status-in-own-thread {
-    background-color: var(--focus-bg);
     grid-template-areas:
       "sidebar     author-name"
       "sidebar     author-handle"
@@ -165,6 +164,12 @@
   }
   .status-article.notification-next-grouped :global(.status-header) {
     margin-bottom: 0;
+  }
+
+  @media (max-width: 767px) {
+    .status-article:not(.status-in-own-thread) {
+      grid-template-columns: min-content minmax(0, 1fr) 0 min-content;
+    }
   }
 </style>
 <script>

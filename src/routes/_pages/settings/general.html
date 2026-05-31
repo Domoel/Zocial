@@ -151,6 +151,11 @@
                bind:checked="$disableFavCounts" on:change="onChange(event)">
         {'intl.hideFavoriteCount'}
       </label>
+      <label class="setting-group">
+        <input type="checkbox" id="choice-disable-reply-counts"
+               bind:checked="$disableReplyCounts" on:change="onChange(event)">
+        {'intl.hideReplyCount'}
+      </label>
 
       <h3>{'intl.immediacy'}</h3>
 

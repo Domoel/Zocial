@@ -1,9 +1,9 @@
 // modeled after https://github.com/andrewiggins/afterframe
 // see also https://github.com/WICG/requestPostAnimationFrame
-const channel = ENAFORE_IS_BROWSER && new MessageChannel()
+const channel = ZOCIAL_IS_BROWSER && new MessageChannel()
 const callbacks = []
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   channel.port1.onmessage = onMessage
 }
 
