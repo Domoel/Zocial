@@ -97,7 +97,7 @@
       LazyImage
     },
     computed: {
-      card: ({ originalStatus }) => originalStatus.card,
+      card: ({ originalStatus, clientSideCard }) => originalStatus.card || clientSideCard,
       title: ({ card }) => card.title,
       unescapedTitle: ({ title }) => title && unescape(title),
       url: ({ card }) => card.url,

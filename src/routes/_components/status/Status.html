@@ -204,6 +204,7 @@
   import { tryToFocusElement } from '../../_utils/tryToFocusElement.js'
   import { on } from '../../_utils/eventBus.ts'
   import { database } from '../../_database/database.js'
+  import { extractFirstExternalLink, resolveCardForUrl } from '../../_utils/resolveCardForUrl.js'
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
@@ -252,6 +253,20 @@
           }
         }).catch(() => {})
       }
+
+      // Client-side card: resolve first external link if server provides no card
+      const { $hideCards } = this.store.get()
+      if (!$hideCards && !_origStatus.card && _origStatus.content) {
+        const firstUrl = extractFirstExternalLink(_origStatus.content)
+        if (firstUrl) {
+          const { currentInstance, accessToken } = this.store.get()
+          if (currentInstance && accessToken) {
+            resolveCardForUrl(firstUrl, currentInstance, accessToken).then(card => {
+              try { this.set({ clientSideCard: card }) } catch (e) {}
+            }).catch(() => {})
+          }
+        }
+      }
     },
     onupdate ({ changed, previous, current }) {
       if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped)) {
@@ -289,6 +304,7 @@
       quotedBy: null,
       overrideOriginalStatus: null,
       inReplyToAccount: null,
+      clientSideCard: null,
       timelineType: null,
       timelineValue: null,
       index: null,
@@ -389,12 +405,11 @@
       ),
       spoilerShown: ({ $spoilersShown, uuid, $showAllSpoilers }) => (typeof $spoilersShown[uuid] === 'undefined' ? !!$showAllSpoilers : !!$spoilersShown[uuid]),
       replyShown: ({ $repliesShown, uuid }) => !!$repliesShown[uuid],
-      showCard: ({ originalStatus, showMedia, $hideCards, showQuote }) => (
+      showCard: ({ originalStatus, showMedia, $hideCards, showQuote, clientSideCard }) => (
         !$hideCards &&
         !showMedia &&
         !showQuote &&
-        originalStatus.card &&
-        originalStatus.card.title
+        ((originalStatus.card && originalStatus.card.title) || clientSideCard)
       ),
       showPoll: ({ originalStatus }) => (
         originalStatus.poll
@@ -526,7 +541,7 @@
         originalAccount, originalAccountId, visibility,
         replyVisibility, spoilerText, computedSpoilerText, originalStatus, originalStatusId, inReplyToId,
         enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl,
-        inReplyToAccount, matchingHashtag
+        inReplyToAccount, matchingHashtag, clientSideCard
       }) => ({
         notification,
         notificationId,
@@ -553,7 +568,8 @@
         localOnly,
         originalStatusCanonicalUrl,
         inReplyToAccount,
-        matchingHashtag
+        matchingHashtag,
+        clientSideCard
       })
     }
   }
