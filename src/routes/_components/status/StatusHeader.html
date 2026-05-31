@@ -38,7 +38,7 @@
           rel="prefetch"
           >{'@' + targetAccount.acct}</a
         >{/if}{#if replyTargetAccount}{" "}<a
-          class="status-header-reply-target"
+          class="status-header-reply-target {isStatusInNotification ? 'is-in-notification' : ''}"
           href="/accounts/{replyTargetAccount.id}"
           rel="prefetch"
           title="{'@' + replyTargetAccount.acct}"
@@ -147,8 +147,11 @@
   .status-in-notification .status-header-action,
   .status-in-notification .status-header-author,
   .status-in-notification .status-header-author:visited,
-  .status-in-notification .status-header-author:hover,
-  .status-in-notification .status-header-reply-target {
+  .status-in-notification .status-header-author:hover {
+    color: var(--body-text-color);
+  }
+
+  .status-header-reply-target.is-in-notification {
     color: var(--body-text-color);
   }
 
