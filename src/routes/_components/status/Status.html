@@ -166,6 +166,12 @@
   .status-article.notification-next-grouped :global(.status-header) {
     margin-bottom: 0;
   }
+
+  @media (max-width: 767px) {
+    .status-article:not(.status-in-own-thread) {
+      grid-template-columns: min-content minmax(0, 1fr) 0 min-content;
+    }
+  }
 </style>
 <script>
   import StatusSidebar from './StatusSidebar.html'
