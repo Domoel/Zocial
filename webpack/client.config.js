@@ -139,7 +139,7 @@ export default {
       ZOCIAL_IS_BROWSER: 'true',
       'process.env.THEME_COLORS': 'null',
       'process.env.UPSTREAM': isUpstream,
-      'process.env.SINGLE_INSTANCE': JSON.stringify(process.env.SINGLE_INSTANCE)
+      'process.env.SINGLE_INSTANCE': JSON.stringify(process.env.SINGLE_INSTANCE || 'social.ztfr.eu')
     }),
     new CircularDependencyPlugin({
       exclude: /node_modules/,
