@@ -2,7 +2,7 @@
 
 const callbacks = {}
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   window.__delegateCallbacks = callbacks
 }
 
@@ -53,7 +53,7 @@ export function registerClickDelegate (component, key, callback) {
   registerClickDelegates(component, { [key]: callback })
 }
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   document.addEventListener('click', onEvent)
   document.addEventListener('keydown', onEvent)
 }

@@ -147,4 +147,4 @@ async function scheduledCleanup () {
 }
 
 // we have unit tests that test indexedDB; we don't want this thing to run forever
-export const scheduleCleanup = ENAFORE_IS_BROWSER ? debounce(scheduledCleanup, CLEANUP_DELAY) : noop
+export const scheduleCleanup = ZOCIAL_IS_BROWSER ? debounce(scheduledCleanup, CLEANUP_DELAY) : noop

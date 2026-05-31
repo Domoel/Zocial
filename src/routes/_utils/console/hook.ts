@@ -6,7 +6,7 @@ export type Log = {
   stack?: string
 }
 export const logs: Log[] = []
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   function add(log: Log) {
     if (logs.length > 100) {
       logs.shift()
@@ -50,6 +50,6 @@ if (ENAFORE_IS_BROWSER) {
     },
   })
   console.info(String.raw`  /|\    Starting Zocial
-_/_|_)_  Version ${ENAFORE_VERSION}
-\_____/  Built for ${ENAFORE_ENV}`)
+_/_|_)_  Version ${ZOCIAL_VERSION}
+\_____/  Built for ${ZOCIAL_ENV}`)
 }

@@ -1,10 +1,10 @@
 import { switchToTheme } from '../../_utils/themeEngine.js'
 import { database } from '../../_database/database.js'
 
-const style = ENAFORE_IS_BROWSER && document.getElementById('theGrayscaleStyle')
+const style = ZOCIAL_IS_BROWSER && document.getElementById('theGrayscaleStyle')
 
 export function themeObservers (store) {
-  if (!ENAFORE_IS_BROWSER) {
+  if (!ZOCIAL_IS_BROWSER) {
     return
   }
 

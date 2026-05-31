@@ -11,7 +11,7 @@ const listStore = new ListStore()
 
 listStore.computeForRealm('intersectionStates', {})
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   window.__listStore = listStore // for debugging
 }
 

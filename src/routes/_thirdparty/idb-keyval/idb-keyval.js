@@ -104,7 +104,7 @@ function close () {
   return store._close()
 }
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   lifecycle.addEventListener('statechange', async event => {
     if (event.newState === 'frozen') { // page is frozen, close IDB connections
       await close()

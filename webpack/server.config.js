@@ -80,10 +80,10 @@ export default {
     new webpack.DefinePlugin({
       'process.env.INLINE_SVGS': JSON.stringify(inlineSvgs),
       'process.env.LOCALE': JSON.stringify(LOCALE),
-      ENAFORE_VERSION: JSON.stringify(version),
-      ENAFORE_ENV: JSON.stringify(mode),
-      ENAFORE_IS_SERVICE_WORKER: 'false',
-      ENAFORE_IS_BROWSER: 'false',
+      ZOCIAL_VERSION: JSON.stringify(version),
+      ZOCIAL_ENV: JSON.stringify(mode),
+      ZOCIAL_IS_SERVICE_WORKER: 'false',
+      ZOCIAL_IS_BROWSER: 'false',
       'process.env.THEME_COLORS': 'null',
       'process.env.UPSTREAM': isUpstream,
       'process.env.SINGLE_INSTANCE': JSON.stringify(

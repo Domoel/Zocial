@@ -55,7 +55,7 @@ export async function findBySearchQuery (query) {
   return emojis.map(emoji => applySkinToneToEmoji(emoji, skinTone))
 }
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   lifecycle.addEventListener('statechange', event => {
     if (event.newState === 'frozen' && database) { // page is frozen, close IDB connections
       console.log('closed emoji DB')

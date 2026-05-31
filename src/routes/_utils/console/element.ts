@@ -17,7 +17,7 @@ import inspect from 'object-inspect'
 import { logs, type Log } from './hook.ts'
 import { eventBus } from '../eventBus.ts'
 
-if (ENAFORE_IS_BROWSER) {
+if (ZOCIAL_IS_BROWSER) {
   const DefaultFormat: Component<{ args: unknown[] }> = ({ args, html }) => {
     const first = args[0]
     let a = 0

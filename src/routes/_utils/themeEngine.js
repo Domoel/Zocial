@@ -1,6 +1,6 @@
 import { themes } from '../_static/themes.js'
-const prefersDarkTheme = ENAFORE_IS_BROWSER && matchMedia('(prefers-color-scheme: dark)').matches
-const meta = ENAFORE_IS_BROWSER && document.getElementById('theThemeColor')
+const prefersDarkTheme = ZOCIAL_IS_BROWSER && matchMedia('(prefers-color-scheme: dark)').matches
+const meta = ZOCIAL_IS_BROWSER && document.getElementById('theThemeColor')
 
 export const DEFAULT_LIGHT_THEME = 'zocial' // theme that is shown by default
 export const DEFAULT_DARK_THEME = 'zocial' // theme that is shown for prefers-color-scheme:dark

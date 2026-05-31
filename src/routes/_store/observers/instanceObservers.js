@@ -83,7 +83,7 @@ function stream (store, instanceName, currentInstanceInfo) {
 
 export function instanceObservers () {
   store.observe('currentInstance', async (currentInstance) => {
-    if (!ENAFORE_IS_BROWSER) {
+    if (!ZOCIAL_IS_BROWSER) {
       return
     }
     if (currentInstanceStream) {

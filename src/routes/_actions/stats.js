@@ -5,7 +5,7 @@ export async function checkStats () {
   const { currentInstance, accessToken } = store.get()
   const pingTime = Date.now()
   if (
-    ENAFORE_IS_BROWSER &&
+    ZOCIAL_IS_BROWSER &&
     pingTime -
       ((store.getInstanceData(currentInstance, 'lastPings') || 0) +
         Math.random() * 1000 * 60 * 60 * 12) >
@@ -23,7 +23,7 @@ export async function checkStats () {
           l: navigator.languages[
             Math.round(Math.random() * (navigator.languages.length - 1))
           ],
-          v: ENAFORE_VERSION
+          v: ZOCIAL_VERSION
         }),
       true,
       1,

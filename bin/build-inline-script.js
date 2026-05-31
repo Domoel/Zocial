@@ -20,7 +20,7 @@ async function buildInlineScriptAndCSP () {
   const bundle = await build({
     entryPoints: [inlineScriptPath],
     define: {
-      ENAFORE_IS_BROWSER: 'true',
+      ZOCIAL_IS_BROWSER: 'true',
       'process.env.THEME_COLORS': JSON.stringify(inlineThemeColors)
     },
     minify: true,
