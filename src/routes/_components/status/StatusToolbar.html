@@ -176,7 +176,7 @@
         const newBookmarkedValue = !bookmarked
         /* no await */ setStatusBookmarkedOrUnbookmarked(originalStatusId, newBookmarkedValue)
         if (newBookmarkedValue) {
-          this.refs.bookmarkIcon.animate(CHECKMARK_ANIMATION)
+          this.refs.bookmarkIcon.animate(REBLOG_ANIMATION, CHECKMARK_ANIMATION)
         }
       },
       async pickEmojiReaction () {
