@@ -62,6 +62,7 @@ const persistedState = {
 }
 
 const nonPersistedState = {
+  instanceFollowedHashtags: {},
   customEmoji: {},
   unexpiredInstanceFilters: {},
   followRequestCounts: {},

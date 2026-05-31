@@ -194,9 +194,11 @@
       targetAccount: ({ notificationInfo }) =>
         notificationInfo && notificationInfo.move && notificationInfo.target,
       replyTargetAccount: ({ inReplyToAccount }) => inReplyToAccount || null,
-      icon: ({ notificationInfo, timelineType, status, inReplyToAccount }) => {
+      icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag }) => {
         if (timelineType === 'pinned') {
           return '#fa-thumb-tack'
+        } else if (timelineType === 'tag' || matchingHashtag) {
+          return '#fa-hashtag'
         } else if (status && status.reblog) {
           return '#fa-retweet'
         } else if (inReplyToAccount) {
@@ -207,19 +209,25 @@
           return null
         }
       },
-      actionText: ({ notificationInfo, status, inReplyToAccount }) => {
+      actionText: ({ notificationInfo, status, inReplyToAccount, timelineType, timelineValue, matchingHashtag }) => {
         if (status && status.reblog) {
           return 'intl.reblogged'
         } else if (inReplyToAccount) {
           return 'intl.replyTo'
+        } else if (timelineType === 'tag') {
+          return '#' + timelineValue
+        } else if (matchingHashtag) {
+          return '#' + matchingHashtag
         } else if (notificationInfo) {
           return notificationInfo.actionText
         }
       },
-      standalone: ({ notificationInfo, status, inReplyToAccount }) => {
+      standalone: ({ notificationInfo, status, inReplyToAccount, timelineType, matchingHashtag }) => {
         if (status && status.reblog) {
           return false
         } else if (inReplyToAccount) {
+          return false
+        } else if (timelineType === 'tag' || matchingHashtag) {
           return false
         } else if (notificationInfo) {
           return notificationInfo.standalone
@@ -230,9 +238,11 @@
       emojiReaction: ({ notificationInfo }) => {
         if (notificationInfo && notificationInfo.reaction) { return notificationInfo.html }
       },
-      avatarHidden: ({ timelineType, notificationInfo, icon }) =>
+      avatarHidden: ({ timelineType, notificationInfo, icon, matchingHashtag }) =>
         icon === '#fa-question' ||
         timelineType === 'pinned' ||
+        timelineType === 'tag' ||
+        !!matchingHashtag ||
         (notificationInfo && notificationInfo.poll)
           ? 'hidden'
           : ''

@@ -441,10 +441,22 @@
               showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll
             )
           ),
-      showHeader: ({ notificationInfo, status, timelineType, inReplyToAccount }) => (
+      matchingHashtag: ({ originalStatus, $followedHashtagsForInstance, timelineType }) => {
+        if (timelineType !== 'home' || !originalStatus.tags || !originalStatus.tags.length) {
+          return null
+        }
+        const followed = $followedHashtagsForInstance
+        if (!followed || !followed.length) return null
+        const followedNames = new Set(followed.map(t => t.name.toLowerCase()))
+        const match = originalStatus.tags.find(tag => followedNames.has(tag.name.toLowerCase()))
+        return match ? match.name : null
+      },
+      showHeader: ({ notificationInfo, status, timelineType, inReplyToAccount, matchingHashtag }) => (
         notificationInfo ||
         status.reblog ||
         timelineType === 'pinned' ||
+        timelineType === 'tag' ||
+        !!matchingHashtag ||
         (!!inReplyToAccount && timelineType !== 'status' && timelineType !== 'reply')
       ),
       hasReactions: ({ quotedBy, originalStatus }) => quotedBy ? false : ((originalStatus.reactions || originalStatus.emoji_reactions) || []).length > 0,
@@ -511,7 +523,7 @@
         originalAccount, originalAccountId, visibility,
         replyVisibility, spoilerText, computedSpoilerText, originalStatus, originalStatusId, inReplyToId,
         enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl,
-        inReplyToAccount
+        inReplyToAccount, matchingHashtag
       }) => ({
         notification,
         notificationId,
@@ -537,7 +549,8 @@
         originalStatusEmojis,
         localOnly,
         originalStatusCanonicalUrl,
-        inReplyToAccount
+        inReplyToAccount,
+        matchingHashtag
       })
     }
   }

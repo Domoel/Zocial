@@ -1,5 +1,6 @@
 import { updateInstanceInfo, updateVerifyCredentialsForInstance } from '../../_actions/instances.js'
 import { setupListsForInstance } from '../../_actions/lists.js'
+import { setupFollowedHashtagsForInstance } from '../../_actions/followedTags.js'
 import { createStream } from '../../_actions/stream/streaming.js'
 import { updatePushSubscriptionForInstance } from '../../_actions/pushSubscription.js'
 import { setupCustomEmojiForInstance } from '../../_actions/emoji.js'
@@ -45,6 +46,7 @@ async function refreshInstanceData (instanceName) {
   // these are all low-priority
   scheduleIdleTask(() => setupCustomEmojiForInstance(instanceName))
   scheduleIdleTask(() => setupListsForInstance(instanceName))
+  scheduleIdleTask(() => setupFollowedHashtagsForInstance(instanceName))
   scheduleIdleTask(() => setupFiltersForInstance(instanceName))
   scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName))
 

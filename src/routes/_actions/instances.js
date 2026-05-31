@@ -50,7 +50,8 @@ export async function logOutOfInstance (instanceName, message) {
     statusModifications,
     pushSubscriptions,
     instanceDataReady,
-    lastContentTypes
+    lastContentTypes,
+    instanceFollowedHashtags
   } = store.get()
   loggedInInstancesInOrder.splice(loggedInInstancesInOrder.indexOf(instanceName), 1)
   const newInstance = instanceName === currentInstance ? loggedInInstancesInOrder[0] : currentInstance
@@ -67,7 +68,8 @@ export async function logOutOfInstance (instanceName, message) {
     statusModifications,
     pushSubscriptions,
     instanceDataReady,
-    lastContentTypes
+    lastContentTypes,
+    instanceFollowedHashtags
   ]
   for (const obj of objectsToClear) {
     delete obj[instanceName]
@@ -91,7 +93,8 @@ export async function logOutOfInstance (instanceName, message) {
     statusModifications,
     pushSubscriptions,
     instanceDataReady,
-    lastContentTypes
+    lastContentTypes,
+    instanceFollowedHashtags
   })
   store.clearTimelineDataForInstance(instanceName)
   store.clearAutosuggestDataForInstance(instanceName)
