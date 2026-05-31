@@ -49,45 +49,40 @@ Source code: [git.ztfr.eu/Dome/Enafore](https://git.ztfr.eu/Dome/Enafore)
 
 ### Docker Compose (recommended)
 
-Copy the example env file and edit it:
+Pull the image and create your env file:
 
 ```bash
 cp .env.example .env
 ```
 
+Open `.env` and set your instance:
+
 ```ini
-# .env
 SINGLE_INSTANCE=your.instance.com
-PORT=80
 ```
 
-Then build and start:
+Then start the container:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-That's it. The instance hostname is baked into the app during the build — no instance input field is shown to users on the login screen.
-
-**To switch to a different instance**, change `SINGLE_INSTANCE` in `.env` and rebuild:
+The entrypoint script injects `SINGLE_INSTANCE` into the app at startup — no rebuild needed. To switch to a different instance, change `.env` and restart:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-**To allow users to log in to any instance** (multi-instance mode), leave `SINGLE_INSTANCE` empty:
+**Multi-instance mode** (users can log in to any server): leave `SINGLE_INSTANCE` commented out or empty in `.env`.
 
-```ini
-SINGLE_INSTANCE=
-```
-
-### Building without Docker
+### Building from source
 
 ```bash
-SINGLE_INSTANCE=your.instance.com npm run build
+git clone https://git.ztfr.eu/Dome/Enafore
+cd Enafore
+npm install
+npm run build   # output in __sapper__/export/
 ```
-
-The output lands in `__sapper__/export/` and can be served as a static site.
 
 ### Environment variables
 
