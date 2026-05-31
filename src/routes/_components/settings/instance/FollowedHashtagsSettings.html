@@ -28,7 +28,7 @@
       autocapitalize="off"
       spellcheck="false"
     />
-    <button type="submit" class="add-button">{'intl.addHashtag'}</button>
+    <button type="submit" class="add-button">{'intl.followLabel'}</button>
   </form>
 
   {#if errorMessage}
@@ -114,7 +114,15 @@
   .add-hashtag-input {
     flex: 1;
     min-width: 0;
-    font-size: 1em;
+    font-size: 0.85em;
+  }
+
+  .add-button {
+    font-size: 0.85em;
+    font-weight: bold;
+    padding: 5px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
   }
 
   .hashtag-error {
