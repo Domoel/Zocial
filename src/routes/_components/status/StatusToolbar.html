@@ -57,6 +57,13 @@
     color: var(--deemphasized-text-color);
     margin-inline-start: 2px;
     min-width: 1ch;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 240px) {
+    .toolbar-count {
+      display: none;
+    }
   }
 
   .status-toolbar.status-in-own-thread {
