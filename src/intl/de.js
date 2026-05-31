@@ -402,6 +402,9 @@ export default {
   loggedInAs: 'Eingeloggt als',
   homeTimelineFilters: 'Filter für Startzeitleiste',
   notificationFilters: 'Filter für Benachrichtigungen',
+  followedHashtags: 'Gefolgten Hashtags',
+  noFollowedHashtags: 'Du folgst keinen Hashtags.',
+  addHashtag: 'Hashtag folgen',
   pushNotifications: 'Push-Benachrichtigungen',
   // Add instance page
   storageError: 'Es sieht so aus als ob Zocial lokal keine Daten speichern kann. Ist Dein Browser im privaten Modus oder blockiert Cookies? Zocial speichert alle Daten lokal und braucht zum ordnungsgemäßen Betrieb LocalStorage und IndexedDB.',
@@ -543,6 +546,8 @@ export default {
   cannotReblogDirectMessage: 'Kann nicht geboostet werden, da dies eine Direktnachricht ist',
   reblog: 'Boost',
   reply: 'Antworten',
+  replyTo: 'Antwort an',
+  replyToLower: 'Antwort an',
   replyToThread: 'Auf Unterhaltung antworten',
   favorite: 'Favorisieren',
   unfavorite: 'Favorisieren aufheben',

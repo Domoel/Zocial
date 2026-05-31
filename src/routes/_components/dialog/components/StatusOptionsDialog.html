@@ -17,7 +17,6 @@ import { show } from '../helpers/showDialog.js'
 import { close } from '../helpers/closeDialog.js'
 import { setAccountBlocked } from '../../../_actions/block.js'
 import { setStatusPinnedOrUnpinned } from '../../../_actions/pin.js'
-import { setStatusBookmarkedOrUnbookmarked } from '../../../_actions/bookmark.js'
 import { setConversationMuted } from '../../../_actions/muteConversation.js'
 import { copyText } from '../../../_actions/copyText.js'
 import { deleteAndRedraft } from '../../../_actions/deleteAndRedraft.js'
@@ -96,13 +95,12 @@ export default {
     ),
     muteConversationIcon: ({ mutingConversation }) => mutingConversation ? '#fa-volume-up' : '#fa-volume-off',
     isPublicOrUnlisted: ({ visibility }) => visibility === 'public' || visibility === 'unlisted',
-    bookmarkLabel: ({ status }) => status.bookmarked ? 'intl.unbookmarkStatus' : 'intl.bookmarkStatus',
     hasReactions: ({ status }) => ('reactions' in status) || ('emoji_reactions' in status),
     hasQuote: ({ status }) => 'quote' in status,
     items: ({
       blockLabel, blocking, blockIcon, muteLabel, muteIcon, followLabel, followIcon,
       following, followRequested, pinLabel, isUser, visibility, mentionsUser, mutingConversation,
-      muteConversationLabel, muteConversationIcon, supportsWebShare, isPublicOrUnlisted, bookmarkLabel,
+      muteConversationLabel, muteConversationIcon, supportsWebShare, isPublicOrUnlisted,
       username, notifying, hasReactions, hasQuote, relationship
     }) => ([
       isUser && {
@@ -176,11 +174,6 @@ export default {
         icon: '#fa-quote-right'
       },
       {
-        key: 'bookmark',
-        label: bookmarkLabel,
-        icon: '#fa-bookmark'
-      },
-      {
         key: 'translate',
         label: 'intl.translateStatus',
         icon: '#fa-language'
@@ -231,8 +224,6 @@ export default {
           return this.onShare()
         case 'report':
           return this.onReport()
-        case 'bookmark':
-          return this.onBookmark()
         case 'notify':
           return this.onNotifyClicked()
         case 'denotify':
@@ -300,11 +291,6 @@ export default {
       const { status, account } = this.get()
       this.close()
       await reportStatusOrAccount(({ status, account }))
-    },
-    async onBookmark () {
-      const { status } = this.get()
-      this.close()
-      await setStatusBookmarkedOrUnbookmarked(status.id, !status.bookmarked)
     },
     async onNotifyClicked () {
       const { accountId } = this.get()

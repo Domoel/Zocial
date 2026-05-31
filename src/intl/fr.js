@@ -406,6 +406,9 @@ export default {
   loggedInAs: 'Connecté en tant que',
   homeTimelineFilters: "Filtres d'historique de l'acceuil",
   notificationFilters: 'Filtres de notifications',
+  followedHashtags: 'Hashtags suivis',
+  noFollowedHashtags: 'Vous ne suivez aucun hashtag.',
+  addHashtag: 'Suivre un hashtag',
   pushNotifications: 'Filtres de notifications push',
   // Add instance page
   storageError: `Il semble que Zocial ne peut pas stocker les données en locale. Est-ce que votre navigateur
@@ -551,6 +554,8 @@ export default {
   cannotReblogDirectMessage: 'Impossible de partager car ce pouet est direct',
   reblog: 'Partager',
   reply: 'Répondre',
+  replyTo: 'En réponse à',
+  replyToLower: 'en réponse à',
   replyToThread: 'Répondre au discussion',
   favorite: 'Mettre en favori',
   unfavorite: 'Ne plus mettre en favori',

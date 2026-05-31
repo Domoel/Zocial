@@ -421,6 +421,9 @@ export default {
   loggedInAs: 'Iniciaste sesión como',
   homeTimelineFilters: 'Filtros para la cronología Inicio',
   notificationFilters: 'Filtros para notificaciones',
+  followedHashtags: 'Hashtags seguidos',
+  noFollowedHashtags: 'No sigues ningún hashtag.',
+  addHashtag: 'Seguir hashtag',
   pushNotifications: 'Notificaciones Push',
   // Add instance page
   storageError: `Parece que Zocial no puede almacenar datos localmente. ¿Está tu navegador en modo privado
@@ -577,6 +580,8 @@ export default {
   cannotReblogDirectMessage: 'No se puede reenviar porque es un mensaje directo',
   reblog: 'Reenviar',
   reply: 'Responder',
+  replyTo: 'En respuesta a',
+  replyToLower: 'en respuesta a',
   replyToThread: 'Responder al hilo',
   favorite: 'Favorito',
   unfavorite: 'No favorito',

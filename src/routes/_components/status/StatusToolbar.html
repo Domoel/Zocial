@@ -7,6 +7,8 @@
   <IconButton label="{'intl.favorite'}" pressedLabel="{'intl.unfavorite'}" pressable={true} pressed={favorited}
     checked={favorited} href="#fa-star" clickListener={false} elementId={favoriteKey} ref:favoriteIcon
     rightClickListener={hasReactions} on:rightClick="pickEmojiReaction()" />
+  <IconButton label="{'intl.bookmarkStatus'}" pressedLabel="{'intl.unbookmarkStatus'}" pressable={true} pressed={bookmarked}
+    checked={bookmarked} href="#fa-bookmark" clickListener={false} elementId={bookmarkKey} ref:bookmarkIcon />
   <IconButton label="{'intl.moreOptions'}" href="#fa-ellipsis-h" clickListener={false} elementId={optionsKey} />
 </div>
 {#if enableShortcuts}
@@ -76,7 +78,8 @@
         favoriteKey,
         reblogKey,
         replyKey,
-        optionsKey
+        optionsKey,
+        bookmarkKey
       } = this.get()
       registerClickDelegates(this, {
         [favoriteKey]: () => {
@@ -93,6 +96,10 @@
         },
         [optionsKey]: () => {
           this.onOptionsClick()
+          return true
+        },
+        [bookmarkKey]: () => {
+          this.bookmark()
           return true
         }
       })
@@ -165,8 +172,12 @@
         } catch (e) { /* ignore */ }
       },
       bookmark () {
-        const { originalStatus, originalStatusId } = this.get()
-        /* no await */ setStatusBookmarkedOrUnbookmarked(originalStatusId, !originalStatus.bookmarked)
+        const { originalStatusId, bookmarked } = this.get()
+        const newBookmarkedValue = !bookmarked
+        /* no await */ setStatusBookmarkedOrUnbookmarked(originalStatusId, newBookmarkedValue)
+        if (newBookmarkedValue) {
+          this.refs.bookmarkIcon.animate(REBLOG_ANIMATION, CHECKMARK_ANIMATION)
+        }
       },
       async pickEmojiReaction () {
         const { originalStatus } = this.get()
@@ -226,10 +237,17 @@
         }
         return originalStatus.favourited
       },
+      bookmarked: ({ originalStatusId, $currentStatusModifications, originalStatus }) => {
+        if ($currentStatusModifications && originalStatusId in $currentStatusModifications.bookmarks) {
+          return $currentStatusModifications.bookmarks[originalStatusId]
+        }
+        return originalStatus.bookmarked
+      },
       favoriteKey: ({ uuid }) => `fav-${uuid}`,
       reblogKey: ({ uuid }) => `reblog-${uuid}`,
       replyKey: ({ uuid }) => `reply-${uuid}`,
       optionsKey: ({ uuid }) => `options-${uuid}`,
+      bookmarkKey: ({ uuid }) => `bookmark-${uuid}`,
       hasReactions: ({ originalStatus }) => Boolean(originalStatus.reactions || originalStatus.emoji_reactions),
       hasQuote: ({ originalStatus }) => 'quote' in originalStatus
     }

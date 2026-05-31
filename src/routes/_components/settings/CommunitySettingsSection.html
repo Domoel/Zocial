@@ -74,6 +74,12 @@
           label="{'intl.pinnedStatuses'}"
           icon="#fa-thumb-tack"
         />
+
+        <PageListItem
+          href="/followed-tags"
+          label="{'intl.followedHashtags'}"
+          icon="#fa-hashtag"
+        />
       </PageList>
     </div>
 
@@ -100,6 +106,11 @@
 
   .instance-settings-section {
     margin-top: 32px;
+  }
+
+  :global([href="/followed-tags"] .page-list-item-svg) {
+    width: 20px;
+    height: 20px;
   }
 </style>
 

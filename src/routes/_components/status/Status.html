@@ -202,6 +202,7 @@
   import { addEmojiTooltips } from '../../_utils/addEmojiTooltips.js'
   import { tryToFocusElement } from '../../_utils/tryToFocusElement.js'
   import { on } from '../../_utils/eventBus.ts'
+  import { database } from '../../_database/database.js'
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
@@ -236,6 +237,20 @@
         })
       }
       scheduleIdleTask(() => addEmojiTooltips(this.refs.article))
+
+      // Async: load the replied-to account for reply header and boosted-reply header
+      const { status: _status, originalStatus: _origStatus } = this.get()
+      const replyToId = _status.reblog
+        ? _status.reblog.in_reply_to_id
+        : _origStatus.in_reply_to_id
+      if (replyToId) {
+        const { currentInstance } = this.store.get()
+        database.getStatus(currentInstance, replyToId).then(parentStatus => {
+          if (parentStatus) {
+            try { this.set({ inReplyToAccount: parentStatus.account }) } catch (e) {}
+          }
+        }).catch(() => {})
+      }
     },
     onupdate ({ changed, previous, current }) {
       if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped)) {
@@ -272,6 +287,7 @@
       enableShortcuts: null,
       quotedBy: null,
       overrideOriginalStatus: null,
+      inReplyToAccount: null,
       timelineType: null,
       timelineValue: null,
       index: null,
@@ -428,10 +444,22 @@
               showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll
             )
           ),
-      showHeader: ({ notificationInfo, status, timelineType }) => (
+      matchingHashtag: ({ originalStatus, $followedHashtagsForInstance, timelineType }) => {
+        if (timelineType !== 'home' || !originalStatus.tags || !originalStatus.tags.length) {
+          return null
+        }
+        const followed = $followedHashtagsForInstance
+        if (!followed || !followed.length) return null
+        const followedNames = new Set(followed.map(t => t.name.toLowerCase()))
+        const match = originalStatus.tags.find(tag => followedNames.has(tag.name.toLowerCase()))
+        return match ? match.name : null
+      },
+      showHeader: ({ notificationInfo, status, timelineType, inReplyToAccount, matchingHashtag }) => (
         notificationInfo ||
         status.reblog ||
-        timelineType === 'pinned'
+        timelineType === 'pinned' ||
+        !!matchingHashtag ||
+        (!!inReplyToAccount && timelineType !== 'status' && timelineType !== 'reply')
       ),
       hasReactions: ({ quotedBy, originalStatus }) => quotedBy ? false : ((originalStatus.reactions || originalStatus.emoji_reactions) || []).length > 0,
       className: ({ visibility, timelineType, isStatusInOwnThread, $underlineLinks, $disableTapOnStatus, quotedBy, treeMetadata, nextGrouped, prevGrouped }) => (classname(
@@ -496,7 +524,8 @@
         account, accountId, uuid, isStatusInNotification, isStatusInOwnThread,
         originalAccount, originalAccountId, visibility,
         replyVisibility, spoilerText, computedSpoilerText, originalStatus, originalStatusId, inReplyToId,
-        enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl
+        enableShortcuts, shortcutScope, originalStatusEmojis, localOnly, originalStatusCanonicalUrl,
+        inReplyToAccount, matchingHashtag
       }) => ({
         notification,
         notificationId,
@@ -521,7 +550,9 @@
         shortcutScope,
         originalStatusEmojis,
         localOnly,
-        originalStatusCanonicalUrl
+        originalStatusCanonicalUrl,
+        inReplyToAccount,
+        matchingHashtag
       })
     }
   }

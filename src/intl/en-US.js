@@ -460,6 +460,9 @@ export default {
   loggedInAs: 'Logged in as',
   homeTimelineFilters: 'Home timeline filters',
   notificationFilters: 'Notification filters',
+  followedHashtags: 'Followed hashtags',
+  noFollowedHashtags: 'You don\'t follow any hashtags.',
+  addHashtag: 'Follow hashtag',
   pushNotifications: 'Push notifications',
   // Add instance page
   storageError: `It seems Zocial cannot store data locally. Is your browser in private mode
@@ -631,6 +634,8 @@ export default {
   cannotReblogDirectMessage: 'Cannot be boosted because this is a direct message',
   reblog: 'Boost',
   reply: 'Reply',
+  replyTo: 'Reply to',
+  replyToLower: 'reply to',
   replyToThread: 'Reply to thread',
   favorite: 'Favorite',
   unfavorite: 'Unfavorite',

@@ -1,5 +1,5 @@
 <div
-  class="status-header {isStatusInNotification ? 'status-in-notification' : ''} {standalone ? 'header-is-standalone' : ''}"
+  class="status-header {isStatusInNotification || (notificationInfo && inReplyToAccount) ? 'status-in-notification' : ''} {standalone ? 'header-is-standalone' : ''}"
 >
   <div class="status-header-avatar {avatarHidden}">
     <a
@@ -15,7 +15,7 @@
   {#if emojiReaction}
   <div class="status-header-emoji">{@html emojiReaction}</div>
   {:else}
-  <SvgIcon className="status-header-svg" href="{icon}" />
+  <SvgIcon className="status-header-svg {matchingHashtag ? 'status-header-svg-hashtag' : ''}" href="{icon}" />
   {/if}
   <div class="status-header-content">
     <div class="status-header-inner">
@@ -33,10 +33,16 @@
       </a>
       {/if} {#if actionText}
       <span class="status-header-action"
-        >{actionText}{#if targetAccount}{" "}<a
+        >{#if matchingHashtag}<a href="/tags/{matchingHashtag}" rel="prefetch">{actionText}</a>{:else}{actionText}{/if}{#if isBoostOfReply}{" "}{'intl.replyToLower'}{/if}{#if targetAccount}{" "}<a
           href="/accounts/{targetAccount.id}"
           rel="prefetch"
           >{'@' + targetAccount.acct}</a
+        >{/if}{#if replyTargetAccount}{" "}<a
+          class="status-header-reply-target"
+          href="/accounts/{replyTargetAccount.id}"
+          rel="prefetch"
+          title="{'@' + replyTargetAccount.acct}"
+          ><Avatar account={replyTargetAccount} size="extra-small" /><AccountDisplayName account={replyTargetAccount} /></a
         >{/if}</span
       >
       {/if}
@@ -72,6 +78,12 @@
     height: 18px;
     fill: var(--deemphasized-text-color);
     font-size: 13px;
+  }
+
+  :global(.status-header-svg-hashtag) {
+    min-width: 14px;
+    width: 14px;
+    height: 14px;
   }
 
   :global(.status-header-svg),
@@ -118,14 +130,34 @@
   .status-header-action,
   .status-header-author,
   .status-header-author:visited,
-  .status-header-author:hover {
+  .status-header-author:hover,
+  .status-header-reply-target,
+  .status-header-reply-target:visited,
+  .status-header-reply-target:hover {
     color: var(--deemphasized-text-color);
+  }
+
+  .status-header-reply-target {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    vertical-align: middle;
+  }
+
+  .status-header-reply-target :global(.avatar) {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border-radius: 4px;
   }
 
   .status-in-notification .status-header-action,
   .status-in-notification .status-header-author,
   .status-in-notification .status-header-author:visited,
-  .status-in-notification .status-header-author:hover {
+  .status-in-notification .status-header-author:hover,
+  .status-in-notification .status-header-reply-target,
+  .status-in-notification .status-header-reply-target:visited,
+  .status-in-notification .status-header-reply-target:hover {
     color: var(--body-text-color);
   }
 
@@ -167,26 +199,41 @@
       avatarElementId: ({ uuid }) => `status-header-avatar-${uuid}`,
       targetAccount: ({ notificationInfo }) =>
         notificationInfo && notificationInfo.move && notificationInfo.target,
-      icon: ({ notificationInfo, timelineType, status }) => {
+      replyTargetAccount: ({ inReplyToAccount }) => inReplyToAccount || null,
+      isBoostOfReply: ({ status, inReplyToAccount }) =>
+        !!(status && status.reblog && inReplyToAccount),
+      icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag }) => {
         if (timelineType === 'pinned') {
           return '#fa-thumb-tack'
+        } else if (matchingHashtag) {
+          return '#fa-hashtag'
         } else if (status && status.reblog) {
           return '#fa-retweet'
+        } else if (inReplyToAccount) {
+          return '#fa-reply'
         } else if (notificationInfo) {
           return notificationInfo.icon
         } else {
           return null
         }
       },
-      actionText: ({ notificationInfo, status }) => {
+      actionText: ({ notificationInfo, status, inReplyToAccount, timelineType, timelineValue, matchingHashtag }) => {
         if (status && status.reblog) {
           return 'intl.reblogged'
+        } else if (inReplyToAccount) {
+          return 'intl.replyToLower'
+        } else if (matchingHashtag) {
+          return '#' + matchingHashtag
         } else if (notificationInfo) {
           return notificationInfo.actionText
         }
       },
-      standalone: ({ notificationInfo, status }) => {
+      standalone: ({ notificationInfo, status, inReplyToAccount, timelineType, matchingHashtag }) => {
         if (status && status.reblog) {
+          return false
+        } else if (inReplyToAccount) {
+          return false
+        } else if (matchingHashtag) {
           return false
         } else if (notificationInfo) {
           return notificationInfo.standalone
@@ -197,9 +244,10 @@
       emojiReaction: ({ notificationInfo }) => {
         if (notificationInfo && notificationInfo.reaction) { return notificationInfo.html }
       },
-      avatarHidden: ({ timelineType, notificationInfo, icon }) =>
+      avatarHidden: ({ timelineType, notificationInfo, icon, matchingHashtag }) =>
         icon === '#fa-question' ||
         timelineType === 'pinned' ||
+        !!matchingHashtag ||
         (notificationInfo && notificationInfo.poll)
           ? 'hidden'
           : ''
