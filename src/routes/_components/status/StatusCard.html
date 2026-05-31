@@ -103,7 +103,7 @@
       title: ({ card }) => card.title,
       unescapedTitle: ({ title }) => title && unescape(title),
       url: ({ card }) => card.url,
-      hostname: ({ url }) => URL ? new URL(url).hostname : '',
+      hostname: ({ url }) => { try { return url ? new URL(url).hostname : '' } catch (e) { return '' } },
       description: ({ card, hostname }) => card.description || card.provider_name || hostname,
       unescapedDescription: ({ description }) => description && unescape(description),
       imageUrl: ({ card }) => card.image

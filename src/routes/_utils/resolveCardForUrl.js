@@ -4,8 +4,16 @@ function extractFirstExternalLink (html) {
   if (typeof document === 'undefined' || !html) return null
   const div = document.createElement('div')
   div.innerHTML = html
-  const link = div.querySelector('a[target="_blank"]')
-  return link ? link.href : null
+  const links = div.querySelectorAll('a[href]')
+  for (const link of links) {
+    try {
+      const url = new URL(link.href)
+      if (url.protocol.startsWith('http') && url.origin !== window.location.origin) {
+        return link.href
+      }
+    } catch (e) { /* skip invalid hrefs */ }
+  }
+  return null
 }
 
 function stripHTML (html) {

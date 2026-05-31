@@ -473,8 +473,8 @@
         }
         const followed = $followedHashtagsForInstance
         if (!followed || !followed.length) return null
-        const followedNames = new Set(followed.map(t => t.name.toLowerCase()))
-        const match = originalStatus.tags.find(tag => followedNames.has(tag.name.toLowerCase()))
+        const followedNames = new Set(followed.filter(t => t && t.name).map(t => t.name.toLowerCase()))
+        const match = originalStatus.tags.find(tag => tag && tag.name && followedNames.has(tag.name.toLowerCase()))
         return match ? match.name : null
       },
       showHeader: ({ notificationInfo, status, timelineType, inReplyToAccount, matchingHashtag }) => (

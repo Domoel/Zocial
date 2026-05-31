@@ -156,7 +156,9 @@
     },
     async oncreate () {
       const { instanceName } = this.get()
-      await refreshFollowedHashtagsForInstance(instanceName)
+      try {
+        await refreshFollowedHashtagsForInstance(instanceName)
+      } catch (e) { /* silently fail — list stays empty */ }
     },
     methods: {
       async onSubmit (event) {
