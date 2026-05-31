@@ -421,6 +421,9 @@ export default {
   loggedInAs: 'Iniciaste sesión como',
   homeTimelineFilters: 'Filtros para la cronología Inicio',
   notificationFilters: 'Filtros para notificaciones',
+  followedHashtags: 'Hashtags seguidos',
+  noFollowedHashtags: 'No sigues ningún hashtag.',
+  addHashtag: 'Seguir hashtag',
   pushNotifications: 'Notificaciones Push',
   // Add instance page
   storageError: `Parece que Zocial no puede almacenar datos localmente. ¿Está tu navegador en modo privado

@@ -460,6 +460,9 @@ export default {
   loggedInAs: 'Logged in as',
   homeTimelineFilters: 'Home timeline filters',
   notificationFilters: 'Notification filters',
+  followedHashtags: 'Followed hashtags',
+  noFollowedHashtags: 'You don\'t follow any hashtags.',
+  addHashtag: 'Follow hashtag',
   pushNotifications: 'Push notifications',
   // Add instance page
   storageError: `It seems Zocial cannot store data locally. Is your browser in private mode

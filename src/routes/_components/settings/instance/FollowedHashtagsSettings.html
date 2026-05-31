@@ -1,0 +1,124 @@
+<div class="followed-hashtags-settings">
+  {#if followedHashtags.length}
+    <ul class="hashtag-list">
+      {#each followedHashtags as tag (tag.name)}
+        <li class="hashtag-list-item">
+          <a href="/tags/{tag.name}" class="hashtag-link"># {tag.name}</a>
+          <IconButton
+            label="{'intl.unfollowLabel'}"
+            href="#fa-times"
+            clickListener={true}
+            on:click="unfollow(tag.name)"
+          />
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="no-hashtags">{'intl.noFollowedHashtags'}</p>
+  {/if}
+
+  <form class="add-hashtag-form" on:submit="onSubmit(event)">
+    <input
+      class="add-hashtag-input"
+      type="text"
+      bind:value=newTag
+      placeholder="mastodon"
+      aria-label="{'intl.addHashtag'}"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+    />
+    <button type="submit">{'intl.addHashtag'}</button>
+  </form>
+  {#if errorMessage}
+    <p class="hashtag-error">{errorMessage}</p>
+  {/if}
+</div>
+<style>
+  .hashtag-list {
+    list-style: none;
+    margin: 0 0 15px 0;
+    padding: 0;
+  }
+
+  .hashtag-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--main-border);
+  }
+
+  .hashtag-link {
+    font-size: 1.1em;
+    color: var(--anchor-text);
+  }
+
+  p.no-hashtags {
+    margin: 0 0 15px 0;
+    color: var(--deemphasized-text-color);
+  }
+
+  .add-hashtag-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .add-hashtag-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hashtag-error {
+    margin: 8px 0 0 0;
+    color: var(--warning-color);
+    font-size: 0.9em;
+  }
+</style>
+<script>
+  import IconButton from '../../IconButton.html'
+  import { store } from '../../../_store/store.js'
+  import { followHashtag, unfollowHashtag, refreshFollowedHashtagsForInstance } from '../../../_actions/followedTags.js'
+
+  export default {
+    store: () => store,
+    components: { IconButton },
+    data: () => ({
+      newTag: '',
+      errorMessage: ''
+    }),
+    computed: {
+      followedHashtags: ({ instanceName, $followedHashtagsForInstance }) =>
+        ($followedHashtagsForInstance || []).slice().sort((a, b) => a.name.localeCompare(b.name))
+    },
+    async oncreate () {
+      const { instanceName } = this.get()
+      await refreshFollowedHashtagsForInstance(instanceName)
+    },
+    methods: {
+      async onSubmit (event) {
+        event.preventDefault()
+        const { newTag, instanceName } = this.get()
+        const tag = newTag.trim().replace(/^#/, '').toLowerCase()
+        if (!tag) return
+        this.set({ errorMessage: '' })
+        try {
+          await followHashtag(instanceName, tag)
+          this.set({ newTag: '' })
+        } catch (e) {
+          this.set({ errorMessage: e.message || 'intl.error' })
+        }
+      },
+      async unfollow (tagName) {
+        const { instanceName } = this.get()
+        try {
+          await unfollowHashtag(instanceName, tagName)
+        } catch (e) {
+          this.set({ errorMessage: e.message || 'intl.error' })
+        }
+      }
+    }
+  }
+</script>
