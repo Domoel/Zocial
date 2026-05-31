@@ -360,7 +360,7 @@ export default {
   </p>
 
   <p>
-    Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a <a href="https://hub.docker.com/r/domoel/enafore">Docker Image</a> and can be deployed using an nginx web  server. All data is stored locally in your browser and shared with the fediverse instance(s) you connect to.
+    Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/enafore">Docker Image</a> and can be deployed using an nginx web  server. All data is stored locally in your browser and shared with the fediverse instance(s) you connect to.
   </p>
 
   <p>

@@ -327,7 +327,7 @@ export default {
   </p>
 
   <p>
-    Zocial ist eine statische Website, die überall gehostet werden kann (z. B. GitHub Pages). Sie wird als <a href="https://hub.docker.com/r/domoel/enafore">Docker Image</a> bereitgestellt und kann mithilfe eines Nginx-Webservers aufgesetzt werden. Alle Daten werden lokal in deinem Browser gespeichert und mit den Fediverse-Instanzen geteilt, mit denen du dich verbindest.
+    Zocial ist eine statische Website, die überall gehostet werden kann (z. B. GitHub Pages). Sie wird als <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/enafore">Docker Image</a> bereitgestellt und kann mithilfe eines Nginx-Webservers aufgesetzt werden. Alle Daten werden lokal in deinem Browser gespeichert und mit den Fediverse-Instanzen geteilt, mit denen du dich verbindest.
   </p>
 
   <p>
