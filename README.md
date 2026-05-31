@@ -93,11 +93,11 @@ npm run build        # output lands in __sapper__/export/
 
 ### Environment variables
 
-| Variable | Default | Description |
-|---|---|---|
+| Variable | Default | Description | Options |
+|---|---|---|---|
 | `SINGLE_INSTANCE` | *(unset)* | Lock the client to a specific instance hostname. |
 | `PORT` | `80` | Host port exposed by the Docker container. |
-| `LOCALE` | `en-US`, `de`, `es`, `fr`, `ru-RU` | UI locale baked in at build time. |
+| `LOCALE` | `en-US` | UI locale baked in at build time. | `de`, `es`, `fr`, `ru-RU` |
 
 ---
 
