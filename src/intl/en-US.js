@@ -635,6 +635,7 @@ export default {
   reblog: 'Boost',
   reply: 'Reply',
   replyTo: 'Reply to',
+  replyToLower: 'reply to',
   replyToThread: 'Reply to thread',
   favorite: 'Favorite',
   unfavorite: 'Unfavorite',

@@ -33,7 +33,7 @@
       </a>
       {/if} {#if actionText}
       <span class="status-header-action"
-        >{#if matchingHashtag}<a href="/tags/{matchingHashtag}" rel="prefetch">{actionText}</a>{:else}{actionText}{/if}{#if targetAccount}{" "}<a
+        >{#if matchingHashtag}<a href="/tags/{matchingHashtag}" rel="prefetch">{actionText}</a>{:else}{actionText}{/if}{#if isBoostOfReply}{" "}{'intl.replyToLower'}{/if}{#if targetAccount}{" "}<a
           href="/accounts/{targetAccount.id}"
           rel="prefetch"
           >{'@' + targetAccount.acct}</a
@@ -200,6 +200,8 @@
       targetAccount: ({ notificationInfo }) =>
         notificationInfo && notificationInfo.move && notificationInfo.target,
       replyTargetAccount: ({ inReplyToAccount }) => inReplyToAccount || null,
+      isBoostOfReply: ({ status, inReplyToAccount }) =>
+        !!(status && status.reblog && inReplyToAccount),
       icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag }) => {
         if (timelineType === 'pinned') {
           return '#fa-thumb-tack'
@@ -219,7 +221,7 @@
         if (status && status.reblog) {
           return 'intl.reblogged'
         } else if (inReplyToAccount) {
-          return 'intl.replyTo'
+          return 'intl.replyToLower'
         } else if (matchingHashtag) {
           return '#' + matchingHashtag
         } else if (notificationInfo) {

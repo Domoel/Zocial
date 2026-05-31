@@ -547,6 +547,7 @@ export default {
   reblog: 'Boost',
   reply: 'Antworten',
   replyTo: 'Antwort an',
+  replyToLower: 'Antwort an',
   replyToThread: 'Auf Unterhaltung antworten',
   favorite: 'Favorisieren',
   unfavorite: 'Favorisieren aufheben',

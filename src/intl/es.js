@@ -581,6 +581,7 @@ export default {
   reblog: 'Reenviar',
   reply: 'Responder',
   replyTo: 'En respuesta a',
+  replyToLower: 'en respuesta a',
   replyToThread: 'Responder al hilo',
   favorite: 'Favorito',
   unfavorite: 'No favorito',

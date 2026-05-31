@@ -555,6 +555,7 @@ export default {
   reblog: 'Partager',
   reply: 'Répondre',
   replyTo: 'En réponse à',
+  replyToLower: 'en réponse à',
   replyToThread: 'Répondre au discussion',
   favorite: 'Mettre en favori',
   unfavorite: 'Ne plus mettre en favori',

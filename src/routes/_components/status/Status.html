@@ -238,11 +238,14 @@
       }
       scheduleIdleTask(() => addEmojiTooltips(this.refs.article))
 
-      // Async: load the replied-to account for the reply header indicator
+      // Async: load the replied-to account for reply header and boosted-reply header
       const { status: _status, originalStatus: _origStatus } = this.get()
-      if (!_status.reblog && _origStatus.in_reply_to_id) {
+      const replyToId = _status.reblog
+        ? _status.reblog.in_reply_to_id
+        : _origStatus.in_reply_to_id
+      if (replyToId) {
         const { currentInstance } = this.store.get()
-        database.getStatus(currentInstance, _origStatus.in_reply_to_id).then(parentStatus => {
+        database.getStatus(currentInstance, replyToId).then(parentStatus => {
           if (parentStatus) {
             try { this.set({ inReplyToAccount: parentStatus.account }) } catch (e) {}
           }
