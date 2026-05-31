@@ -512,6 +512,7 @@ export default {
   themeMajesty: 'Majesty',
   themeGecko: 'Gecko',
   themeGrayscale: 'Grayscale',
+  themeZocial: 'Zocial',
   themeOzark: 'Ozark',
   themeCobalt: 'Cobalt',
   themeSorcery: 'Sorcery',

@@ -54,6 +54,12 @@ const themes = [
     color: '#999999'
   },
   {
+    name: 'zocial',
+    label: 'intl.themeZocial',
+    dark: true,
+    color: '#bd93f9'
+  },
+  {
     name: 'ozark',
     label: 'intl.themeOzark',
     dark: true,
