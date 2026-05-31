@@ -15,7 +15,7 @@
   {#if emojiReaction}
   <div class="status-header-emoji">{@html emojiReaction}</div>
   {:else}
-  <SvgIcon className="status-header-svg" href="{icon}" />
+  <SvgIcon className="status-header-svg {matchingHashtag ? 'status-header-svg-hashtag' : ''}" href="{icon}" />
   {/if}
   <div class="status-header-content">
     <div class="status-header-inner">
@@ -33,7 +33,7 @@
       </a>
       {/if} {#if actionText}
       <span class="status-header-action"
-        >{actionText}{#if targetAccount}{" "}<a
+        >{#if matchingHashtag}<a href="/tags/{matchingHashtag}" rel="prefetch">{actionText}</a>{:else}{actionText}{/if}{#if targetAccount}{" "}<a
           href="/accounts/{targetAccount.id}"
           rel="prefetch"
           >{'@' + targetAccount.acct}</a
@@ -78,6 +78,12 @@
     height: 18px;
     fill: var(--deemphasized-text-color);
     font-size: 13px;
+  }
+
+  :global(.status-header-svg-hashtag) {
+    min-width: 14px;
+    width: 14px;
+    height: 14px;
   }
 
   :global(.status-header-svg),
