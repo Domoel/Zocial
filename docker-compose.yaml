@@ -1,0 +1,9 @@
+services:
+  zocial:
+    build:
+      context: .
+      args:
+        SINGLE_INSTANCE: ${SINGLE_INSTANCE}
+    ports:
+      - "${PORT:-80}:80"
+    restart: unless-stopped

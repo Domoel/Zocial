@@ -28,3 +28,6 @@
 .now
 .vercel
 /webpack/*.cjs
+
+# local environment overrides
+.env

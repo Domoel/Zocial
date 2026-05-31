@@ -45,31 +45,57 @@ Source code: [git.ztfr.eu/Dome/Enafore](https://git.ztfr.eu/Dome/Enafore)
 
 ---
 
-## Configuration
+## Deployment
 
-### Single instance mode
+### Docker Compose (recommended)
 
-Zocial is built with a default instance (`social.ztfr.eu`). On the login screen no instance field is shown — the user is logged in to the configured instance directly.
-
-To build for a **different instance**, pass `SINGLE_INSTANCE` at build time:
+Copy the example env file and edit it:
 
 ```bash
-SINGLE_INSTANCE=mastodon.example.com npm run build
+cp .env.example .env
 ```
 
-To build in **multi-instance mode** (show the instance input field so users can log in to any server), set the variable to an empty string:
+```ini
+# .env
+SINGLE_INSTANCE=your.instance.com
+PORT=80
+```
+
+Then build and start:
 
 ```bash
-SINGLE_INSTANCE= npm run build
+docker compose up -d --build
 ```
 
-### Other environment variables
+That's it. The instance hostname is baked into the app during the build — no instance input field is shown to users on the login screen.
 
-| Variable | Description |
-|---|---|
-| `SINGLE_INSTANCE` | Hostname of the instance to lock the client to. Defaults to `social.ztfr.eu`. Set to empty string for multi-instance mode. |
-| `LOCALE` | UI locale (default: `en-US`) |
-| `UPSTREAM` | Set to any truthy value when building the canonical upstream instance |
+**To switch to a different instance**, change `SINGLE_INSTANCE` in `.env` and rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+**To allow users to log in to any instance** (multi-instance mode), leave `SINGLE_INSTANCE` empty:
+
+```ini
+SINGLE_INSTANCE=
+```
+
+### Building without Docker
+
+```bash
+SINGLE_INSTANCE=your.instance.com npm run build
+```
+
+The output lands in `__sapper__/export/` and can be served as a static site.
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `SINGLE_INSTANCE` | *(unset)* | Instance hostname to lock the client to. Unset or empty = multi-instance mode. |
+| `PORT` | `80` | Host port for the Docker container. |
+| `LOCALE` | `en-US` | UI locale. |
 
 ---
 
@@ -78,7 +104,6 @@ SINGLE_INSTANCE= npm run build
 ```bash
 npm install
 npm run dev        # dev server on http://localhost:4002
-npm run build      # production build
 ```
 
 See the [user guide](https://git.ztfr.eu/Dome/Enafore/src/branch/main/docs/User-Guide.md) for usage instructions. See the [admin guide](https://git.ztfr.eu/Dome/Enafore/src/branch/main/docs/Admin-Guide.md) if Zocial cannot connect to your instance.

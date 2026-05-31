@@ -21,8 +21,11 @@ RUN pnpm install
 # Copy source
 COPY . .
 
+# Build argument — overrideable via docker-compose / --build-arg
+ARG SINGLE_INSTANCE
+
 # Build application
-RUN pnpm run build \
+RUN SINGLE_INSTANCE=${SINGLE_INSTANCE} pnpm run build \
  && cp __sapper__/export/service-worker-index.html __sapper__/export/404.html
 
 # -----------------------------
