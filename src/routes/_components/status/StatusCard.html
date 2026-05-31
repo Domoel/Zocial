@@ -1,4 +1,4 @@
-<a ref:cardlink href={url} class="status-card" target="_blank" rel="nofollow noopener ugc">
+<a ref:cardlink href={url} class="status-card" target={isInternal ? '_self' : '_blank'} rel={isInternal ? 'prefetch' : 'nofollow noopener ugc'}>
     <strong class="card-title" title={unescapedTitle}>
      {unescapedTitle}
     </strong>
@@ -90,6 +90,7 @@
   import LazyImage from '../LazyImage.html'
   import Shortcut from '../shortcut/Shortcut.html'
   import { unescape } from '../../_thirdparty/unescape/unescape.js'
+  import { goto } from '../../../../__sapper__/client.js'
 
   export default {
     components: {
@@ -98,6 +99,7 @@
     },
     computed: {
       card: ({ originalStatus, clientSideCard }) => originalStatus.card || clientSideCard,
+      isInternal: ({ card }) => !!(card && card.url && card.url.startsWith('/')),
       title: ({ card }) => card.title,
       unescapedTitle: ({ title }) => title && unescape(title),
       url: ({ card }) => card.url,
@@ -108,11 +110,13 @@
     },
     methods: {
       open () {
-        if (this.refs.cardlink) {
+        const { isInternal, url } = this.get()
+        if (isInternal) {
+          goto(url)
+        } else if (this.refs.cardlink) {
           this.refs.cardlink.click()
         }
       }
-
     }
   }
 </script>

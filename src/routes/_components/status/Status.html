@@ -269,7 +269,7 @@
       }
     },
     onupdate ({ changed, previous, current }) {
-      if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped)) {
+      if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped || changed.clientSideCard)) {
         // this sucks but otherwise svelte fucks up the list 🙃
         setTimeout(() => {
           this.fire('recalculateHeight')
