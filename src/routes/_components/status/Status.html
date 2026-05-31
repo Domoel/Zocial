@@ -37,7 +37,7 @@
   <!-- Apparently it's possible for spoilered content to sometimes have embeds, but I can't figure out how.
        Don't bother optimizing this with the preloadHiddenContent. -->
   {#if !nextGrouped && showCard && showContent}
-    <StatusCard {...params} />
+    <StatusCard {...params} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && showMedia }
     <StatusMediaAttachments {...params} on:recalculateHeight />
@@ -271,9 +271,14 @@
     onupdate ({ changed, previous, current }) {
       if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped || changed.clientSideCard)) {
         // this sucks but otherwise svelte fucks up the list 🙃
-        setTimeout(() => {
-          this.fire('recalculateHeight')
-        })
+        if (changed.clientSideCard) {
+          // double-RAF: waits for the browser to fully paint the card before measuring height
+          requestAnimationFrame(() => requestAnimationFrame(() => this.fire('recalculateHeight')))
+        } else {
+          setTimeout(() => {
+            this.fire('recalculateHeight')
+          })
+        }
       }
     },
     components: {

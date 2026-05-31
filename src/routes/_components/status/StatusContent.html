@@ -125,10 +125,16 @@
     },
     methods: {
       async onWrapperClick (event) {
-        const anchor = event.target.closest('a[target="_blank"]')
+        const anchor = event.target.closest('a')
         if (!anchor) return
         const href = anchor.href
-        if (!href || !href.startsWith('http')) return
+        if (!href) return
+        // Only intercept external links (different origin)
+        try {
+          const linkUrl = new URL(href)
+          if (!linkUrl.protocol.startsWith('http')) return
+          if (linkUrl.origin === window.location.origin) return
+        } catch (e) { return }
         // Let modifier-key clicks open in a new tab as usual
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
 

@@ -1,4 +1,4 @@
-<a ref:cardlink href={url} class="status-card" target={isInternal ? '_self' : '_blank'} rel={isInternal ? 'prefetch' : 'nofollow noopener ugc'}>
+<a ref:cardlink href={url} class="status-card" target={isInternal ? '_self' : '_blank'} rel={isInternal ? 'prefetch' : 'nofollow noopener ugc'} on:click="handleClick(event)">
     <strong class="card-title" title={unescapedTitle}>
      {unescapedTitle}
     </strong>
@@ -6,7 +6,7 @@
     <div class="card-content">
   {#if imageUrl}
     <div class="status-card-image-container">
-      <LazyImage src={imageUrl} ariaHidden={true} />
+      <LazyImage src={imageUrl} ariaHidden={true} on:load="fire('recalculateHeight')" />
     </div>
   {/if}
     <span class="card-description">
@@ -109,6 +109,13 @@
       imageUrl: ({ card }) => card.image
     },
     methods: {
+      handleClick (event) {
+        const { isInternal, url } = this.get()
+        if (isInternal && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
+          event.preventDefault()
+          goto(url)
+        }
+      },
       open () {
         const { isInternal, url } = this.get()
         if (isInternal) {
