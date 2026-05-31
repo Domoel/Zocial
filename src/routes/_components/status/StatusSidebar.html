@@ -1,5 +1,5 @@
 <a id={elementId}
-   class="status-sidebar size-{size}"
+   class="status-sidebar size-{size} {isStatusInOwnThread ? 'status-sidebar-focused' : ''}"
    rel="prefetch"
    href="/accounts/{originalAccountId}"
    aria-hidden="true"
@@ -26,6 +26,11 @@
   .status-sidebar.size-medium {
     width: 64px;
     height: 64px;
+  }
+
+  .status-sidebar-focused {
+    box-shadow: 0 0 0 2px var(--focus-outline);
+    border-radius: 4px;
   }
 
   @media (max-width: 767px) {
