@@ -34,7 +34,7 @@ export async function resolveCardForUrl (url, instanceName, accessToken) {
       const image = (status.media_attachments && status.media_attachments[0] && status.media_attachments[0].preview_url) ||
         account.avatar_static || null
       return {
-        url,
+        url: '/statuses/' + status.id,
         title: account.display_name || account.username,
         description: stripHTML(status.content).slice(0, 200) || null,
         image,
@@ -45,7 +45,7 @@ export async function resolveCardForUrl (url, instanceName, accessToken) {
     if (results.accounts && results.accounts[0]) {
       const account = results.accounts[0]
       return {
-        url,
+        url: '/accounts/' + account.id,
         title: account.display_name || account.username,
         description: stripHTML(account.note).slice(0, 150) || ('@' + account.acct),
         image: account.avatar_static || null,
