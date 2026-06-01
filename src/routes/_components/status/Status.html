@@ -12,6 +12,9 @@
   {#if showHeader && !threadPosition}
     <StatusHeader {...params} {notificationInfo} />
   {/if}
+  {#if threadPosition === 'top'}
+    <StatusHeader {...params} isThreadBundle={true} />
+  {/if}
   {#if !nextGrouped && threadPosition !== 'middle'}
     <StatusAuthorName {...params} />
     <StatusAuthorHandle {...params} />

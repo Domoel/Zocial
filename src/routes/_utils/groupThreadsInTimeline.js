@@ -18,9 +18,9 @@ export const BUNDLEABLE_TIMELINE_TYPES = new Set(['home', 'local', 'federated', 
  * stale values need clearing — no double-spread for chain items.
  *
  * threadPosition values:
- *   'top'    — newest post in chain (shown fully, connecting line below avatar)
+ *   'top'    — oldest post / thread starter (shown first, has header, connecting line below avatar)
  *   'middle' — hidden posts between top and bottom
- *   'bottom' — oldest post / thread starter (shown fully, connecting line above avatar)
+ *   'bottom' — newest post in chain (shown last, connecting line above avatar)
  *   null     — not part of a thread chain
  */
 export function markThreadBundles (summaries) {
@@ -53,12 +53,14 @@ export function markThreadBundles (summaries) {
     const chainLength = j - i
 
     if (chainLength >= 2) {
-      // Spread each item exactly once — directly into its final position
-      result[i] = { ...s, threadPosition: 'top', threadChainLength: chainLength }
+      // Reverse the physical order: oldest post (summaries[j-1]) goes to result[i] as 'top'
+      // so it renders first (visually at top) with the "started a thread" header.
+      // Newest post (summaries[i]) goes to result[j-1] as 'bottom'.
+      result[i] = { ...summaries[j - 1], threadPosition: 'top', threadChainLength: chainLength }
       for (let k = i + 1; k < j - 1; k++) {
-        result[k] = { ...summaries[k], threadPosition: 'middle', threadChainLength: chainLength }
+        result[k] = { ...summaries[j - 1 - (k - i)], threadPosition: 'middle', threadChainLength: chainLength }
       }
-      result[j - 1] = { ...summaries[j - 1], threadPosition: 'bottom', threadChainLength: chainLength }
+      result[j - 1] = { ...summaries[i], threadPosition: 'bottom', threadChainLength: chainLength }
       i = j
     } else {
       // Not a chain — pass through, clearing any stale values from a previous run

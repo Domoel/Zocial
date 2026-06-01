@@ -490,6 +490,7 @@ export default {
   pollYouCreatedEnded: 'Eine von Dir erstellte Umfrage ist beendet',
   pollYouVotedEnded: 'Eine Umfrage, an der Du teilgenommen hast, ist beendet',
   reblogged: 'geboostet',
+  startedThread: 'hat einen Thread begonnen',
   showSensitiveMedia: 'Sensible Inhalte zeigen',
   hideSensitiveMedia: 'Sensible Inhalte verbergen',
   clickToShowSensitive: 'Sensible Inhalte. Klicke zum Anzeigen.',
