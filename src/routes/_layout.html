@@ -17,7 +17,9 @@
     min-height: 100vh;
   }
 
-  .main-content {
+  /* overflow-x: hidden would break position:sticky (ComposeStickyButton).
+     Apply it only during the swipe animation via a JS-toggled class. */
+  .main-content.swipe-animating {
     overflow-x: hidden;
   }
 
@@ -92,7 +94,12 @@
         const targetIdx = goLeft ? currentIdx + 1 : currentIdx - 1
         if (targetIdx < 0 || targetIdx >= navPages.length) return // boundary
 
-        const main = this.refs.mainContent.querySelector('main')
+        const mainContent = this.refs.mainContent
+        const main = mainContent.querySelector('main')
+
+        // Clip horizontal overflow only for the duration of the animation so
+        // that position:sticky (ComposeStickyButton FAB) keeps working normally.
+        mainContent.classList.add('swipe-animating')
 
         // slide current content out
         main.classList.add(goLeft ? 'swipe-out-left' : 'swipe-out-right')
@@ -104,6 +111,7 @@
           main.classList.add(goLeft ? 'swipe-in-from-right' : 'swipe-in-from-left')
           setTimeout(() => {
             main.classList.remove('swipe-in-from-right', 'swipe-in-from-left')
+            mainContent.classList.remove('swipe-animating')
           }, 130)
         }, 80)
       }

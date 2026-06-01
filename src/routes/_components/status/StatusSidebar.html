@@ -1,5 +1,5 @@
 <a id={elementId}
-   class="status-sidebar size-{size} {isStatusInOwnThread ? 'status-sidebar-focused' : ''}"
+   class="status-sidebar size-{size} {isStatusInOwnThread ? 'status-sidebar-focused' : ''} {threadPosition === 'top' ? 'thread-top-line' : ''}"
    rel="prefetch"
    href="/accounts/{originalAccountId}"
    aria-hidden="true"
@@ -16,6 +16,31 @@
     margin-inline-end: 15px;
     width: 24px;
     height: 24px;
+    position: relative;
+  }
+
+  /* Thread connecting line: starts exactly at the bottom edge of this avatar
+     and extends downward. Clipped at the virtual-list-item boundary by
+     contain:paint, so it never bleeds into the next item. */
+  .status-sidebar.thread-top-line::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    top: 24px; /* default (extra-small) avatar height */
+    width: 4px;
+    height: 9999px;
+    background: var(--anchor-text);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .status-sidebar.size-small.thread-top-line::after {
+    top: 48px;
+  }
+
+  .status-sidebar.size-medium.thread-top-line::after {
+    top: 64px;
   }
 
   .status-sidebar.size-small {
@@ -45,6 +70,9 @@
     components: {
       Avatar
     },
+    data: () => ({
+      threadPosition: null
+    }),
     computed: {
       elementId: ({ uuid }) => `status-author-avatar-${uuid}`,
       size: ({ isStatusInOwnThread, $isVeryTinyMobileSize }) => {

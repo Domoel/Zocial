@@ -571,6 +571,7 @@ export default {
   pollYouCreatedEnded: 'A poll you created has ended',
   pollYouVotedEnded: 'A poll you voted on has ended',
   reblogged: 'boosted',
+  startedThread: 'started a thread',
   favorited: 'favorited',
   unreblogged: 'unboosted',
   unfavorited: 'unfavorited',

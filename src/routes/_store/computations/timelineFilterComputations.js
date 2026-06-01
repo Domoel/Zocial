@@ -1,3 +1,4 @@
+import { markThreadBundles, BUNDLEABLE_TIMELINE_TYPES } from '../../_utils/groupThreadsInTimeline.js'
 import {
   HOME_REBLOGS,
   HOME_REPLIES,
@@ -108,11 +109,23 @@ export function timelineFilterComputations (store) {
     )
   )
 
+  let _lastBundledKey = null
+  let _lastBundled = null
   store.compute(
     'filteredTimelineItemSummaries',
-    ['timelineItemSummaries', 'timelineFilterFunction'],
-    (timelineItemSummaries, timelineFilterFunction) => {
-      return timelineItemSummaries && timelineItemSummaries.filter(timelineFilterFunction)
+    ['timelineItemSummaries', 'timelineFilterFunction', 'currentTimelineType', 'currentTimeline', 'currentInstance'],
+    (timelineItemSummaries, timelineFilterFunction, currentTimelineType, currentTimeline, currentInstance) => {
+      if (!timelineItemSummaries) return timelineItemSummaries
+      const filtered = timelineItemSummaries.filter(timelineFilterFunction)
+      if (BUNDLEABLE_TIMELINE_TYPES.has(currentTimelineType)) {
+        const key = currentInstance + '/' + currentTimeline
+        const prev = key === _lastBundledKey ? _lastBundled : null
+        const result = markThreadBundles(filtered, prev)
+        _lastBundledKey = key
+        _lastBundled = result
+        return result
+      }
+      return filtered
     }
   )
 

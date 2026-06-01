@@ -1,6 +1,7 @@
 <article id={elementId}
          class={className}
-         tabindex="0"
+         tabindex={threadPosition === 'middle' ? -1 : 0}
+         aria-hidden={threadPosition === 'middle' ? 'true' : null}
          aria-posinset={index + 1}
          aria-setsize={length}
          aria-label={ariaLabel}
@@ -9,62 +10,68 @@
          on:error|capture="recalculateHeight()"
          {style}
 >
-  {#if showHeader}
+  {#if showHeader && !threadPosition}
     <StatusHeader {...params} {notificationInfo} />
   {/if}
-  {#if !nextGrouped}
+  {#if threadPosition === 'top'}
+    <StatusHeader {...params} isThreadBundle={true} />
+  {/if}
+  {#if !nextGrouped && threadPosition !== 'middle'}
     <StatusAuthorName {...params} />
     <StatusAuthorHandle {...params} />
   {/if}
-  {#if !nextGrouped && !isStatusInOwnThread}
+  {#if !nextGrouped && !isStatusInOwnThread && threadPosition !== 'middle'}
     <StatusRelativeDate {...params} {...timestampParams} />
   {/if}
-  {#if !nextGrouped}
-    <StatusSidebar {...params} />
+  {#if !nextGrouped && threadPosition !== 'middle'}
+    <StatusSidebar {...params} {threadPosition} />
   {/if}
-  {#if !nextGrouped && computedSpoilerText}
+  {#if !nextGrouped && computedSpoilerText && threadPosition !== 'middle'}
     <StatusSpoiler {...params} {spoilerShown} {translateContent} {showTranslate} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && !showContent}
+  {#if !nextGrouped && threadPosition !== 'middle' && !showContent}
     <StatusMentions {...params} />
   {/if}
-  {#if !nextGrouped && content && (showContent || preloadHiddenContent)}
+  {#if !nextGrouped && threadPosition !== 'middle' && content && (showContent || preloadHiddenContent)}
     <StatusContent {...params} shown={showContent} {plainTextContent} {translateContent} {showTranslate} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showTranslate}
+  {#if !nextGrouped && threadPosition !== 'middle' && showTranslate}
     <StatusTranslateToolbar {translateContent} {translateState}/>
   {/if}
   <!-- Apparently it's possible for spoilered content to sometimes have embeds, but I can't figure out how.
        Don't bother optimizing this with the preloadHiddenContent. -->
-  {#if !nextGrouped && showCard && showContent}
+  {#if !nextGrouped && threadPosition !== 'middle' && showCard && showContent}
     <StatusCard {...params} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showMedia }
+  {#if !nextGrouped && threadPosition !== 'middle' && showMedia }
     <StatusMediaAttachments {...params} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showPoll && (showContent || preloadHiddenContent)}
+  {#if !nextGrouped && threadPosition !== 'middle' && showPoll && (showContent || preloadHiddenContent)}
     <StatusPoll {...params} shown={showContent} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showQuote && showContent}
+  {#if !nextGrouped && threadPosition !== 'middle' && showQuote && showContent}
   <svelte:self status={originalQuote} quotedBy={uuid} {enableShortcuts} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showHashtagsInBar}
+  {#if !nextGrouped && threadPosition !== 'middle' && showHashtagsInBar}
     <StatusTags {hashtagsInBar} {isStatusInNotification} />
   {/if}
-  {#if !nextGrouped && hasReactions}
+  {#if !nextGrouped && threadPosition !== 'middle' && hasReactions}
     <StatusReactions {...params} />
   {/if}
-  {#if !nextGrouped && isStatusInOwnThread}
+  {#if !nextGrouped && threadPosition !== 'middle' && isStatusInOwnThread}
     <StatusDetails {...params} {...timestampParams} />
   {/if}
-  {#if !nextGrouped && !quotedBy}
+  {#if !nextGrouped && threadPosition !== 'middle' && !quotedBy}
     <StatusToolbar {...params} {replyShown} on:recalculateHeight on:focusArticle="focusArticle()" />
   {/if}
-  {#if !nextGrouped && replyShown}
+  {#if !nextGrouped && threadPosition !== 'middle' && replyShown}
     <StatusComposeBox {...params} on:recalculateHeight />
   {/if}
+  {#if threadPosition === 'top' && summary && summary.threadChainLength > 2}
+    <span class="thread-count-badge">+{summary.threadChainLength - 2}</span>
+  {/if}
 </article>
-{#if enableShortcuts}
+{#if enableShortcuts && threadPosition !== 'middle'}
   <Shortcut scope={shortcutScope} key="o" on:pressed="open()" />
   <Shortcut scope={shortcutScope} key="p" on:pressed="openAuthorProfile()" />
   <Shortcut scope={shortcutScope} key="m" on:pressed="mentionAuthor()" />
@@ -143,11 +150,12 @@
     position: absolute;
     top: 0;
     inset-inline-start: 0;
-    background-image: repeating-linear-gradient(90deg, var(--quote-border) 0, var(--quote-border) 5px, transparent 5px, transparent 10px);
-    width: calc(10px * var(--status-depth));
+    background-image: repeating-linear-gradient(90deg, var(--anchor-text) 0, var(--anchor-text) 4px, transparent 4px, transparent 8px);
+    width: calc(8px * var(--status-depth));
     height: 100%;
     z-index: -1;
-    background-position-x: calc(var(--rtl) * 5px);
+    opacity: 0.4;
+    background-position-x: calc(var(--rtl) * 4px);
   }
   .status-article.status-subtree-start {
     border-top: 4px solid var(--main-border);
@@ -164,6 +172,55 @@
   }
   .status-article.notification-next-grouped :global(.status-header) {
     margin-bottom: 0;
+  }
+
+  /* ── Thread bundling ─────────────────────────────────────── */
+
+  /* Middle items: fully collapsed — zero height, no spacing */
+  .status-article.thread-middle {
+    height: 0;
+    min-height: 0;
+    padding: 0 !important;
+    border: none;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Remove bottom border from top item so line connects cleanly */
+  .status-article.thread-top.status-in-timeline {
+    border-bottom: none;
+  }
+
+  /* Connecting line on thread-bottom: short line from VLI top to avatar top.
+     Uses ::after (not ::before) to avoid conflicting with the
+     existing ::before depth-border pseudo-element. */
+  .status-article.thread-bottom::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(var(--status-pad-h) + 24px);
+    transform: translateX(-50%);
+    top: 0;
+    width: 4px;
+    height: var(--status-pad-v);
+    background: var(--anchor-text);
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  /* Count badge between top and bottom items */
+  .thread-count-badge {
+    grid-area: sidebar;
+    align-self: end;
+    justify-self: center;
+    font-size: 0.65em;
+    background: var(--anchor-text);
+    color: var(--main-bg);
+    border-radius: 999px;
+    padding: 1px 6px;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
+    line-height: 1.6;
   }
 
   @media (max-width: 767px) {
@@ -495,7 +552,7 @@
         (!!inReplyToAccount && timelineType !== 'status' && timelineType !== 'reply')
       ),
       hasReactions: ({ quotedBy, originalStatus }) => quotedBy ? false : ((originalStatus.reactions || originalStatus.emoji_reactions) || []).length > 0,
-      className: ({ visibility, timelineType, isStatusInOwnThread, $underlineLinks, $disableTapOnStatus, quotedBy, treeMetadata, nextGrouped, prevGrouped }) => (classname(
+      className: ({ visibility, timelineType, isStatusInOwnThread, $underlineLinks, $disableTapOnStatus, quotedBy, treeMetadata, nextGrouped, prevGrouped, threadPosition }) => (classname(
         'status-article',
         'shortcut-list-item',
         'focus-fix',
@@ -508,7 +565,10 @@
         (treeMetadata && treeMetadata.end) && 'status-subtree-end',
         quotedBy && 'status-quoted',
         nextGrouped && 'notification-next-grouped',
-        prevGrouped && 'notification-prev-grouped'
+        prevGrouped && 'notification-prev-grouped',
+        threadPosition === 'top' && 'thread-top',
+        threadPosition === 'middle' && 'thread-middle',
+        threadPosition === 'bottom' && 'thread-bottom'
       )),
       content: ({ originalStatus }) => originalStatus.content || '',
       localOnly: ({ originalStatus }) => originalStatus.local_only || false,
@@ -549,6 +609,7 @@
       },
       nextGrouped: ({ status, summary, nextSummary }) => summary && nextSummary && summary.group === nextSummary.group,
       prevGrouped: ({ status, summary, prevSummary }) => summary && prevSummary && summary.group === prevSummary.group,
+      threadPosition: ({ summary }) => (summary && summary.threadPosition) || null,
       // This params list deliberately does *not* include `spoilersShown` or `replyShown`, because these
       // change frequently and would therefore cause costly recomputes if included here.
       // The main goal here is to avoid typing by passing as many params as possible to child components.

@@ -498,6 +498,7 @@ export default {
   pollYouCreatedEnded: 'Une enquête vous avez créée a terminée',
   pollYouVotedEnded: 'Une enquête dans laquelle vous avez voté a terminée',
   reblogged: 'partagé',
+  startedThread: 'a commencé un fil',
   showSensitiveMedia: 'Afficher la média sensible',
   hideSensitiveMedia: 'Cacher la média sensible',
   clickToShowSensitive: 'Image sensible. Cliquer pour afficher.',

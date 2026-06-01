@@ -199,11 +199,13 @@
       avatarElementId: ({ uuid }) => `status-header-avatar-${uuid}`,
       targetAccount: ({ notificationInfo }) =>
         notificationInfo && notificationInfo.move && notificationInfo.target,
-      replyTargetAccount: ({ inReplyToAccount }) => inReplyToAccount || null,
+      replyTargetAccount: ({ inReplyToAccount, isThreadBundle }) => isThreadBundle ? null : (inReplyToAccount || null),
       isBoostOfReply: ({ status, inReplyToAccount }) =>
         !!(status && status.reblog && inReplyToAccount),
-      icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag }) => {
-        if (timelineType === 'pinned') {
+      icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag, isThreadBundle }) => {
+        if (isThreadBundle) {
+          return '#fa-comments'
+        } else if (timelineType === 'pinned') {
           return '#fa-thumb-tack'
         } else if (status && status.reblog) {
           return '#fa-retweet'
@@ -217,8 +219,10 @@
           return null
         }
       },
-      actionText: ({ notificationInfo, status, inReplyToAccount, timelineType, timelineValue, matchingHashtag }) => {
-        if (status && status.reblog) {
+      actionText: ({ notificationInfo, status, inReplyToAccount, timelineType, timelineValue, matchingHashtag, isThreadBundle }) => {
+        if (isThreadBundle) {
+          return 'intl.startedThread'
+        } else if (status && status.reblog) {
           return 'intl.reblogged'
         } else if (inReplyToAccount) {
           return 'intl.replyToLower'
@@ -228,8 +232,10 @@
           return notificationInfo.actionText
         }
       },
-      standalone: ({ notificationInfo, status, inReplyToAccount, timelineType, matchingHashtag }) => {
-        if (status && status.reblog) {
+      standalone: ({ notificationInfo, status, inReplyToAccount, timelineType, matchingHashtag, isThreadBundle }) => {
+        if (isThreadBundle) {
+          return false
+        } else if (status && status.reblog) {
           return false
         } else if (inReplyToAccount) {
           return false
@@ -253,7 +259,8 @@
           : ''
     },
     data: () => ({
-      notificationInfo: null
+      notificationInfo: null,
+      isThreadBundle: false
     })
   }
 </script>

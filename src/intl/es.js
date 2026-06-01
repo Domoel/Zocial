@@ -520,6 +520,7 @@ export default {
   pollYouCreatedEnded: 'Una encuesta que creaste ha finalizado',
   pollYouVotedEnded: 'Una encuesta en la que votaste ha finalizado',
   reblogged: 'reenviado',
+  startedThread: 'comenzó un hilo',
   favorited: 'marcado como favorito',
   unreblogged: 'no reenviado',
   unfavorited: 'no marcado como favorito',

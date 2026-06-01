@@ -60,6 +60,20 @@
       setupTimeline()
       this.setupStreaming()
       this.setupAsyncComponents()
+      // When the tab becomes visible again after being hidden, re-run setupTimeline.
+      // If a fetch failed while the tab was in the background (e.g. service worker
+      // was terminated by the browser), timelineItemSummariesAreStale will be true
+      // and setupTimeline will re-fetch. If data is fresh it exits immediately.
+      this._visibilityObserver = this.observe('$pageVisibilityHidden', (hidden, wasHidden) => {
+        if (wasHidden === true && !hidden) {
+          setupTimeline()
+        }
+      })
+    },
+    ondestroy () {
+      if (this._visibilityObserver) {
+        this._visibilityObserver.cancel()
+      }
     },
     data: () => ({
       LoadingFooter,
