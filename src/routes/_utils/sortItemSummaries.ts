@@ -90,11 +90,6 @@ export function sortItemSummariesForThread(
         summary.replies = undefined
         return summary as TimelineSummary
       })
-    // A post is the last sibling at its depth if the next post has a smaller depth
-    for (let i = 0; i < newSummaries.length; i++) {
-      const next = newSummaries[i + 1]
-      newSummaries[i]!.isLastSibling = !next || (next.depth ?? 0) < (newSummaries[i]!.depth ?? 0)
-    }
     _summaries = newSummaries
   } catch (e) {
     console.warn('failed to sortItemSummariesForThread', e)

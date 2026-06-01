@@ -150,18 +150,12 @@
     position: absolute;
     top: 0;
     inset-inline-start: 0;
-    /* Element spans from left edge all the way to the avatar */
-    width: calc(var(--status-pad-h) + 10px * var(--status-depth));
-    height: calc(var(--status-pad-v) + 10px);
-    /* Vertical stripes only in the gutter (8px × depth), not under the avatar */
     background-image: repeating-linear-gradient(90deg, var(--anchor-text) 0, var(--anchor-text) 4px, transparent 4px, transparent 8px);
-    background-size: calc(8px * var(--status-depth)) 100%;
-    background-repeat: no-repeat;
-    /* Horizontal turn reaches the avatar */
-    border-block-end: 4px solid var(--anchor-text);
-    opacity: calc(0.4 * min(1, var(--status-depth)));
+    width: calc(8px * var(--status-depth));
+    height: 100%;
     z-index: -1;
-    pointer-events: none;
+    opacity: 0.4;
+    background-position-x: calc(var(--rtl) * 4px);
   }
   .status-article.status-subtree-start {
     border-top: 4px solid var(--main-border);
@@ -569,7 +563,6 @@
         !$disableTapOnStatus && !isStatusInOwnThread && 'tap-on-status',
         (treeMetadata && treeMetadata.start) && 'status-subtree-start',
         (treeMetadata && treeMetadata.end) && 'status-subtree-end',
-        (treeMetadata && treeMetadata.isLastSibling) && 'status-last-sibling',
         quotedBy && 'status-quoted',
         nextGrouped && 'notification-next-grouped',
         prevGrouped && 'notification-prev-grouped',
@@ -597,8 +590,7 @@
         return {
           depth: summary.depth,
           start: summary.start,
-          end: summary.end,
-          isLastSibling: summary.isLastSibling
+          end: summary.end
         }
       },
       style: ({ treeMetadata }) => `--status-depth:${treeMetadata ? Math.min(8, treeMetadata.depth || 0) : 0}`,
