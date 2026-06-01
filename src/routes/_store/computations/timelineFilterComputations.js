@@ -109,6 +109,7 @@ export function timelineFilterComputations (store) {
     )
   )
 
+  let _lastBundled = null
   store.compute(
     'filteredTimelineItemSummaries',
     ['timelineItemSummaries', 'timelineFilterFunction', 'currentTimelineType'],
@@ -116,8 +117,11 @@ export function timelineFilterComputations (store) {
       if (!timelineItemSummaries) return timelineItemSummaries
       const filtered = timelineItemSummaries.filter(timelineFilterFunction)
       if (BUNDLEABLE_TIMELINE_TYPES.has(currentTimelineType)) {
-        return markThreadBundles(filtered)
+        const result = markThreadBundles(filtered, _lastBundled)
+        _lastBundled = result
+        return result
       }
+      _lastBundled = null
       return filtered
     }
   )

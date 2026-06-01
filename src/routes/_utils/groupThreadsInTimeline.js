@@ -23,8 +23,26 @@ export const BUNDLEABLE_TIMELINE_TYPES = new Set(['home', 'local', 'federated', 
  *   'bottom' — newest post in chain (shown last, connecting line above avatar)
  *   null     — not part of a thread chain
  */
-export function markThreadBundles (summaries) {
+export function markThreadBundles (summaries, prevBundled) {
   const n = summaries.length
+
+  // Opt 1: quick scan — if nothing could form a chain, return the same array
+  // reference so downstream computeds and the virtual list skip remeasurement.
+  let hasCandidate = false
+  for (let i = 0; i < n - 1; i++) {
+    if (!summaries[i].reblogId && !summaries[i].type && summaries[i].replyId) {
+      hasCandidate = true
+      break
+    }
+  }
+  if (!hasCandidate) return summaries
+
+  // Opt 2: build a lookup of the previous bundled result keyed by item id so
+  // that items whose threadPosition and chainLength are unchanged can reuse
+  // their old object reference — prevents the virtual list from treating them
+  // as changed items and triggering unnecessary height remeasurement.
+  const prevById = prevBundled ? new Map(prevBundled.map(s => [s.id, s])) : null
+
   const result = new Array(n)
 
   let i = 0
@@ -56,11 +74,11 @@ export function markThreadBundles (summaries) {
       // Reverse the physical order: oldest post (summaries[j-1]) goes to result[i] as 'top'
       // so it renders first (visually at top) with the "started a thread" header.
       // Newest post (summaries[i]) goes to result[j-1] as 'bottom'.
-      result[i] = { ...summaries[j - 1], threadPosition: 'top', threadChainLength: chainLength }
+      result[i] = stableRef(prevById, summaries[j - 1], 'top', chainLength)
       for (let k = i + 1; k < j - 1; k++) {
-        result[k] = { ...summaries[j - 1 - (k - i)], threadPosition: 'middle', threadChainLength: chainLength }
+        result[k] = stableRef(prevById, summaries[j - 1 - (k - i)], 'middle', chainLength)
       }
-      result[j - 1] = { ...summaries[i], threadPosition: 'bottom', threadChainLength: chainLength }
+      result[j - 1] = stableRef(prevById, summaries[i], 'bottom', chainLength)
       i = j
     } else {
       // Not a chain — pass through, clearing any stale values from a previous run
@@ -70,6 +88,18 @@ export function markThreadBundles (summaries) {
   }
 
   return result
+}
+
+// Return the previous object reference if threadPosition and chainLength are
+// unchanged — same reference means the virtual list skips height remeasurement.
+function stableRef (prevById, source, position, chainLength) {
+  if (prevById) {
+    const prev = prevById.get(source.id)
+    if (prev && prev.threadPosition === position && prev.threadChainLength === chainLength) {
+      return prev
+    }
+  }
+  return { ...source, threadPosition: position, threadChainLength: chainLength }
 }
 
 function clearIfStale (s) {
