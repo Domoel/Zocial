@@ -12,6 +12,7 @@ export interface TimelineSummary {
   filterContexts: unknown
   start: boolean
   end: boolean
+  isLastSibling: boolean
   replies: undefined
   parent: undefined
   depth: number | undefined
@@ -43,6 +44,7 @@ export function timelineItemToSummary(
     ),
     start: false,
     end: false,
+    isLastSibling: false,
     replies: undefined,
     parent: undefined,
     depth: undefined,

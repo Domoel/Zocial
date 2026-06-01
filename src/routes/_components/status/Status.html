@@ -148,18 +148,14 @@
   .status-article::before {
     content: "";
     position: absolute;
-    inset-block: 0;
+    top: 0;
     inset-inline-start: 0;
-    /* Content width = indentation area minus the 4px left border */
-    width: calc(8px * var(--status-depth) - 4px);
-    /* Vertical: full height — lines overlap across articles to form the bracket */
-    border-inline-start: 4px solid var(--anchor-text);
-    /* Horizontal branch: 4px bar centred on avatar (pad-v + 10px → centre at pad-v + 12px) */
-    background-image: linear-gradient(var(--anchor-text), var(--anchor-text));
-    background-size: 100% 4px;
-    background-position: 0 calc(var(--status-pad-v) + 10px);
-    background-repeat: no-repeat;
-    /* opacity=0 hides connector at depth=0 */
+    /* One 4px stripe per depth level, like the original */
+    background-image: repeating-linear-gradient(90deg, var(--anchor-text) 0, var(--anchor-text) 4px, transparent 4px, transparent 8px);
+    width: calc(8px * var(--status-depth));
+    /* Stops at avatar centre; border-block-end centres the 4px turn at pad-v + 12px */
+    height: calc(var(--status-pad-v) + 10px);
+    border-block-end: 4px solid var(--anchor-text);
     opacity: calc(0.4 * min(1, var(--status-depth)));
     z-index: -1;
     pointer-events: none;
@@ -570,6 +566,7 @@
         !$disableTapOnStatus && !isStatusInOwnThread && 'tap-on-status',
         (treeMetadata && treeMetadata.start) && 'status-subtree-start',
         (treeMetadata && treeMetadata.end) && 'status-subtree-end',
+        (treeMetadata && treeMetadata.isLastSibling) && 'status-last-sibling',
         quotedBy && 'status-quoted',
         nextGrouped && 'notification-next-grouped',
         prevGrouped && 'notification-prev-grouped',
@@ -597,7 +594,8 @@
         return {
           depth: summary.depth,
           start: summary.start,
-          end: summary.end
+          end: summary.end,
+          isLastSibling: summary.isLastSibling
         }
       },
       style: ({ treeMetadata }) => `--status-depth:${treeMetadata ? Math.min(8, treeMetadata.depth || 0) : 0}`,
