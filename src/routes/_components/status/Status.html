@@ -558,7 +558,7 @@
         (!!inReplyToAccount && timelineType !== 'status' && timelineType !== 'reply')
       ),
       hasReactions: ({ quotedBy, originalStatus }) => quotedBy ? false : ((originalStatus.reactions || originalStatus.emoji_reactions) || []).length > 0,
-      className: ({ visibility, timelineType, isStatusInOwnThread, $underlineLinks, $disableTapOnStatus, quotedBy, treeMetadata, nextGrouped, prevGrouped }) => (classname(
+      className: ({ visibility, timelineType, isStatusInOwnThread, $underlineLinks, $disableTapOnStatus, quotedBy, treeMetadata, nextGrouped, prevGrouped, threadPosition }) => (classname(
         'status-article',
         'shortcut-list-item',
         'focus-fix',
