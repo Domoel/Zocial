@@ -199,7 +199,7 @@
       avatarElementId: ({ uuid }) => `status-header-avatar-${uuid}`,
       targetAccount: ({ notificationInfo }) =>
         notificationInfo && notificationInfo.move && notificationInfo.target,
-      replyTargetAccount: ({ inReplyToAccount }) => inReplyToAccount || null,
+      replyTargetAccount: ({ inReplyToAccount, isThreadBundle }) => isThreadBundle ? null : (inReplyToAccount || null),
       isBoostOfReply: ({ status, inReplyToAccount }) =>
         !!(status && status.reblog && inReplyToAccount),
       icon: ({ notificationInfo, timelineType, status, inReplyToAccount, matchingHashtag, isThreadBundle }) => {
