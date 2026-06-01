@@ -1,3 +1,4 @@
+import { markThreadBundles } from '../../_utils/groupThreadsInTimeline.js'
 import {
   HOME_REBLOGS,
   HOME_REPLIES,
@@ -110,9 +111,15 @@ export function timelineFilterComputations (store) {
 
   store.compute(
     'filteredTimelineItemSummaries',
-    ['timelineItemSummaries', 'timelineFilterFunction'],
-    (timelineItemSummaries, timelineFilterFunction) => {
-      return timelineItemSummaries && timelineItemSummaries.filter(timelineFilterFunction)
+    ['timelineItemSummaries', 'timelineFilterFunction', 'currentTimelineType'],
+    (timelineItemSummaries, timelineFilterFunction, currentTimelineType) => {
+      if (!timelineItemSummaries) return timelineItemSummaries
+      const filtered = timelineItemSummaries.filter(timelineFilterFunction)
+      // Apply thread bundling only on content timelines, not threads or notifications
+      if (currentTimelineType && currentTimelineType !== 'status' && currentTimelineType !== 'notifications') {
+        return markThreadBundles(filtered)
+      }
+      return filtered
     }
   )
 
