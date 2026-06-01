@@ -187,21 +187,21 @@
 
   <h2 id="section-notifications">{'intl.notifications'}</h2>
 
-  <form class="ui-settings">
+  <div class="ui-settings notifications-block">
     <label class="setting-group">
       <input type="checkbox" id="choice-enable-desktop-notifications"
              bind:checked="$enableDesktopNotifications" on:change="onDesktopNotificationsChange(event)">
       {'intl.enableDesktopNotifications'}
     </label>
-  </form>
 
-  {#if $isUserLoggedIn}
-    <h3 class="notifications-subheading">{'intl.notificationFilters'}</h3>
-    <NotificationFilterSettings instanceName={$currentInstance} />
+    {#if $isUserLoggedIn}
+      <h3>{'intl.notificationFilters'}</h3>
+      <NotificationFilterSettings instanceName={$currentInstance} />
 
-    <h3 class="notifications-subheading">{'intl.pushNotifications'}</h3>
-    <PushNotificationSettings instanceName={$currentInstance} />
-  {/if}
+      <h3>{'intl.pushNotifications'}</h3>
+      <PushNotificationSettings instanceName={$currentInstance} />
+    {/if}
+  </div>
 
   {#if $isUserLoggedIn }
     <h2>{themeTitle}</h2>
@@ -210,8 +210,16 @@
 </SettingsLayout>
 <UISettingsStyles />
 <style>
-  .notifications-subheading {
-    margin: 20px 20px 8px;
+  /* flatten inner component boxes so everything sits in one shared frame */
+  .notifications-block :global(.generic-instance-settings) {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .notifications-block :global(h3) {
+    margin: 16px 0 4px;
     font-size: 1.4em;
   }
 </style>
