@@ -13,6 +13,7 @@ import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
 import { addStatusesOrNotifications } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { sortItemSummariesForThread, sortItemSummariesForNotificationBatch } from '../_utils/sortItemSummaries.ts'
+import { markThreadBundles } from '../_utils/groupThreadsInTimeline.js'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
 import li from 'li'
 
@@ -119,6 +120,10 @@ export async function addPagedTimelineItemSummaries (instanceName, timelineName,
     mergedSummaries = sortItemSummariesForThread(mergedSummaries, statusId)
   }
 
+  if (type !== 'status' && type !== 'notifications') {
+    mergedSummaries = markThreadBundles(mergedSummaries)
+  }
+
   if (!isEqual(oldSummaries, mergedSummaries)) {
     store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: mergedSummaries })
   }
@@ -183,6 +188,10 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
 
   if (type === 'status') {
     mergedSummaries = sortItemSummariesForThread(mergedSummaries, statusId)
+  }
+
+  if (type !== 'status' && type !== 'notifications') {
+    mergedSummaries = markThreadBundles(mergedSummaries)
   }
 
   if (!isEqual(oldSummaries, mergedSummaries)) {

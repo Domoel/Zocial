@@ -12,56 +12,59 @@
   {#if showHeader}
     <StatusHeader {...params} {notificationInfo} />
   {/if}
-  {#if !nextGrouped}
+  {#if !nextGrouped && threadPosition !== 'middle'}
     <StatusAuthorName {...params} />
     <StatusAuthorHandle {...params} />
   {/if}
-  {#if !nextGrouped && !isStatusInOwnThread}
+  {#if !nextGrouped && !isStatusInOwnThread && threadPosition !== 'middle'}
     <StatusRelativeDate {...params} {...timestampParams} />
   {/if}
   {#if !nextGrouped}
     <StatusSidebar {...params} />
   {/if}
-  {#if !nextGrouped && computedSpoilerText}
+  {#if !nextGrouped && computedSpoilerText && threadPosition !== 'middle'}
     <StatusSpoiler {...params} {spoilerShown} {translateContent} {showTranslate} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && !showContent}
+  {#if !nextGrouped && threadPosition !== 'middle' && !showContent}
     <StatusMentions {...params} />
   {/if}
-  {#if !nextGrouped && content && (showContent || preloadHiddenContent)}
+  {#if !nextGrouped && threadPosition !== 'middle' && content && (showContent || preloadHiddenContent)}
     <StatusContent {...params} shown={showContent} {plainTextContent} {translateContent} {showTranslate} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showTranslate}
+  {#if !nextGrouped && threadPosition !== 'middle' && showTranslate}
     <StatusTranslateToolbar {translateContent} {translateState}/>
   {/if}
   <!-- Apparently it's possible for spoilered content to sometimes have embeds, but I can't figure out how.
        Don't bother optimizing this with the preloadHiddenContent. -->
-  {#if !nextGrouped && showCard && showContent}
+  {#if !nextGrouped && threadPosition !== 'middle' && showCard && showContent}
     <StatusCard {...params} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showMedia }
+  {#if !nextGrouped && threadPosition !== 'middle' && showMedia }
     <StatusMediaAttachments {...params} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showPoll && (showContent || preloadHiddenContent)}
+  {#if !nextGrouped && threadPosition !== 'middle' && showPoll && (showContent || preloadHiddenContent)}
     <StatusPoll {...params} shown={showContent} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showQuote && showContent}
+  {#if !nextGrouped && threadPosition !== 'middle' && showQuote && showContent}
   <svelte:self status={originalQuote} quotedBy={uuid} {enableShortcuts} on:recalculateHeight />
   {/if}
-  {#if !nextGrouped && showHashtagsInBar}
+  {#if !nextGrouped && threadPosition !== 'middle' && showHashtagsInBar}
     <StatusTags {hashtagsInBar} {isStatusInNotification} />
   {/if}
-  {#if !nextGrouped && hasReactions}
+  {#if !nextGrouped && threadPosition !== 'middle' && hasReactions}
     <StatusReactions {...params} />
   {/if}
-  {#if !nextGrouped && isStatusInOwnThread}
+  {#if !nextGrouped && threadPosition !== 'middle' && isStatusInOwnThread}
     <StatusDetails {...params} {...timestampParams} />
   {/if}
-  {#if !nextGrouped && !quotedBy}
+  {#if !nextGrouped && threadPosition !== 'middle' && !quotedBy}
     <StatusToolbar {...params} {replyShown} on:recalculateHeight on:focusArticle="focusArticle()" />
   {/if}
-  {#if !nextGrouped && replyShown}
+  {#if !nextGrouped && threadPosition !== 'middle' && replyShown}
     <StatusComposeBox {...params} on:recalculateHeight />
+  {/if}
+  {#if threadPosition === 'top' && summary && summary.threadChainLength > 2}
+    <span class="thread-count-badge">+{summary.threadChainLength - 2}</span>
   {/if}
 </article>
 {#if enableShortcuts}
@@ -164,6 +167,66 @@
   }
   .status-article.notification-next-grouped :global(.status-header) {
     margin-bottom: 0;
+  }
+
+  /* ── Thread bundling ─────────────────────────────────────── */
+  /* Connecting line drawn through the sidebar/avatar column */
+  .status-article.thread-top :global(.status-sidebar)::after,
+  .status-article.thread-middle :global(.status-sidebar)::after,
+  .status-article.thread-middle :global(.status-sidebar)::before,
+  .status-article.thread-bottom :global(.status-sidebar)::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    background: var(--main-border);
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+
+  /* Line going downward from the top item's avatar */
+  .status-article.thread-top :global(.status-sidebar)::after {
+    top: 100%;
+    bottom: auto;
+    height: 100%;   /* fills the gap to the next item */
+  }
+
+  /* Middle items: thin bar with lines above and below */
+  .status-article.thread-middle {
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 0;
+    border-bottom: none;
+  }
+  .status-article.thread-middle :global(.status-sidebar)::before {
+    top: 0;
+    height: 50%;
+  }
+  .status-article.thread-middle :global(.status-sidebar)::after {
+    top: 50%;
+    height: 50%;
+  }
+
+  /* Line going upward to the top item from the bottom item's avatar */
+  .status-article.thread-bottom :global(.status-sidebar)::before {
+    top: 0;
+    height: 100%;
+    bottom: auto;
+  }
+
+  /* Count badge on the top item showing how many posts are bundled */
+  .thread-count-badge {
+    grid-area: sidebar;
+    align-self: end;
+    justify-self: center;
+    font-size: 0.65em;
+    background: var(--main-border);
+    color: var(--deemphasized-text-color);
+    border-radius: 999px;
+    padding: 1px 5px;
+    margin-bottom: 2px;
+    z-index: 2;
+    line-height: 1.6;
   }
 
   @media (max-width: 767px) {
@@ -508,7 +571,10 @@
         (treeMetadata && treeMetadata.end) && 'status-subtree-end',
         quotedBy && 'status-quoted',
         nextGrouped && 'notification-next-grouped',
-        prevGrouped && 'notification-prev-grouped'
+        prevGrouped && 'notification-prev-grouped',
+        threadPosition === 'top' && 'thread-top',
+        threadPosition === 'middle' && 'thread-middle',
+        threadPosition === 'bottom' && 'thread-bottom'
       )),
       content: ({ originalStatus }) => originalStatus.content || '',
       localOnly: ({ originalStatus }) => originalStatus.local_only || false,
@@ -549,6 +615,7 @@
       },
       nextGrouped: ({ status, summary, nextSummary }) => summary && nextSummary && summary.group === nextSummary.group,
       prevGrouped: ({ status, summary, prevSummary }) => summary && prevSummary && summary.group === prevSummary.group,
+      threadPosition: ({ summary }) => (summary && summary.threadPosition) || null,
       // This params list deliberately does *not* include `spoilersShown` or `replyShown`, because these
       // change frequently and would therefore cause costly recomputes if included here.
       // The main goal here is to avoid typing by passing as many params as possible to child components.
