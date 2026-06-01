@@ -22,24 +22,24 @@
   }
 
   @keyframes swipe-out-left {
-    to { transform: translateX(-25%); opacity: 0; }
+    to { transform: translateX(-20%); opacity: 0; }
   }
   @keyframes swipe-out-right {
-    to { transform: translateX(25%); opacity: 0; }
+    to { transform: translateX(20%); opacity: 0; }
   }
   @keyframes swipe-in-from-right {
-    from { transform: translateX(25%); opacity: 0; }
+    from { transform: translateX(20%); opacity: 0; }
     to   { transform: translateX(0);   opacity: 1; }
   }
   @keyframes swipe-in-from-left {
-    from { transform: translateX(-25%); opacity: 0; }
+    from { transform: translateX(-20%); opacity: 0; }
     to   { transform: translateX(0);    opacity: 1; }
   }
 
-  :global(main.swipe-out-left)       { animation: swipe-out-left      150ms ease forwards; }
-  :global(main.swipe-out-right)      { animation: swipe-out-right     150ms ease forwards; }
-  :global(main.swipe-in-from-right)  { animation: swipe-in-from-right 200ms ease forwards; }
-  :global(main.swipe-in-from-left)   { animation: swipe-in-from-left  200ms ease forwards; }
+  :global(main.swipe-out-left)       { animation: swipe-out-left      80ms  cubic-bezier(0.4, 0, 1, 1)    forwards; }
+  :global(main.swipe-out-right)      { animation: swipe-out-right     80ms  cubic-bezier(0.4, 0, 1, 1)    forwards; }
+  :global(main.swipe-in-from-right)  { animation: swipe-in-from-right 120ms cubic-bezier(0, 0, 0.2, 1)    forwards; }
+  :global(main.swipe-in-from-left)   { animation: swipe-in-from-left  120ms cubic-bezier(0, 0, 0.2, 1)    forwards; }
 
   @media (prefers-reduced-motion: reduce) {
     :global(main.swipe-out-left),
@@ -104,8 +104,8 @@
           main.classList.add(goLeft ? 'swipe-in-from-right' : 'swipe-in-from-left')
           setTimeout(() => {
             main.classList.remove('swipe-in-from-right', 'swipe-in-from-left')
-          }, 220)
-        }, 150)
+          }, 130)
+        }, 80)
       }
 
       const el = this.refs.mainContent
