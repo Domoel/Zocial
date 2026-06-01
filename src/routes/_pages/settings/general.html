@@ -68,6 +68,11 @@
       {'intl.bottomNav'}
     </label>
     <label class="setting-group">
+      <input type="checkbox" id="choice-enable-thread-polling"
+             bind:checked="$enableThreadPolling" on:change="onChange(event)">
+      {'intl.enableThreadPolling'}
+    </label>
+    <label class="setting-group">
       <input type="checkbox" id="choice-hide-long-posts"
              bind:checked="$hideLongPosts" on:change="onChange(event)">
       {'intl.hideLongPosts'}
@@ -181,14 +186,27 @@
         </label>
 
       <p>
-        {'intl.filterNotificationsPre'}
-        <a rel="prefetch" href="{singleInstance ? '/settings/account' : `/settings/instances${$currentInstance ? '/' + $currentInstance : ''}`}">{singleInstance ? 'intl.filterNotificationsTextSingle' : 'intl.filterNotificationsText'}</a>.
-        {'intl.filterNotificationsPost'}
-      </p>
-      <p>
         {@html 'intl.wellnessFooter'}
       </p>
   </form>
+
+  <h2 id="section-notifications">{'intl.notifications'}</h2>
+
+  <div class="ui-settings notifications-block">
+    <label class="setting-group">
+      <input type="checkbox" id="choice-enable-desktop-notifications"
+             bind:checked="$enableDesktopNotifications" on:change="onDesktopNotificationsChange(event)">
+      {'intl.enableDesktopNotifications'}
+    </label>
+
+    {#if $isUserLoggedIn}
+      <h3>{'intl.notificationFilters'}</h3>
+      <NotificationFilterSettings instanceName={$currentInstance} />
+
+      <h3>{'intl.pushNotifications'}</h3>
+      <PushNotificationSettings instanceName={$currentInstance} />
+    {/if}
+  </div>
 
   {#if $isUserLoggedIn }
     <h2>{themeTitle}</h2>
@@ -196,9 +214,25 @@
   {/if}
 </SettingsLayout>
 <UISettingsStyles />
+<style>
+  /* flatten inner component boxes so everything sits in one shared frame */
+  .notifications-block :global(.generic-instance-settings) {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .notifications-block :global(h3) {
+    margin: 16px 0 4px;
+    font-size: 1.4em;
+  }
+</style>
 <script>
   import SettingsLayout from '../../_components/settings/SettingsLayout.html'
   import ThemeSettings from '../../_components/settings/instance/ThemeSettings.html'
+  import NotificationFilterSettings from '../../_components/settings/instance/NotificationFilterSettings.html'
+  import PushNotificationSettings from '../../_components/settings/instance/PushNotificationSettings.html'
   import { store } from '../../_store/store.js'
   import Tooltip from '../../_components/Tooltip.html'
   import UISettingsStyles from '../../_components/settings/UISettingsStyles.html'
@@ -211,6 +245,8 @@
     components: {
       SettingsLayout,
       ThemeSettings,
+      NotificationFilterSettings,
+      PushNotificationSettings,
       Tooltip,
       UISettingsStyles
     },
@@ -259,6 +295,32 @@
           }
         }
         this.store.save()
+      },
+      async onDesktopNotificationsChange (event) {
+        const { checked } = event.target
+        if (!checked) {
+          this.store.set({ enableDesktopNotifications: false })
+          this.store.save()
+          return
+        }
+        // reset checkbox — we'll re-check it only on success
+        event.target.checked = false
+        if (!('Notification' in window)) {
+          alert('intl.desktopNotificationsNotSupported')
+          return
+        }
+        if (Notification.permission === 'denied') {
+          alert('intl.desktopNotificationsBlocked')
+          return
+        }
+        const permission = await Notification.requestPermission()
+        if (permission === 'granted') {
+          event.target.checked = true
+          this.store.set({ enableDesktopNotifications: true })
+          this.store.save()
+        } else {
+          alert('intl.desktopNotificationsBlocked')
+        }
       }
     },
     store: () => store,

@@ -15,7 +15,7 @@
   {#if emojiReaction}
   <div class="status-header-emoji">{@html emojiReaction}</div>
   {:else}
-  <SvgIcon className="status-header-svg {matchingHashtag ? 'status-header-svg-hashtag' : ''}" href="{icon}" />
+  <SvgIcon className="status-header-svg {icon === '#fa-hashtag' ? 'status-header-svg-hashtag' : ''}" href="{icon}" />
   {/if}
   <div class="status-header-content">
     <div class="status-header-inner">
@@ -33,7 +33,7 @@
       </a>
       {/if} {#if actionText}
       <span class="status-header-action"
-        >{#if matchingHashtag}<a href="/tags/{matchingHashtag}" rel="prefetch">{actionText}</a>{:else}{actionText}{/if}{#if isBoostOfReply}{" "}{'intl.replyToLower'}{/if}{#if targetAccount}{" "}<a
+        >{#if icon === '#fa-hashtag'}<a href="/tags/{matchingHashtag}" rel="prefetch">{actionText}</a>{:else}{actionText}{/if}{#if isBoostOfReply}{" "}{'intl.replyToLower'}{/if}{#if targetAccount}{" "}<a
           href="/accounts/{targetAccount.id}"
           rel="prefetch"
           >{'@' + targetAccount.acct}</a

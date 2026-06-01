@@ -259,19 +259,24 @@
         }).catch(() => {})
       }
 
-      // Client-side card: resolve first external link if server provides no card
+      // Client-side card: delay resolution so fast-scrolled items don't trigger API calls
       const { $hideCards } = this.store.get()
       if (!$hideCards && !_origStatus.card && _origStatus.content) {
         const firstUrl = extractFirstExternalLink(_origStatus.content)
         if (firstUrl) {
-          const { currentInstance, accessToken } = this.store.get()
-          if (currentInstance && accessToken) {
-            resolveCardForUrl(firstUrl, currentInstance, accessToken).then(card => {
-              try { this.set({ clientSideCard: card }) } catch (e) {}
-            }).catch(() => {})
-          }
+          this._cardTimer = setTimeout(() => {
+            const { currentInstance, accessToken } = this.store.get()
+            if (currentInstance && accessToken) {
+              resolveCardForUrl(firstUrl, currentInstance, accessToken).then(card => {
+                try { this.set({ clientSideCard: card }) } catch (e) {}
+              }).catch(() => {})
+            }
+          }, 400)
         }
       }
+    },
+    ondestroy () {
+      clearTimeout(this._cardTimer)
     },
     onupdate ({ changed, previous, current }) {
       if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped || changed.clientSideCard)) {

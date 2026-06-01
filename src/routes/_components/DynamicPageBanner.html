@@ -1,6 +1,9 @@
-<div class="dynamic-page-banner {icon ? 'dynamic-page-with-icon' : ''}"
+<div class="dynamic-page-banner {icon ? 'dynamic-page-with-icon' : ''} {hasLeftSlot ? 'dynamic-page-with-left' : ''}"
      role="navigation" aria-label="{'intl.pageHeader'}"
 >
+  {#if hasLeftSlot}
+  <div class="banner-left-slot"><slot name="left"></slot></div>
+  {/if}
   {#if icon}
   <SvgIcon className="dynamic-page-banner-svg" href={icon} />
   {/if}
@@ -27,6 +30,15 @@
   .dynamic-page-banner.dynamic-page-with-icon {
     grid-template-columns: min-content 1fr min-content min-content;
     grid-template-areas: "icon title slot back";
+  }
+  .dynamic-page-banner.dynamic-page-with-left {
+    grid-template-columns: min-content 1fr min-content min-content;
+    grid-template-areas: "left title slot back";
+  }
+  .banner-left-slot {
+    grid-area: left;
+    display: flex;
+    align-items: center;
   }
   :global(.dynamic-page-banner-svg) {
     width: 24px;
@@ -82,7 +94,8 @@
   export default {
     data: () => ({
       icon: undefined,
-      ariaTitle: ''
+      ariaTitle: '',
+      hasLeftSlot: false
     }),
     components: {
       Shortcut,

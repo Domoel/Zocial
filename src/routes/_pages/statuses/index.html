@@ -1,6 +1,17 @@
 {#if $isUserLoggedIn}
   <TimelinePage timeline="status/{params.statusId}">
-    <DynamicPageBanner title="" ariaTitle="{'intl.statusThreadPage'}" />
+    <DynamicPageBanner title="" ariaTitle="{'intl.statusThreadPage'}" hasLeftSlot={$enableThreadPolling}>
+      <button
+        slot="left"
+        class="thread-poll-toggle {pollEnabled ? 'active' : ''}"
+        on:click="togglePoll()"
+        aria-pressed={pollEnabled}
+        title={pollEnabled ? 'intl.threadPollingStop' : 'intl.threadPollingStart'}
+        aria-label={pollEnabled ? 'intl.threadPollingStop' : 'intl.threadPollingStart'}
+      >
+        <SvgIcon className="thread-poll-svg {pollEnabled ? 'spinning' : ''}" href="#fa-refresh" />
+      </button>
+    </DynamicPageBanner>
   </TimelinePage>
 {:else}
   <HiddenFromSSR>
@@ -11,12 +22,55 @@
     </FreeTextLayout>
   </HiddenFromSSR>
 {/if}
+<style>
+  .thread-poll-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 50%;
+    color: var(--deemphasized-text-color);
+    transition: color 0.2s;
+  }
+
+  .thread-poll-toggle:hover {
+    color: var(--body-text-color);
+  }
+
+  .thread-poll-toggle.active {
+    color: var(--anchor-text);
+  }
+
+  :global(.thread-poll-svg) {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  :global(.thread-poll-svg.spinning) {
+    animation: spin 2s linear infinite;
+  }
+</style>
 <script>
   import FreeTextLayout from '../../_components/FreeTextLayout.html'
   import { store } from '../../_store/store.js'
   import HiddenFromSSR from '../../_components/HiddenFromSSR.html'
   import DynamicPageBanner from '../../_components/DynamicPageBanner.html'
   import TimelinePage from '../../_components/TimelinePage.html'
+  import SvgIcon from '../../_components/SvgIcon.html'
+  import { getStatusContext } from '../../_api/statuses.js'
+  import { addPagedTimelineItemSummaries } from '../../_actions/timeline.js'
+  import { timelineItemToSummary } from '../../_utils/timelineItemToSummary.ts'
+
+  const POLL_INTERVAL_MS = 30000
 
   export default {
     oncreate () {
@@ -26,12 +80,54 @@
         location.replace(params.fallbackUrl)
       }
     },
+    ondestroy () {
+      this._stopPoll()
+    },
+    data: () => ({
+      pollEnabled: false
+    }),
     store: () => store,
+    methods: {
+      togglePoll () {
+        const { pollEnabled } = this.get()
+        if (pollEnabled) {
+          this.set({ pollEnabled: false })
+          this._stopPoll()
+        } else {
+          this.set({ pollEnabled: true })
+          this._startPoll()
+        }
+      },
+      _startPoll () {
+        this._stopPoll()
+        this._pollTimer = setInterval(() => this._doPoll(), POLL_INTERVAL_MS)
+      },
+      _stopPoll () {
+        if (this._pollTimer) {
+          clearInterval(this._pollTimer)
+          this._pollTimer = null
+        }
+      },
+      async _doPoll () {
+        const { params } = this.get()
+        const { currentInstance, accessToken } = this.store.get()
+        if (!currentInstance || !accessToken) return
+        try {
+          const context = await getStatusContext(currentInstance, accessToken, params.statusId)
+          const timelineName = `status/${params.statusId}`
+          const newSummaries = context.descendants.map(s => timelineItemToSummary(s, currentInstance))
+          await addPagedTimelineItemSummaries(currentInstance, timelineName, newSummaries)
+        } catch (_) {
+          // silently ignore — network errors shouldn't break the UI
+        }
+      }
+    },
     components: {
       FreeTextLayout,
       HiddenFromSSR,
       DynamicPageBanner,
-      TimelinePage
+      TimelinePage,
+      SvgIcon
     }
   }
 </script>

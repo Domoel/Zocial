@@ -422,6 +422,17 @@ export default {
   metrics: 'Metrics',
   hideFollowerCount: 'Hide follower counts (capped at 10)',
   hideReblogCount: 'Hide boost counts',
+  enableThreadPolling: 'Show auto-refresh button in threads',
+  threadPollingStart: 'Auto-refresh replies (every 30s)',
+  threadPollingStop: 'Stop auto-refresh',
+  enableDesktopNotifications: 'Enable desktop notifications',
+  desktopNotificationsNotSupported: 'Your browser does not support desktop notifications.',
+  desktopNotificationsBlocked: 'Desktop notifications are blocked. Please allow them in your browser or system settings.',
+  desktopNotificationTitle: 'Zocial',
+  desktopNotificationBody: `{count, plural,
+    one {1 new notification}
+    other {{count} new notifications}
+  }`,
   hideFavoriteCount: 'Hide favorite and reaction counts',
   hideReplyCount: 'Hide reply counts',
   hideUnread: 'Hide unread notifications count (i.e. the red dot)',
