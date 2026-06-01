@@ -28,6 +28,7 @@ const persistedState = {
   disableInfiniteScroll: false,
   disableLongAriaLabels: false,
   disableNotificationBadge: false,
+  enableDesktopNotifications: false,
   disableNotificationSound: (() => {
     try {
       return localStorage.getItem('store_disableNotificationBadge') === 'true'

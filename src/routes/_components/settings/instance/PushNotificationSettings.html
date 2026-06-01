@@ -51,7 +51,8 @@
       const pushSubscription = this.store.getInstanceData(instanceName, 'pushSubscriptions')
 
       for (const { key } of options) {
-        form.elements[key].checked = get(pushSubscription, ['alerts', key])
+        const saved = get(pushSubscription, ['alerts', key])
+        form.elements[key].checked = saved === undefined ? true : saved
       }
     },
     store: () => store,

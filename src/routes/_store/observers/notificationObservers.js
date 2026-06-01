@@ -20,14 +20,36 @@ export function notificationObservers () {
   let previousNumberOfNotifications = 0
   let audio
   store.observe('numberOfNotifications', (numberOfNotifications) => {
-    const { disableNotificationSound } = store.get()
-    if (!disableNotificationSound && numberOfNotifications > previousNumberOfNotifications) {
-      try {
-        (audio || (audio = new Audio('/boop.mp3'))).play()
-      } catch (_) {
-        // ignore
+    const { disableNotificationSound, enableDesktopNotifications } = store.get()
+
+    if (numberOfNotifications > previousNumberOfNotifications) {
+      if (!disableNotificationSound) {
+        try {
+          (audio || (audio = new Audio('/boop.mp3'))).play()
+        } catch (_) {
+          // ignore
+        }
+      }
+
+      if (enableDesktopNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const count = numberOfNotifications - previousNumberOfNotifications
+        try {
+          const n = new Notification('Zocial', {
+            body: count === 1 ? '1 new notification' : `${count} new notifications`,
+            icon: '/icons/favicon.ico',
+            tag: 'zocial-notifications',
+            renotify: count > previousNumberOfNotifications
+          })
+          n.onclick = () => {
+            window.focus()
+            n.close()
+          }
+        } catch (_) {
+          // ignore
+        }
       }
     }
+
     previousNumberOfNotifications = numberOfNotifications
   })
 }
