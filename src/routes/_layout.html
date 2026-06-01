@@ -3,7 +3,7 @@
 </svelte:head>
 <Nav {page} />
 
-<div class="main-content">
+<div class="main-content" ref:mainContent>
   <main class="{infiniteScrollPage ? 'infinite-scroll-page' : ''}">
     <svelte:component this={child.component} {...child.props} />
   </main>
@@ -20,6 +20,10 @@
 <script>
   import { store } from './_store/store.js'
   import { observe } from 'svelte-extras'
+  import { goto } from '../../__sapper__/client.js'
+
+  const SWIPE_MIN_X = 60   // minimum horizontal distance to count as a swipe
+  const SWIPE_DIR_RATIO = 2 // horizontal must be at least 2× the vertical
 
   export default {
     components: {
@@ -35,6 +39,41 @@
         console.log('currentPage', page)
         this.store.set({ currentPage: page })
       })
+
+      this._swipeStartX = 0
+      this._swipeStartY = 0
+
+      this._onTouchStart = (e) => {
+        this._swipeStartX = e.touches[0].clientX
+        this._swipeStartY = e.touches[0].clientY
+      }
+
+      this._onTouchEnd = (e) => {
+        const dx = e.changedTouches[0].clientX - this._swipeStartX
+        const dy = e.changedTouches[0].clientY - this._swipeStartY
+        if (Math.abs(dx) < SWIPE_MIN_X || Math.abs(dx) < Math.abs(dy) * SWIPE_DIR_RATIO) return
+
+        const { navPages } = this.store.get()
+        const { page } = this.get()
+        const currentIdx = navPages.findIndex(p => p.name === page)
+        if (currentIdx === -1) return // not a top-level nav page
+
+        const targetIdx = dx < 0 ? currentIdx + 1 : currentIdx - 1
+        if (targetIdx < 0 || targetIdx >= navPages.length) return // boundary
+
+        goto(navPages[targetIdx].href)
+      }
+
+      const el = this.refs.mainContent
+      el.addEventListener('touchstart', this._onTouchStart, { passive: true })
+      el.addEventListener('touchend', this._onTouchEnd, { passive: true })
+    },
+    ondestroy () {
+      const el = this.refs.mainContent
+      if (el) {
+        el.removeEventListener('touchstart', this._onTouchStart)
+        el.removeEventListener('touchend', this._onTouchEnd)
+      }
     },
     store: () => store,
     computed: {
