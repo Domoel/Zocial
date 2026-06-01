@@ -31,3 +31,4 @@
 
 # local environment overrides
 .env
+/.claude
