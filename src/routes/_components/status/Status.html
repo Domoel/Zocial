@@ -148,20 +148,31 @@
   .status-article::before {
     content: "";
     position: absolute;
-    top: 0;
-    inset-inline-start: 0;
-    background-image: repeating-linear-gradient(90deg, var(--anchor-text) 0, var(--anchor-text) 4px, transparent 4px, transparent 8px);
-    width: calc(8px * var(--status-depth));
-    height: 100%;
+    inset-block: 0;
+    inset-inline-start: calc(var(--status-pad-h) + (var(--status-depth) - 1) * 10px);
+    width: 8px;
+    /* Vertical thread line — runs full height of the article */
+    border-inline-start: 2px solid var(--anchor-text);
+    /* Horizontal stub at avatar-centre height */
+    background-image: linear-gradient(to right, transparent 2px, var(--anchor-text) 2px);
+    background-size: 100% 2px;
+    background-position: 0 calc(var(--status-pad-v) + 11px);
+    background-repeat: no-repeat;
+    /* opacity=0 hides the connector at depth=0 */
+    opacity: calc(0.4 * min(1, var(--status-depth)));
     z-index: -1;
-    opacity: 0.4;
-    background-position-x: calc(var(--rtl) * 4px);
+    pointer-events: none;
   }
   .status-article.status-subtree-start {
     border-top: 4px solid var(--main-border);
   }
   .status-article.status-subtree-end {
     border-bottom: 4px solid var(--main-border);
+  }
+  /* Last item in subtree: shorten vertical line to avatar centre → └── shape */
+  .status-article.status-subtree-end::before {
+    bottom: auto;
+    height: calc(var(--status-pad-v) + 13px);
   }
   .status-article.notification-next-grouped {
     border-bottom: none;
