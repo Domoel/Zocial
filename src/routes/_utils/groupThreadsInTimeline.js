@@ -1,3 +1,5 @@
+import { mapBy } from './maps.js'
+
 /**
  * Timeline types where consecutive self-thread chains should be bundled.
  * Intentionally a whitelist — new special timelines (favorites, bookmarks,
@@ -26,11 +28,20 @@ export const BUNDLEABLE_TIMELINE_TYPES = new Set(['home', 'local', 'federated', 
 export function markThreadBundles (summaries, prevBundled) {
   const n = summaries.length
 
-  // Opt 1: quick scan — if nothing could form a chain, return the same array
-  // reference so downstream computeds and the virtual list skip remeasurement.
+  // Opt 1: quick scan — if no adjacent same-author reply pair exists, return the
+  // same array reference so downstream computeds and the virtual list skip remeasurement.
+  // Checks actual adjacency (replyId matches next item's id) to avoid false positives
+  // from posts that merely reply to external accounts.
   let hasCandidate = false
   for (let i = 0; i < n - 1; i++) {
-    if (!summaries[i].reblogId && !summaries[i].type && summaries[i].replyId) {
+    const s = summaries[i]
+    const next = summaries[i + 1]
+    if (
+      !s.reblogId && !s.type && s.replyId &&
+      !next.reblogId && !next.type &&
+      s.replyId === next.id &&
+      s.accountId === next.accountId
+    ) {
       hasCandidate = true
       break
     }
@@ -41,7 +52,7 @@ export function markThreadBundles (summaries, prevBundled) {
   // that items whose threadPosition and chainLength are unchanged can reuse
   // their old object reference — prevents the virtual list from treating them
   // as changed items and triggering unnecessary height remeasurement.
-  const prevById = prevBundled ? new Map(prevBundled.map(s => [s.id, s])) : null
+  const prevById = prevBundled ? mapBy(prevBundled, s => s.id) : null
 
   const result = new Array(n)
 

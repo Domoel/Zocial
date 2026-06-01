@@ -109,18 +109,23 @@ export function timelineFilterComputations (store) {
     )
   )
 
+  let _lastBundledKey = null
   let _lastBundled = null
   store.compute(
     'filteredTimelineItemSummaries',
-    ['timelineItemSummaries', 'timelineFilterFunction', 'currentTimelineType'],
-    (timelineItemSummaries, timelineFilterFunction, currentTimelineType) => {
+    ['timelineItemSummaries', 'timelineFilterFunction', 'currentTimelineType', 'currentTimeline', 'currentInstance'],
+    (timelineItemSummaries, timelineFilterFunction, currentTimelineType, currentTimeline, currentInstance) => {
       if (!timelineItemSummaries) return timelineItemSummaries
       const filtered = timelineItemSummaries.filter(timelineFilterFunction)
       if (BUNDLEABLE_TIMELINE_TYPES.has(currentTimelineType)) {
-        const result = markThreadBundles(filtered, _lastBundled)
+        const key = currentInstance + '/' + currentTimeline
+        const prev = key === _lastBundledKey ? _lastBundled : null
+        const result = markThreadBundles(filtered, prev)
+        _lastBundledKey = key
         _lastBundled = result
         return result
       }
+      _lastBundledKey = null
       _lastBundled = null
       return filtered
     }
