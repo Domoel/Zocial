@@ -23,7 +23,7 @@
     <StatusRelativeDate {...params} {...timestampParams} />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle'}
-    <StatusSidebar {...params} />
+    <StatusSidebar {...params} {threadPosition} />
   {/if}
   {#if !nextGrouped && computedSpoilerText && threadPosition !== 'middle'}
     <StatusSpoiler {...params} {spoilerShown} {translateContent} {showTranslate} on:recalculateHeight />
@@ -188,23 +188,7 @@
     border-bottom: none;
   }
 
-  /* Connecting line: top item downward from below avatar.
-     Line x = padding-h + half of 48px avatar = pad + 24px.
-     Extends far down; covered by the bottom item's background (DOM order). */
-  .status-article.thread-top::after {
-    content: '';
-    position: absolute;
-    inset-inline-start: calc(var(--status-pad-h) + 24px);
-    transform: translateX(-50%);
-    top: calc(var(--status-pad-v) + 24px);
-    width: 2px;
-    height: 9999px;
-    background: var(--anchor-text);
-    pointer-events: none;
-    opacity: 0.4;
-  }
-
-  /* Connecting line: bottom item from top to avatar center.
+  /* Connecting line on thread-bottom: short line from VLI top to avatar top.
      Uses ::after (not ::before) to avoid conflicting with the
      existing ::before depth-border pseudo-element. */
   .status-article.thread-bottom::after {
