@@ -148,17 +148,18 @@
   .status-article::before {
     content: "";
     position: absolute;
-    inset-block: 0;
-    inset-inline-start: calc(var(--status-pad-h) + (var(--status-depth) - 1) * 10px);
-    width: 8px;
-    /* Vertical thread line — runs full height of the article */
-    border-inline-start: 2px solid var(--anchor-text);
-    /* Horizontal stub at avatar-centre height */
-    background-image: linear-gradient(to right, transparent 2px, var(--anchor-text) 2px);
-    background-size: 100% 2px;
-    background-position: 0 calc(var(--status-pad-v) + 11px);
+    inset-block: 0; /* full height — connects visually to parent above and sibling below */
+    inset-inline-start: 0;
+    /* Content width = indentation area minus the 4px left border */
+    width: calc(8px * var(--status-depth) - 4px);
+    /* Vertical line: full-height left border */
+    border-inline-start: 4px solid var(--anchor-text);
+    /* Horizontal branch: 4px bar at avatar-centre (pad-v + 10px centres a 4px stripe at pad-v + 12px) */
+    background-image: linear-gradient(var(--anchor-text), var(--anchor-text));
+    background-size: 100% 4px;
+    background-position: 0 calc(var(--status-pad-v) + 10px);
     background-repeat: no-repeat;
-    /* opacity=0 hides the connector at depth=0 */
+    /* opacity=0 hides connector at depth=0 */
     opacity: calc(0.4 * min(1, var(--status-depth)));
     z-index: -1;
     pointer-events: none;
@@ -168,11 +169,6 @@
   }
   .status-article.status-subtree-end {
     border-bottom: 4px solid var(--main-border);
-  }
-  /* Last item in subtree: shorten vertical line to avatar centre → └── shape */
-  .status-article.status-subtree-end::before {
-    bottom: auto;
-    height: calc(var(--status-pad-v) + 13px);
   }
   .status-article.notification-next-grouped {
     border-bottom: none;
