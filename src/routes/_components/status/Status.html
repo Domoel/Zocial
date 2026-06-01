@@ -9,7 +9,7 @@
          on:error|capture="recalculateHeight()"
          {style}
 >
-  {#if showHeader}
+  {#if showHeader && !threadPosition}
     <StatusHeader {...params} {notificationInfo} />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle'}
@@ -19,7 +19,7 @@
   {#if !nextGrouped && !isStatusInOwnThread && threadPosition !== 'middle'}
     <StatusRelativeDate {...params} {...timestampParams} />
   {/if}
-  {#if !nextGrouped}
+  {#if !nextGrouped && threadPosition !== 'middle'}
     <StatusSidebar {...params} />
   {/if}
   {#if !nextGrouped && computedSpoilerText && threadPosition !== 'middle'}
@@ -170,62 +170,66 @@
   }
 
   /* ── Thread bundling ─────────────────────────────────────── */
-  /* Connecting line drawn through the sidebar/avatar column */
-  .status-article.thread-top :global(.status-sidebar)::after,
-  .status-article.thread-middle :global(.status-sidebar)::after,
-  .status-article.thread-middle :global(.status-sidebar)::before,
-  .status-article.thread-bottom :global(.status-sidebar)::before {
-    content: '';
-    position: absolute;
-    width: 2px;
-    background: var(--main-border);
-    inset-inline-start: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
-  }
 
-  /* Line going downward from the top item's avatar */
-  .status-article.thread-top :global(.status-sidebar)::after {
-    top: 100%;
-    bottom: auto;
-    height: 100%;   /* fills the gap to the next item */
-  }
-
-  /* Middle items: thin bar with lines above and below */
+  /* Middle items: fully collapsed — zero height, no spacing */
   .status-article.thread-middle {
-    padding-top: 0;
-    padding-bottom: 0;
+    height: 0;
     min-height: 0;
+    padding: 0 !important;
+    border: none;
+    overflow: hidden;
+  }
+
+  /* Remove bottom border from top item so line connects cleanly */
+  .status-article.thread-top.status-in-timeline {
     border-bottom: none;
   }
-  .status-article.thread-middle :global(.status-sidebar)::before {
-    top: 0;
-    height: 50%;
-  }
-  .status-article.thread-middle :global(.status-sidebar)::after {
-    top: 50%;
-    height: 50%;
+
+  /* Connecting line: top item downward from below avatar.
+     Line x = padding-h + half of 48px avatar = pad + 24px.
+     Extends far down; covered by the bottom item's background (DOM order). */
+  .status-article.thread-top::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(var(--status-pad-h) + 24px);
+    transform: translateX(-50%);
+    top: calc(var(--status-pad-v) + 24px);
+    width: 2px;
+    height: 9999px;
+    background: var(--anchor-text);
+    pointer-events: none;
+    opacity: 0.4;
   }
 
-  /* Line going upward to the top item from the bottom item's avatar */
-  .status-article.thread-bottom :global(.status-sidebar)::before {
+  /* Connecting line: bottom item from top to avatar center.
+     Uses ::after (not ::before) to avoid conflicting with the
+     existing ::before depth-border pseudo-element. */
+  .status-article.thread-bottom::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(var(--status-pad-h) + 24px);
+    transform: translateX(-50%);
     top: 0;
-    height: 100%;
-    bottom: auto;
+    width: 2px;
+    height: calc(var(--status-pad-v) + 24px);
+    background: var(--anchor-text);
+    pointer-events: none;
+    opacity: 0.4;
   }
 
-  /* Count badge on the top item showing how many posts are bundled */
+  /* Count badge between top and bottom items */
   .thread-count-badge {
     grid-area: sidebar;
     align-self: end;
     justify-self: center;
     font-size: 0.65em;
-    background: var(--main-border);
-    color: var(--deemphasized-text-color);
+    background: var(--anchor-text);
+    color: var(--main-bg);
     border-radius: 999px;
-    padding: 1px 5px;
-    margin-bottom: 2px;
-    z-index: 2;
+    padding: 1px 6px;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
     line-height: 1.6;
   }
 
