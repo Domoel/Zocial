@@ -16,6 +16,37 @@
   .infinite-scroll-page {
     min-height: 100vh;
   }
+
+  .main-content {
+    overflow-x: hidden;
+  }
+
+  @keyframes swipe-out-left {
+    to { transform: translateX(-25%); opacity: 0; }
+  }
+  @keyframes swipe-out-right {
+    to { transform: translateX(25%); opacity: 0; }
+  }
+  @keyframes swipe-in-from-right {
+    from { transform: translateX(25%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+  }
+  @keyframes swipe-in-from-left {
+    from { transform: translateX(-25%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  :global(main.swipe-out-left)       { animation: swipe-out-left      150ms ease forwards; }
+  :global(main.swipe-out-right)      { animation: swipe-out-right     150ms ease forwards; }
+  :global(main.swipe-in-from-right)  { animation: swipe-in-from-right 200ms ease forwards; }
+  :global(main.swipe-in-from-left)   { animation: swipe-in-from-left  200ms ease forwards; }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(main.swipe-out-left),
+    :global(main.swipe-out-right),
+    :global(main.swipe-in-from-right),
+    :global(main.swipe-in-from-left) { animation: none; }
+  }
 </style>
 <script>
   import { store } from './_store/store.js'
@@ -58,10 +89,24 @@
         const currentIdx = navPages.findIndex(p => p.name === page)
         if (currentIdx === -1) return // not a top-level nav page
 
-        const targetIdx = dx < 0 ? currentIdx + 1 : currentIdx - 1
+        const goLeft = dx < 0
+        const targetIdx = goLeft ? currentIdx + 1 : currentIdx - 1
         if (targetIdx < 0 || targetIdx >= navPages.length) return // boundary
 
-        goto(navPages[targetIdx].href)
+        const main = this.refs.mainContent.querySelector('main')
+
+        // slide current content out
+        main.classList.add(goLeft ? 'swipe-out-left' : 'swipe-out-right')
+
+        setTimeout(() => {
+          goto(navPages[targetIdx].href)
+          main.classList.remove('swipe-out-left', 'swipe-out-right')
+          // slide new content in from the opposite side
+          main.classList.add(goLeft ? 'swipe-in-from-right' : 'swipe-in-from-left')
+          setTimeout(() => {
+            main.classList.remove('swipe-in-from-right', 'swipe-in-from-left')
+          }, 220)
+        }, 150)
       }
 
       const el = this.refs.mainContent
