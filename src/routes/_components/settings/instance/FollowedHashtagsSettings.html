@@ -4,7 +4,8 @@
       {#each followedHashtags as tag (tag.name)}
         <li class="hashtag-list-item">
           <a href="/tags/{tag.name}" rel="prefetch" class="hashtag-link">
-            <span class="hashtag-symbol">#</span>{tag.name}
+            <SvgIcon className="hashtag-icon" href="#fa-hashtag" />
+            {tag.name}
           </a>
           <button type="button" class="unfollow-button" on:click="unfollow(tag.name)" aria-label="Unfollow #{tag.name}">
             {'intl.unfollowLabel'}
@@ -68,7 +69,7 @@
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 8px;
     color: var(--anchor-text);
   }
 
@@ -76,10 +77,12 @@
     text-decoration: underline;
   }
 
-  .hashtag-symbol {
-    color: var(--deemphasized-text-color);
-    font-weight: 400;
-    margin-inline-end: 1px;
+  :global(.hashtag-icon) {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    fill: var(--deemphasized-text-color);
+    flex-shrink: 0;
   }
 
   .unfollow-button {
@@ -142,9 +145,11 @@
 </style>
 <script>
   import { store } from '../../../_store/store.js'
+  import SvgIcon from '../../SvgIcon.html'
   import { followHashtag, unfollowHashtag, refreshFollowedHashtagsForInstance } from '../../../_actions/followedTags.js'
 
   export default {
+    components: { SvgIcon },
     store: () => store,
     data: () => ({
       newTag: '',
