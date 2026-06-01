@@ -115,6 +115,6 @@ function stableRef (prevById, source, position, chainLength) {
 
 function clearIfStale (s) {
   return (s.threadPosition != null || s.threadChainLength != null)
-    ? { ...s, threadPosition: null, threadChainLength: undefined }
+    ? { ...s, threadPosition: null, threadChainLength: null }
     : s
 }

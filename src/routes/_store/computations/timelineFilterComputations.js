@@ -125,8 +125,6 @@ export function timelineFilterComputations (store) {
         _lastBundled = result
         return result
       }
-      _lastBundledKey = null
-      _lastBundled = null
       return filtered
     }
   )
