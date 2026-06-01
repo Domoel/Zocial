@@ -51,7 +51,6 @@
 <script>
   import { store } from './_store/store.js'
   import { observe } from 'svelte-extras'
-  import { goto } from '../../__sapper__/client.js'
 
   const SWIPE_MIN_X = 60   // minimum horizontal distance to count as a swipe
   const SWIPE_DIR_RATIO = 2 // horizontal must be at least 2× the vertical
@@ -99,7 +98,7 @@
         main.classList.add(goLeft ? 'swipe-out-left' : 'swipe-out-right')
 
         setTimeout(() => {
-          goto(navPages[targetIdx].href)
+          import('../../__sapper__/client.js').then(({ goto }) => goto(navPages[targetIdx].href))
           main.classList.remove('swipe-out-left', 'swipe-out-right')
           // slide new content in from the opposite side
           main.classList.add(goLeft ? 'swipe-in-from-right' : 'swipe-in-from-left')
