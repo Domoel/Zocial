@@ -68,6 +68,11 @@
       {'intl.bottomNav'}
     </label>
     <label class="setting-group">
+      <input type="checkbox" id="choice-enable-thread-polling"
+             bind:checked="$enableThreadPolling" on:change="onChange(event)">
+      {'intl.enableThreadPolling'}
+    </label>
+    <label class="setting-group">
       <input type="checkbox" id="choice-hide-long-posts"
              bind:checked="$hideLongPosts" on:change="onChange(event)">
       {'intl.hideLongPosts'}
