@@ -148,13 +148,13 @@
   .status-article::before {
     content: "";
     position: absolute;
-    inset-block: 0; /* full height — connects visually to parent above and sibling below */
+    inset-block: 0;
     inset-inline-start: 0;
     /* Content width = indentation area minus the 4px left border */
     width: calc(8px * var(--status-depth) - 4px);
-    /* Vertical line: full-height left border */
+    /* Vertical: full height — lines overlap across articles to form the bracket */
     border-inline-start: 4px solid var(--anchor-text);
-    /* Horizontal branch: 4px bar at avatar-centre (pad-v + 10px centres a 4px stripe at pad-v + 12px) */
+    /* Horizontal branch: 4px bar centred on avatar (pad-v + 10px → centre at pad-v + 12px) */
     background-image: linear-gradient(var(--anchor-text), var(--anchor-text));
     background-size: 100% 4px;
     background-position: 0 calc(var(--status-pad-v) + 10px);
