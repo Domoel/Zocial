@@ -66,6 +66,22 @@ The navigation bar is fully reorderable — drag items on desktop, or long-press
 
 Set a character threshold at which long posts collapse with a "show more" toggle — useful on Akkoma instances where post length limits are often lifted entirely.
 
+### A settings panel that makes sense
+
+The settings panel has been reorganised and extended — related controls are grouped together, and adjustments that felt buried or out of place have been moved to where you'd actually look for them.
+
+### Two custom pin slots
+
+The navigation bar has room for two fully customisable pin slots, sitting right alongside the fixed tabs. Pin any timeline, hashtag, or list you visit regularly and it's always one tap away — making full use of the space the nav bar offers.
+
+### Manage followed hashtags
+
+A dedicated section in Settings lets you view, follow, and unfollow hashtags without leaving the app — no more navigating to a hashtag timeline first. Manage all your tag subscriptions in one place.
+
+### Desktop notifications
+
+Fine-grained control over which interactions trigger a desktop or browser notification. Choose exactly which events you want to be alerted about — mentions, boosts, follows, favourites, or all of the above.
+
 ---
 
 ## 📦 Deployment
