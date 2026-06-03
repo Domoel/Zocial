@@ -109,7 +109,7 @@ The instance hostname is injected at container startup — **no rebuild required
 ### Building from source
 
 ```bash
-git clone https://git.ztfr.eu/Dome/Enafore
+git clone https://git.ztfr.eu/Dome/Zocial
 cd Enafore
 npm install
 npm run build        # output lands in __sapper__/export/

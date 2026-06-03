@@ -15,12 +15,12 @@ export default {
   footer: `
     <p>
       Zocial es
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">software de código abierto</a>
+      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">software de código abierto</a>
       creado por
       <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
       y distribuido bajo la
       <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">Licencia AGPL</a>.
+         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">Licencia AGPL</a>.
       Aquí está la <a href="/settings/about#privacy-policy" rel="prefetch">política de privacidad</a>.
       Es una continuación de Zocial creado por
         <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>.
@@ -331,12 +331,12 @@ export default {
   <p>
     Zocial es
     <a rel="noopener" target="_blank"
-       href="https://git.ztfr.eu/Dome/Enafore">software libre y de código abierto</a>
+       href="https://git.ztfr.eu/Dome/Zocial">software libre y de código abierto</a>
     creado por
     <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
     y distribuido bajo la
     <a rel="noopener" target="_blank"
-       href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">GNU Affero General Public License</a>.
+       href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>.
   </p>
 
   <h2 id="privacy-policy">Política de privacidad</h2>

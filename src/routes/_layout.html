@@ -131,7 +131,7 @@
     computed: {
       page: ({ child }) => child.props.path.slice(1) || 'home',
       infiniteScrollPage: ({ $isUserLoggedIn, page }) => $isUserLoggedIn && !page.startsWith('settings'),
-      canonical: ({ path }) => (ZOCIAL_IS_BROWSER ? location.origin + path : process.env.UPSTREAM ? 'https://enafore.social' + path : null)
+      canonical: ({ path }) => (ZOCIAL_IS_BROWSER ? location.origin + path : process.env.UPSTREAM ? 'https://zocial.ztfr.eu' + path : null)
     },
     methods: {
       observe

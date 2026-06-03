@@ -15,11 +15,11 @@ export default {
   footer: `
     <p>
       Zocial ist
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">quelloffene Software</a>,
+      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">quelloffene Software</a>,
       erstellt von <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
       und verteilt unter der
       <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">AGPL Lizenz</a>.
+         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL Lizenz</a>.
       Hier ist die <a href="/settings/about#privacy-policy" rel="prefetch">Datenschutzerklärung</a>.
       Es ist eine Fortsetzung des Zocial-Projekts von <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>.
     </p>
@@ -317,7 +317,7 @@ export default {
   aboutApp: 'Über Zocial',
   aboutAppDescription: `
   <p>
-    Zocial ist <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore">Open-Source-Software</a> und ein Fork von <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">Enafore</a>, erstellt von <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">Dome</a>.
+    Zocial ist <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Open-Source-Software</a> und ein Fork von <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">Enafore</a>, erstellt von <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">Dome</a>.
   </p>
 
   <h2 id="privacy-policy">Datenschutzrichtlinie</h2>
@@ -327,7 +327,7 @@ export default {
   </p>
 
   <p>
-    Zocial ist eine statische Website, die überall gehostet werden kann (z. B. GitHub Pages). Sie wird als <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/enafore">Docker Image</a> bereitgestellt und kann mithilfe eines Nginx-Webservers aufgesetzt werden. Alle Daten werden lokal in deinem Browser gespeichert und mit den Fediverse-Instanzen geteilt, mit denen du dich verbindest.
+    Zocial ist eine statische Website, die überall gehostet werden kann (z. B. GitHub Pages). Sie wird als <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/zocial">Docker Image</a> bereitgestellt und kann mithilfe eines Nginx-Webservers aufgesetzt werden. Alle Daten werden lokal in deinem Browser gespeichert und mit den Fediverse-Instanzen geteilt, mit denen du dich verbindest.
   </p>
 
   <p>
@@ -341,13 +341,13 @@ export default {
   </p>
 
   <p>
-    Zocial ist unter der <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Enafore/src/branch/main/LICENSE">GNU Affero General Public License</a> lizenziert. Ein <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> Angebot.
+    Zocial ist unter der <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a> lizenziert. Ein <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> Angebot.
   </p>
 
   <h2>Version</h2>
 
   <p>
-    Du nutzt Zocial-Version <code class="enafore-version"></code>.
+    Du nutzt Zocial-Version <code class="zocial-version"></code>.
   </p>`,
   // Settings
   settings: 'Einstellungen',
