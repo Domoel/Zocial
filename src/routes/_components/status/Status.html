@@ -67,9 +67,6 @@
   {#if !nextGrouped && threadPosition !== 'middle' && replyShown}
     <StatusComposeBox {...params} on:recalculateHeight />
   {/if}
-  {#if threadPosition === 'top' && summary && summary.threadChainLength > 2}
-    <span class="thread-count-badge">+{summary.threadChainLength - 2}</span>
-  {/if}
 </article>
 {#if enableShortcuts && threadPosition !== 'middle'}
   <Shortcut scope={shortcutScope} key="o" on:pressed="open()" />
@@ -191,7 +188,9 @@
     border-bottom: none;
   }
 
-  /* Connecting line on thread-bottom: short line from VLI top to avatar top.
+  /* Connecting line on thread-bottom: line from VLI top to avatar center.
+     Height is generous (padding + half avatar) to bridge any subpixel gaps
+     that accumulate when multiple zero-height middle items are present.
      Uses ::after (not ::before) to avoid conflicting with the
      existing ::before depth-border pseudo-element. */
   .status-article.thread-bottom::after {
@@ -201,27 +200,12 @@
     transform: translateX(-50%);
     top: 0;
     width: 4px;
-    height: var(--status-pad-v);
+    height: calc(var(--status-pad-v) + 24px);
     background: var(--anchor-text);
     pointer-events: none;
     opacity: 0.4;
   }
 
-  /* Count badge between top and bottom items */
-  .thread-count-badge {
-    grid-area: sidebar;
-    align-self: end;
-    justify-self: center;
-    font-size: 0.65em;
-    background: var(--anchor-text);
-    color: var(--main-bg);
-    border-radius: 999px;
-    padding: 1px 6px;
-    margin-bottom: 4px;
-    position: relative;
-    z-index: 1;
-    line-height: 1.6;
-  }
 
   @media (max-width: 767px) {
     .status-article:not(.status-in-own-thread) {
