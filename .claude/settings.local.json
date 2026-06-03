@@ -18,7 +18,9 @@
       "Bash(git -C /media/Datengrab/Gitea/Enafore/Enafore log --oneline main...HEAD --name-only)",
       "Bash(git -C /media/Datengrab/Gitea/Enafore/Enafore log --oneline --all -- src/routes/_components/compose/ComposeStickyButton.html)",
       "Bash(git -C /media/Datengrab/Gitea/Enafore/Enafore show 509b41b3 -- src/routes/_layout.html)",
-      "Bash(git -C /media/Datengrab/Gitea/Enafore/Enafore log --oneline main..dev)"
+      "Bash(git -C /media/Datengrab/Gitea/Enafore/Enafore log --oneline main..dev)",
+      "Bash(grep -r \"statusThreadNumber\\\\|withinContext\" /tmp/phanpy/src --include=\"*.js\" --include=\"*.jsx\" | head -30)",
+      "Read(//tmp/phanpy/src/**)"
     ]
   }
 }

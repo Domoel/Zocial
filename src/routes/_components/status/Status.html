@@ -14,7 +14,7 @@
     <StatusHeader {...params} {notificationInfo} />
   {/if}
   {#if threadPosition === 'top'}
-    <StatusHeader {...params} isThreadBundle={true} />
+    <StatusHeader {...params} isThreadBundle={true} threadChainLength={summary && summary.threadChainLength} />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle'}
     <StatusAuthorName {...params} />

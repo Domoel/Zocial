@@ -9,29 +9,30 @@ export const BUNDLEABLE_TIMELINE_TYPES = new Set(['home', 'local', 'federated', 
 
 /**
  * Detects consecutive self-thread chains in a timeline (newest-first order)
- * and marks each item with a threadPosition.
+ * and marks each item with a threadPosition and threadIndex.
  *
  * A self-thread: same author, each post replies directly to the previous one.
  * Timeline is newest-first, so for chain [D, C, B, A]:
  *   summaries[i].replyId === summaries[i+1].id (D replies to C, etc.)
  *
- * Single-pass: reads from the input array for chain detection, writes results
- * to a new array. Items are only object-spread when their position changes or
- * stale values need clearing — no double-spread for chain items.
+ * Only bundles when ALL posts are by the same author (self-reply thread).
+ * This matches Phanpy's approach: a thread is a deliberate, coherent chain
+ * by one person. Mixed-author conversations are left unbundled so no other
+ * user's context post is hidden.
  *
  * threadPosition values:
- *   'top'    — oldest post / thread starter (shown first, has header, connecting line below avatar)
+ *   'top'    — oldest post / thread starter (shown first, has header)
  *   'middle' — hidden posts between top and bottom
- *   'bottom' — newest post in chain (shown last, connecting line above avatar)
+ *   'bottom' — newest post in chain (shown last)
  *   null     — not part of a thread chain
+ *
+ * threadIndex: 1-based chronological position within the chain
  */
 export function markThreadBundles (summaries, prevBundled) {
   const n = summaries.length
 
   // Opt 1: quick scan — if no adjacent same-author reply pair exists, return the
   // same array reference so downstream computeds and the virtual list skip remeasurement.
-  // Checks actual adjacency (replyId matches next item's id) to avoid false positives
-  // from posts that merely reply to external accounts.
   let hasCandidate = false
   for (let i = 0; i < n - 1; i++) {
     const s = summaries[i]
@@ -49,9 +50,9 @@ export function markThreadBundles (summaries, prevBundled) {
   if (!hasCandidate) return summaries
 
   // Opt 2: build a lookup of the previous bundled result keyed by item id so
-  // that items whose threadPosition and chainLength are unchanged can reuse
-  // their old object reference — prevents the virtual list from treating them
-  // as changed items and triggering unnecessary height remeasurement.
+  // that items whose threadPosition, chainLength and threadIndex are unchanged
+  // can reuse their old object reference — prevents the virtual list from
+  // treating them as changed items and triggering unnecessary height remeasurement.
   const prevById = prevBundled ? mapBy(prevBundled, s => s.id) : null
 
   const result = new Array(n)
@@ -67,7 +68,7 @@ export function markThreadBundles (summaries, prevBundled) {
       continue
     }
 
-    // Walk forward using the original summaries to detect a same-author reply chain
+    // Walk forward: detect a same-author reply chain
     let j = i + 1
     while (
       j < n &&
@@ -83,13 +84,15 @@ export function markThreadBundles (summaries, prevBundled) {
 
     if (chainLength >= 2) {
       // Reverse the physical order: oldest post (summaries[j-1]) goes to result[i] as 'top'
-      // so it renders first (visually at top) with the "started a thread" header.
+      // so it renders first (visually at top) with the thread header.
       // Newest post (summaries[i]) goes to result[j-1] as 'bottom'.
-      result[i] = stableRef(prevById, summaries[j - 1], 'top', chainLength)
+      // threadIndex is the 1-based chronological position (top = 1, bottom = chainLength).
+      result[i] = stableRef(prevById, summaries[j - 1], 'top', chainLength, 1)
       for (let k = i + 1; k < j - 1; k++) {
-        result[k] = stableRef(prevById, summaries[j - 1 - (k - i)], 'middle', chainLength)
+        const threadIndex = k - i + 1
+        result[k] = stableRef(prevById, summaries[j - 1 - (k - i)], 'middle', chainLength, threadIndex)
       }
-      result[j - 1] = stableRef(prevById, summaries[i], 'bottom', chainLength)
+      result[j - 1] = stableRef(prevById, summaries[i], 'bottom', chainLength, chainLength)
       i = j
     } else {
       // Not a chain — pass through, clearing any stale values from a previous run
@@ -101,20 +104,23 @@ export function markThreadBundles (summaries, prevBundled) {
   return result
 }
 
-// Return the previous object reference if threadPosition and chainLength are
-// unchanged — same reference means the virtual list skips height remeasurement.
-function stableRef (prevById, source, position, chainLength) {
+function stableRef (prevById, source, position, chainLength, threadIndex) {
   if (prevById) {
     const prev = prevById.get(source.id)
-    if (prev && prev.threadPosition === position && prev.threadChainLength === chainLength) {
+    if (
+      prev &&
+      prev.threadPosition === position &&
+      prev.threadChainLength === chainLength &&
+      prev.threadIndex === threadIndex
+    ) {
       return prev
     }
   }
-  return { ...source, threadPosition: position, threadChainLength: chainLength }
+  return { ...source, threadPosition: position, threadChainLength: chainLength, threadIndex }
 }
 
 function clearIfStale (s) {
-  return (s.threadPosition != null || s.threadChainLength != null)
-    ? { ...s, threadPosition: null, threadChainLength: null }
+  return (s.threadPosition != null || s.threadChainLength != null || s.threadIndex != null)
+    ? { ...s, threadPosition: null, threadChainLength: null, threadIndex: null }
     : s
 }
