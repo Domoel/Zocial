@@ -56,6 +56,9 @@
     >
     {/if}
   </div>
+  {#if isThreadBundle && threadChainLength > 1}
+  <span class="thread-header-count">1/{threadChainLength}</span>
+  {/if}
 </div>
 <style>
   .status-header {
@@ -161,6 +164,19 @@
     color: var(--body-text-color);
   }
 
+  .thread-header-count {
+    margin-inline-start: auto;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.75em;
+    font-weight: 600;
+    background: var(--anchor-text);
+    color: var(--main-bg);
+    line-height: 1.6;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   .report-button {
     padding: 6px 12px;
   }
@@ -260,7 +276,8 @@
     },
     data: () => ({
       notificationInfo: null,
-      isThreadBundle: false
+      isThreadBundle: false,
+      threadChainLength: 0
     })
   }
 </script>
