@@ -444,6 +444,7 @@ export default {
   immediacy: 'Immediacy',
   showAbsoluteTimestamps: 'Show absolute timestamps (e.g. "March 3rd") instead of relative timestamps (e.g. "5 minutes ago")',
   ui: 'UI',
+  composer: 'Composer',
   grayscaleMode: 'Show emojis, images, and videos in grayscale',
   wellnessFooter: `These settings are partly based on guidelines from the
     <a rel="noopener" target="_blank" href="https://humanetech.com">Center for Humane Technology</a>.`,
