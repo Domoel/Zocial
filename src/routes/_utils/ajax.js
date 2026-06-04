@@ -4,8 +4,11 @@ export const WRITE_TIMEOUT = 45000 // allow more time if the user did a write ac
 
 function fetchWithTimeout (url, fetchOptions, timeout) {
   return new Promise((resolve, reject) => {
-    fetch(url, fetchOptions).then(resolve, reject)
-    setTimeout(() => reject(new Error(`Timed out after ${timeout / 1000} seconds`)), timeout)
+    const timeoutId = setTimeout(() => reject(new Error(`Timed out after ${timeout / 1000} seconds`)), timeout)
+    fetch(url, fetchOptions).then(
+      response => { clearTimeout(timeoutId); resolve(response) },
+      error => { clearTimeout(timeoutId); reject(error) }
+    )
   })
 }
 
