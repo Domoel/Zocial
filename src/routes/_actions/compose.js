@@ -105,8 +105,13 @@ export function setReplyVisibility (realm, replyVisibility) {
   if (typeof postPrivacy !== 'undefined') {
     return // user has already set the postPrivacy
   }
-  const { currentVerifyCredentials } = store.get()
-  const defaultVisibility = currentVerifyCredentials.source.privacy || 'public'
+  const { currentVerifyCredentials, defaultUnlistedReplies } = store.get()
+  // When the user opts in, default replies to "unlisted"; otherwise use their account default.
+  // Either way we still cap at the replied-to status's privacy below, so a reply is never
+  // more public than the post it answers.
+  const defaultVisibility = defaultUnlistedReplies
+    ? 'unlisted'
+    : (currentVerifyCredentials.source.privacy || 'public')
   const visibility = PRIVACY_LEVEL[replyVisibility] < PRIVACY_LEVEL[defaultVisibility]
     ? replyVisibility
     : defaultVisibility

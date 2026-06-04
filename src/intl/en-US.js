@@ -425,6 +425,7 @@ export default {
   hideFollowerCount: 'Hide follower counts (capped at 10)',
   hideReblogCount: 'Hide boost counts',
   enableThreadPolling: 'Show auto-refresh button in threads',
+  defaultUnlistedReplies: 'Default replies to unlisted visibility (never more public than the post you reply to)',
   threadPollingStart: 'Auto-refresh replies (every 30s)',
   threadPollingStop: 'Stop auto-refresh',
   enableDesktopNotifications: 'Enable desktop notifications',

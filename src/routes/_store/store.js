@@ -19,6 +19,9 @@ const persistedState = {
     ZOCIAL_IS_BROWSER && /iP(?:hone|ad|od)/.test(navigator.userAgent),
   bottomNav: false,
   centerNav: true,
+  // When true, replies default to "unlisted" visibility (never more public than the
+  // post being replied to). See setReplyVisibility() in _actions/compose.js.
+  defaultUnlistedReplies: false,
   disableFollowRequestCount: false,
   hideLongPosts: true,
   longPostLength: 1024,

@@ -73,6 +73,11 @@
       {'intl.enableThreadPolling'}
     </label>
     <label class="setting-group">
+      <input type="checkbox" id="choice-default-unlisted-replies"
+             bind:checked="$defaultUnlistedReplies" on:change="onChange(event)">
+      {'intl.defaultUnlistedReplies'}
+    </label>
+    <label class="setting-group">
       <input type="checkbox" id="choice-hide-long-posts"
              bind:checked="$hideLongPosts" on:change="onChange(event)">
       {'intl.hideLongPosts'}
