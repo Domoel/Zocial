@@ -1,6 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Zocial app icon — SOURCE OF TRUTH for all generated PWA icons.
-  Purple→blue diagonal gradient with a white "Z" and rounded corners.
+  Purple→blue diagonal gradient with a white "Z" on a square, full-bleed
+  background (no rounded corners — Android/iOS apply their own masking).
 
   IMPORTANT — two rules so the build (resvg) and platform masks behave:
 
@@ -15,11 +17,9 @@
          (2.88 = 4 × 0.72;  71.68 = 512 × (1 − 0.72) / 2)
      Enlarging the Z risks it being clipped by Android's maskable mask.
 
-  bin/build-svg.js (buildIcons) rasterizes this into:
-    icon-192/512.png            (rounded corners, purpose "any")
-    icon-192/512-maskable.png   (corners squared off → full-bleed gradient)
-    apple-touch-icon.png        (squared, so iOS shows no transparent corners)
-  Edit this file to change the shipped icons.
+  bin/build-svg.js (buildIcons) rasterizes this into icon-192/512.png,
+  icon-192/512-maskable.png and apple-touch-icon.png (all identical, square
+  and full-bleed). Edit this file to change the shipped icons.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
@@ -28,6 +28,6 @@
       <stop offset="1" stop-color="#2B80D0"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="100" ry="100" fill="url(#zocial-bg)"/>
+  <rect width="512" height="512" fill="url(#zocial-bg)"/>
   <path fill="#ffffff" transform="translate(71.68 71.68) scale(2.88)" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
 </svg>

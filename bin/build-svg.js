@@ -47,10 +47,9 @@ async function buildIcons () {
   const sourcePath = path.resolve(__dirname, '../static/icons/icon-source.svg')
   const sourceSvg = await readFile(sourcePath, 'utf8')
 
-  // Maskable variant: square off the rounded corners so the gradient is full-bleed.
-  // Transparent corners would otherwise show the platform's default (grey) through the mask.
-  const maskableSvg = sourceSvg.replace(/rx="[^"]*"\s+ry="[^"]*"/, 'rx="0" ry="0"')
-
+  // The source is a square, full-bleed icon, so every variant is the same image
+  // at a different size. Android/iOS apply their own corner masking; the "maskable"
+  // PNGs just need to exist for the manifest's purpose:"maskable" entries.
   for (const size of [192, 512]) {
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-${size}.png`),
@@ -58,13 +57,12 @@ async function buildIcons () {
     )
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-${size}-maskable.png`),
-      await render(maskableSvg, size)
+      await render(sourceSvg, size)
     )
   }
-  // iOS does not round transparent corners — use the squared (full-bleed) variant.
   await writeFile(
     path.resolve(__dirname, '../static/icons/apple-touch-icon.png'),
-    await render(maskableSvg, 180)
+    await render(sourceSvg, 180)
   )
 }
 
