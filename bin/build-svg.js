@@ -61,9 +61,10 @@ async function buildIcons () {
       await render(maskableSvg, size)
     )
   }
+  // iOS does not round transparent corners — use the squared (full-bleed) variant.
   await writeFile(
     path.resolve(__dirname, '../static/icons/apple-touch-icon.png'),
-    await render(sourceSvg, 180)
+    await render(maskableSvg, 180)
   )
 }
 
