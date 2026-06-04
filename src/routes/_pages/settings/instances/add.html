@@ -96,6 +96,7 @@
       if (code) {
         await handleOauthCode(code)
       } else {
+        this.store.set({ instanceNameInSearch: '' })
         this.set({
           hasIndexedDB: await testHasIndexedDB(),
           hasLocalStorage: testHasLocalStorage()
