@@ -242,7 +242,8 @@
   import { getAccessibleLabelForStatus } from '../../_a11y/getAccessibleLabelForStatus.js'
   import { formatTimeagoDate } from '../../_intl/formatTimeagoDate.js'
   import { measureText } from '../../_utils/measureText.js'
-  import { LONG_POST_LENGTH, LONG_POST_TEXT } from '../../_static/statuses.js'
+  import { LONG_POST_LENGTH, LONG_POST_TEXT, FILTERED_TEXT } from '../../_static/statuses.js'
+  import { createSearchIndexFromStatusOrNotification } from '../../_utils/createSearchIndexFromStatusOrNotification.js'
   import { absoluteDateFormatter, dayOnlyAbsoluteDateFormatter } from '../../_utils/formatters.js'
   import { composeNewStatusMentioning } from '../../_actions/mention.js'
   import { createStatusOrNotificationUuid } from '../../_utils/createStatusOrNotificationUuid.js'
@@ -445,8 +446,22 @@
         return plainTextContent.length > limit && measureText(plainTextContent) > limit
       },
       spoilerText: ({ originalStatus, plainTextContentOverLength }) => originalStatus.spoiler_text,
-      computedSpoilerText: ({ spoilerText, plainTextContentOverLength }) => (
-        spoilerText || (plainTextContentOverLength && LONG_POST_TEXT)
+      // A "hide with a warning" (non-irreversible) word filter matching this post in the current
+      // timeline's context. Such posts are kept (not dropped) and collapsed behind a "Filtered"
+      // warning by reusing the spoiler mechanism. Returns '' when no warn filter applies.
+      filterWarning: ({ status, $currentTimelineWarnFilterRegex }) => {
+        if (!$currentTimelineWarnFilterRegex) {
+          return ''
+        }
+        try {
+          const searchIndex = createSearchIndexFromStatusOrNotification(status)
+          return $currentTimelineWarnFilterRegex.test(searchIndex) ? FILTERED_TEXT : ''
+        } catch (e) {
+          return ''
+        }
+      },
+      computedSpoilerText: ({ spoilerText, plainTextContentOverLength, filterWarning }) => (
+        filterWarning || spoilerText || (plainTextContentOverLength && LONG_POST_TEXT)
       ),
       inReplyToId: ({ originalStatus }) => originalStatus.in_reply_to_id,
       uuid: ({ $currentInstance, timelineType, timelineValue, notificationId, statusId, quotedBy }) => (

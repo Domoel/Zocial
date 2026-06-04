@@ -50,6 +50,8 @@ export const KNOWN_CONTENT_TYPES = {
 
 export const LONG_POST_LENGTH = 1024
 export const LONG_POST_TEXT = 'intl.longPost'
+// Shown as the spoiler/warning text for posts matching a "hide with a warning" word filter.
+export const FILTERED_TEXT = 'intl.filtered'
 
 export const MAX_STATUS_CHARS = 500
 export const MAX_STATUS_MEDIA_ATTACHMENTS = 4

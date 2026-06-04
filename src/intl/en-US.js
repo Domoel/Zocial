@@ -106,6 +106,8 @@ export default {
   statusNotLoggedIn: 'A thread will appear here when logged in.',
   tagNotLoggedIn: 'A hashtag timeline will appear here when logged in.',
   accountNotLoggedIn: 'Account settings will appear here when logged in.',
+  // Shown as the collapse/warning text for posts matching a "hide with a warning" word filter
+  filtered: 'Filtered',
   // Notification subpages
   filters: 'Filters',
   all: 'All',

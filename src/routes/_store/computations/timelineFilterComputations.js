@@ -82,6 +82,21 @@ export function timelineFilterComputations (store) {
     }
   )
 
+  // The "warn"/non-irreversible filter regex that applies to the current timeline's context.
+  // Status.html uses this to collapse matching posts behind a "Filtered" warning (instead of
+  // dropping them, which is what the "hide"/irreversible filters do via createFilterFunction).
+  store.compute(
+    'currentTimelineWarnFilterRegex',
+    ['unexpiredInstanceFilterWarnRegexes', 'currentInstance', 'timelineWordFilterContext'],
+    (warnRegexes, currentInstance, wordFilterContext) => {
+      if (!wordFilterContext) {
+        return undefined
+      }
+      const contextsToRegex = warnRegexes[currentInstance]
+      return (contextsToRegex && contextsToRegex[wordFilterContext]) || undefined
+    }
+  )
+
   // This one is based on whatever the current timeline is
   store.compute(
     'timelineFilterFunction',
