@@ -37,50 +37,33 @@ async function render (svg, size) {
   }).render().asPng()
 }
 
-// Returns an SVG string for the Zocial app icon (purple→blue gradient, white Z).
-// resvg renders this reliably at any size; raster sources (PNG) are not supported here.
-// paddingFraction: extra padding as fraction of size (0.1 = 10% each side for maskable safe zone).
-// To change the icon, edit the gradient stops / the <path> below.
-function makeZocialIcon (paddingFraction = 0) {
-  const total = 100
-  const pad = total * paddingFraction
-  const inner = total - pad * 2
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#7B35BE"/>
-      <stop offset="100%" stop-color="#2B80D0"/>
-    </linearGradient>
-  </defs>
-  <rect width="${total}" height="${total}" fill="url(#g)"/>
-  <svg x="${pad}" y="${pad}" width="${inner}" height="${inner}" viewBox="0 0 128 128">
-    <path fill="white" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
-  </svg>
-</svg>`
-}
-
+// Generates all PWA icons from static/icons/icon-source.svg (single source of truth).
+// resvg rasterizes the SVG reliably at any size. To change the icon, edit icon-source.svg.
 async function buildIcons () {
   await mkdir(path.resolve(__dirname, '../static/icons'), {
     recursive: true
   })
 
-  // Full-bleed for regular icons; 10% padded variant for maskable safe zone.
-  const icon = Buffer.from(makeZocialIcon(0))
-  const maskableIcon = Buffer.from(makeZocialIcon(0.1))
+  const sourcePath = path.resolve(__dirname, '../static/icons/icon-source.svg')
+  const sourceSvg = await readFile(sourcePath, 'utf8')
+
+  // Maskable variant: square off the rounded corners so the gradient is full-bleed.
+  // Transparent corners would otherwise show the platform's default (grey) through the mask.
+  const maskableSvg = sourceSvg.replace(/rx="[^"]*"\s+ry="[^"]*"/, 'rx="0" ry="0"')
 
   for (const size of [192, 512]) {
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-${size}.png`),
-      await render(icon, size)
+      await render(sourceSvg, size)
     )
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-${size}-maskable.png`),
-      await render(maskableIcon, size)
+      await render(maskableSvg, size)
     )
   }
   await writeFile(
     path.resolve(__dirname, '../static/icons/apple-touch-icon.png'),
-    await render(icon, 180)
+    await render(sourceSvg, 180)
   )
 }
 

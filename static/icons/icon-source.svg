@@ -1,13 +1,13 @@
 <!--
-  Zocial app icon — hand-authored reference / backup.
-  Purple→blue diagonal gradient with a white "Z" and rounded corners,
-  matching icon-source.png. Uses a real <linearGradient> so it renders
-  correctly in any SVG renderer (resvg, browsers, design tools).
+  Zocial app icon — SOURCE OF TRUTH for all generated PWA icons.
+  Purple→blue diagonal gradient with a white "Z" and rounded corners.
+  Uses a real <linearGradient> so it renders correctly in any SVG renderer
+  (resvg, browsers, design tools).
 
-  NOTE: This file is a reference/backup only — it is NOT used by the build.
-  The PWA icons are generated programmatically by makeZocialIcon() in
-  bin/build-svg.js (which keeps the gradient full-bleed and insets the Z
-  for the maskable safe zone). Edit there to change the shipped icons.
+  bin/build-svg.js (buildIcons) rasterizes this file into:
+    icon-192/512.png, icon-192/512-maskable.png, apple-touch-icon.png
+  For the maskable variants the rounded corners are squared off automatically
+  so the gradient is full-bleed. Edit this file to change the shipped icons.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
