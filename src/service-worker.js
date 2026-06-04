@@ -108,7 +108,7 @@ self.addEventListener('fetch', event => {
         manifest.theme_color =
           process.env.THEME_COLORS[await getLastTheme()] ||
           manifest.theme_color
-        manifest.name = manifest.short_name = process.env.UPSTREAM ? 'Zocial' : location.hostname
+        manifest.name = manifest.short_name = 'Zocial'
         await closeKeyValIDBConnection() // don't need to keep the IDB connection open
         return new Response(JSON.stringify(manifest), {
           headers: {
