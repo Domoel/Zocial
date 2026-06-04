@@ -1,4 +1,4 @@
-import { updateInstanceInfo, updateVerifyCredentialsForInstance } from '../../_actions/instances.js'
+import { updateInstanceInfo, updateVerifyCredentialsForInstance, updateNodeInfoForInstance } from '../../_actions/instances.js'
 import { setupListsForInstance } from '../../_actions/lists.js'
 import { setupFollowedHashtagsForInstance } from '../../_actions/followedTags.js'
 import { createStream } from '../../_actions/stream/streaming.js'
@@ -49,6 +49,7 @@ async function refreshInstanceData (instanceName) {
   scheduleIdleTask(() => setupFollowedHashtagsForInstance(instanceName))
   scheduleIdleTask(() => setupFiltersForInstance(instanceName))
   scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName))
+  scheduleIdleTask(() => updateNodeInfoForInstance(instanceName))
 
   // these are the only critical ones
   const ready = Promise.all([

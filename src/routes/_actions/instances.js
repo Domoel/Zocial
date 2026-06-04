@@ -4,7 +4,8 @@ import { switchToTheme } from '../_utils/themeEngine.js'
 import { toast } from '../_components/toast/toast.js'
 import { goto } from '../../../__sapper__/client.js'
 import { cacheFirstUpdateAfter } from '../_utils/sync.js'
-import { getInstanceInfo } from '../_api/instance.js'
+import { getInstanceInfo, fetchNodeInfo } from '../_api/instance.js'
+import { auth } from '../_api/utils.js'
 import { database } from '../_database/database.js'
 import { importVirtualListStore } from '../_utils/asyncModules/importVirtualListStore.js'
 import { formatIntl } from '../_utils/formatIntl.js'
@@ -138,7 +139,13 @@ export async function updateInstanceInfo (instanceName) {
       return getInstanceInfo(instanceName, accessToken)
     },
     () => database.getInstanceInfo(instanceName),
-    info => database.setInstanceInfo(instanceName, info),
+    info => {
+      // preserve nodeInfo fetched separately by updateNodeInfoForInstance
+      const { instanceInfos } = store.get()
+      const existingNodeInfo = instanceInfos[instanceName] && instanceInfos[instanceName].nodeInfo
+      if (existingNodeInfo) info.nodeInfo = existingNodeInfo
+      return database.setInstanceInfo(instanceName, info)
+    },
     info => {
       const { instanceInfos } = store.get()
       instanceInfos[instanceName] = info
@@ -154,5 +161,30 @@ export function logOutOnUnauthorized (instanceName) {
     }
 
     throw error
+  }
+}
+
+export async function updateNodeInfoForInstance (instanceName) {
+  const { loggedInInstances } = store.get()
+  const accessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
+  const headers = accessToken ? auth(accessToken) : null
+  let nodeInfo
+  try {
+    nodeInfo = await fetchNodeInfo(instanceName, headers)
+  } catch (e) {
+    const cachedInfo = await database.getInstanceInfo(instanceName)
+    if (cachedInfo && cachedInfo.pleroma) {
+      console.warn('failed to get nodeInfo', e)
+    }
+    return
+  }
+  const cachedInfo = await database.getInstanceInfo(instanceName)
+  if (!cachedInfo) return
+  cachedInfo.nodeInfo = nodeInfo
+  await database.setInstanceInfo(instanceName, cachedInfo)
+  const { instanceInfos } = store.get()
+  if (instanceInfos[instanceName]) {
+    instanceInfos[instanceName] = Object.assign({}, instanceInfos[instanceName], { nodeInfo })
+    store.set({ instanceInfos })
   }
 }
