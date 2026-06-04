@@ -4,6 +4,7 @@ import fs from 'fs'
 import { promisify } from 'util'
 import { optimize } from 'svgo'
 import * as cheerio from 'cheerio'
+import { makeIcon } from '../src/routes/_utils/makeIcon.js'
 import { Resvg } from '@resvg/resvg-js'
 const $ = cheerio.load('')
 
@@ -81,6 +82,32 @@ async function buildIcons () {
     await render(icon, 180)
   )
 
+  // Alt theme icons (used for notification/badge variants)
+  for (const theme of [{ name: '-alt', bg: '#3c2947', fg: '#d4bbff' }]) {
+    const altIcon = Buffer.from(makeIcon(theme))
+    const altIosIcon = Buffer.from(makeIcon({ ...theme, ios: true }))
+    const altMaskableIcon = Buffer.from(makeIcon({ ...theme, maskable: true }))
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/icon-192${theme.name}.png`),
+      await render(altIcon, 192)
+    )
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/icon-512${theme.name}.png`),
+      await render(altIcon, 512)
+    )
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/icon-192-maskable${theme.name}.png`),
+      await render(altMaskableIcon, 192)
+    )
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/icon-512-maskable${theme.name}.png`),
+      await render(altMaskableIcon, 512)
+    )
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/apple-touch-icon${theme.name}.png`),
+      await render(altIosIcon, 180)
+    )
+  }
 }
 
 export async function buildSvg () {

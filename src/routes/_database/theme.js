@@ -10,3 +10,10 @@ export function getLastTheme () {
   return get('theme')
 }
 
+export function setIconColors (data) {
+  return set('iconColors', data)
+}
+
+export function getIconColors () {
+  return get('iconColors')
+}

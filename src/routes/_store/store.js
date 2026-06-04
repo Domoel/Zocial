@@ -61,6 +61,7 @@ const persistedState = {
   reduceMotion:
     !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,
   underlineLinks: true,
+  iconColors: '',
   lastContentTypes: {}
 }
 
