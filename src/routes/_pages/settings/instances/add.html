@@ -110,7 +110,11 @@
     data: () => ({
       hasIndexedDB: true,
       hasLocalStorage: true,
-      singleInstance: process.env.SINGLE_INSTANCE
+      // ZOCIAL_IS_BROWSER is false during SSR (Sapper export), so the input
+      // field is always rendered in the pre-built HTML. The runtime sed
+      // replacement in entrypoint.sh only updates JS bundles, not HTML files,
+      // so the SSR output must default to multi-instance mode.
+      singleInstance: ZOCIAL_IS_BROWSER && process.env.SINGLE_INSTANCE
     }),
     computed: {
       pageLabel: ({ $isUserLoggedIn }) => $isUserLoggedIn ? 'intl.addInstance' : 'intl.logIn',
