@@ -1,23 +1,27 @@
 <!--
   Zocial app icon — SOURCE OF TRUTH for all generated PWA icons.
   Purple→blue diagonal gradient with a white "Z" and rounded corners.
-  Uses a real <linearGradient> so it renders correctly in any SVG renderer
-  (resvg, browsers, design tools).
 
-  bin/build-svg.js (buildIcons) rasterizes this file into:
+  IMPORTANT: keep this SVG "flat" — no nested <svg> elements.
+  @resvg/resvg-js (used by the build to rasterize this) does not render
+  nested <svg> and returns an empty image (which appears as a grey circle
+  once the platform masks it). The "Z" path therefore lives directly in the
+  root coordinate system, scaled from its 128-unit design grid via
+  transform="scale(4)" (128 × 4 = 512). Use <g>/transform, never <svg>, to
+  position child art.
+
+  bin/build-svg.js (buildIcons) rasterizes this into:
     icon-192/512.png, icon-192/512-maskable.png, apple-touch-icon.png
   For the maskable variants the rounded corners are squared off automatically
   so the gradient is full-bleed. Edit this file to change the shipped icons.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="zocial-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#7B35BE"/>
-      <stop offset="100%" stop-color="#2B80D0"/>
+    <linearGradient id="zocial-bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0" stop-color="#7B35BE"/>
+      <stop offset="1" stop-color="#2B80D0"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="100" ry="100" fill="url(#zocial-bg)"/>
-  <svg x="0" y="0" width="512" height="512" viewBox="0 0 128 128">
-    <path fill="#ffffff" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
-  </svg>
+  <path fill="#ffffff" transform="scale(4)" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
 </svg>
