@@ -29,7 +29,7 @@
         >
       {/if}
       <button class="primary" type="submit" id="submitButton"
-              disabled={singleInstance ? $isUserLoggedIn : !instance || $logInToInstanceLoading}>
+              disabled={singleInstance ? $isUserLoggedIn : !$instanceNameInSearch || $logInToInstanceLoading}>
         {'intl.logIn'}
       </button>
     </form>
