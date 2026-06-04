@@ -37,40 +37,50 @@ async function render (svg, size) {
   }).render().asPng()
 }
 
-// Wraps the source PNG in an SVG so resvg can resize it and add maskable padding.
-// paddingFraction: fraction of each side reserved as safe-zone padding (0.1 = 10% for maskable)
-function sourceIconSvg (pngBase64, size, paddingFraction = 0) {
-  const pad = Math.round(size * paddingFraction)
-  const inner = size - pad * 2
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">` +
-    `<image href="data:image/png;base64,${pngBase64}" x="${pad}" y="${pad}" ` +
-    `width="${inner}" height="${inner}" preserveAspectRatio="xMidYMid meet"/>` +
-    '</svg>'
+// Returns an SVG string for the Zocial app icon (purple→blue gradient, white Z).
+// resvg renders this reliably at any size; raster sources (PNG) are not supported here.
+// paddingFraction: extra padding as fraction of size (0.1 = 10% each side for maskable safe zone).
+// To change the icon, edit the gradient stops / the <path> below.
+function makeZocialIcon (paddingFraction = 0) {
+  const total = 100
+  const pad = total * paddingFraction
+  const inner = total - pad * 2
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7B35BE"/>
+      <stop offset="100%" stop-color="#2B80D0"/>
+    </linearGradient>
+  </defs>
+  <rect width="${total}" height="${total}" fill="url(#g)"/>
+  <svg x="${pad}" y="${pad}" width="${inner}" height="${inner}" viewBox="0 0 128 128">
+    <path fill="white" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
+  </svg>
+</svg>`
 }
 
-// Generates all PWA icons from static/icons/icon-source.png (single source of truth).
-// To change the app icon, replace icon-source.png and rebuild.
 async function buildIcons () {
   await mkdir(path.resolve(__dirname, '../static/icons'), {
     recursive: true
   })
 
-  const sourcePath = path.resolve(__dirname, '../static/icons/icon-source.png')
-  const base64 = (await readFile(sourcePath)).toString('base64')
+  // Full-bleed for regular icons; 10% padded variant for maskable safe zone.
+  const icon = Buffer.from(makeZocialIcon(0))
+  const maskableIcon = Buffer.from(makeZocialIcon(0.1))
 
   for (const size of [192, 512]) {
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-${size}.png`),
-      await render(sourceIconSvg(base64, size, 0), size)
+      await render(icon, size)
     )
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-${size}-maskable.png`),
-      await render(sourceIconSvg(base64, size, 0.1), size)
+      await render(maskableIcon, size)
     )
   }
   await writeFile(
     path.resolve(__dirname, '../static/icons/apple-touch-icon.png'),
-    await render(sourceIconSvg(base64, 180, 0), 180)
+    await render(icon, 180)
   )
 }
 
