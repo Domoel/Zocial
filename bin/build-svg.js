@@ -4,7 +4,6 @@ import fs from 'fs'
 import { promisify } from 'util'
 import { optimize } from 'svgo'
 import * as cheerio from 'cheerio'
-import { makeIcon } from '../src/routes/_utils/makeIcon.js'
 import { Resvg } from '@resvg/resvg-js'
 const $ = cheerio.load('')
 
@@ -38,44 +37,33 @@ async function render (svg, size) {
   }).render().asPng()
 }
 
+// Generates all PWA icons from static/icons/icon-source.svg (single source of truth).
+// resvg rasterizes the SVG reliably at any size. To change the icon, edit icon-source.svg.
 async function buildIcons () {
   await mkdir(path.resolve(__dirname, '../static/icons'), {
     recursive: true
   })
-  for (const theme of [{ name: '' }, { name: '-alt', bg: '#3c2947', fg: '#d4bbff' }]) {
-    const icon = Buffer.from(makeIcon(theme))
-    const iosIcon = Buffer.from(makeIcon({ ...theme, ios: true }))
-    const maskableIcon = Buffer.from(makeIcon({ ...theme, maskable: true }))
+
+  const sourcePath = path.resolve(__dirname, '../static/icons/icon-source.svg')
+  const sourceSvg = await readFile(sourcePath, 'utf8')
+
+  // The source is a square, full-bleed icon, so every variant is the same image
+  // at a different size. Android/iOS apply their own corner masking; the "maskable"
+  // PNGs just need to exist for the manifest's purpose:"maskable" entries.
+  for (const size of [192, 512]) {
     await writeFile(
-      path.resolve(__dirname, `../static/icons/icon-192${theme.name}.png`),
-      await render(icon, 192)
+      path.resolve(__dirname, `../static/icons/icon-${size}.png`),
+      await render(sourceSvg, size)
     )
     await writeFile(
-      path.resolve(__dirname, `../static/icons/icon-512${theme.name}.png`),
-      await render(icon, 512)
-    )
-    await writeFile(
-      path.resolve(
-        __dirname,
-        `../static/icons/icon-192-maskable${theme.name}.png`
-      ),
-      await render(maskableIcon, 192)
-    )
-    await writeFile(
-      path.resolve(
-        __dirname,
-        `../static/icons/icon-512-maskable${theme.name}.png`
-      ),
-      await render(maskableIcon, 512)
-    )
-    await writeFile(
-      path.resolve(
-        __dirname,
-        `../static/icons/apple-touch-icon${theme.name}.png`
-      ),
-      await render(iosIcon, 180)
+      path.resolve(__dirname, `../static/icons/icon-${size}-maskable.png`),
+      await render(sourceSvg, size)
     )
   }
+  await writeFile(
+    path.resolve(__dirname, '../static/icons/apple-touch-icon.png'),
+    await render(sourceSvg, 180)
+  )
 }
 
 export async function buildSvg () {

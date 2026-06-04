@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Zocial app icon — SOURCE OF TRUTH for all generated PWA icons.
+  Purple→blue diagonal gradient with a white "Z" on a square, full-bleed
+  background (no rounded corners — Android/iOS apply their own masking).
+
+  IMPORTANT — two rules so the build (resvg) and platform masks behave:
+
+  1) Keep this SVG "flat": no nested <svg> elements. @resvg/resvg-js does
+     not render nested <svg> and would return an empty (grey) image. Use
+     <g>/transform to position child art, never <svg>.
+
+  2) Keep the "Z" inside the maskable safe zone (the central ~80% circle).
+     The path is designed on a 128-unit grid; the transform scales it to
+     ~72% and centers it in the 512 canvas:
+         translate(71.68 71.68) scale(2.88)
+         (2.88 = 4 × 0.72;  71.68 = 512 × (1 − 0.72) / 2)
+     Enlarging the Z risks it being clipped by Android's maskable mask.
+
+  bin/build-svg.js (buildIcons) rasterizes this into icon-192/512.png,
+  icon-192/512-maskable.png and apple-touch-icon.png (all identical, square
+  and full-bleed). Edit this file to change the shipped icons.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="zocial-bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0" stop-color="#7B35BE"/>
+      <stop offset="1" stop-color="#2B80D0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#zocial-bg)"/>
+  <path fill="#ffffff" transform="translate(71.68 71.68) scale(2.88)" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
+</svg>

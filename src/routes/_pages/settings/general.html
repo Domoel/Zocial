@@ -89,6 +89,15 @@
     </div>
   </form>
 
+  <h2 id="section-composer">{'intl.composer'}</h2>
+  <form class="ui-settings">
+    <label class="setting-group">
+      <input type="checkbox" id="choice-default-unlisted-replies"
+             bind:checked="$defaultUnlistedReplies" on:change="onChange(event)">
+      {'intl.defaultUnlistedReplies'}
+    </label>
+  </form>
+
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>
   <form class="ui-settings">
     <label class="setting-group">

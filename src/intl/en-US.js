@@ -106,6 +106,8 @@ export default {
   statusNotLoggedIn: 'A thread will appear here when logged in.',
   tagNotLoggedIn: 'A hashtag timeline will appear here when logged in.',
   accountNotLoggedIn: 'Account settings will appear here when logged in.',
+  // Shown as the collapse/warning text for posts matching a "hide with a warning" word filter
+  filtered: 'Filtered',
   // Notification subpages
   filters: 'Filters',
   all: 'All',
@@ -423,6 +425,7 @@ export default {
   hideFollowerCount: 'Hide follower counts (capped at 10)',
   hideReblogCount: 'Hide boost counts',
   enableThreadPolling: 'Show auto-refresh button in threads',
+  defaultUnlistedReplies: 'Default replies to unlisted visibility (never more public than the post you reply to)',
   threadPollingStart: 'Auto-refresh replies (every 30s)',
   threadPollingStop: 'Stop auto-refresh',
   enableDesktopNotifications: 'Enable desktop notifications',
@@ -441,6 +444,7 @@ export default {
   immediacy: 'Immediacy',
   showAbsoluteTimestamps: 'Show absolute timestamps (e.g. "March 3rd") instead of relative timestamps (e.g. "5 minutes ago")',
   ui: 'UI',
+  composer: 'Composer',
   grayscaleMode: 'Show emojis, images, and videos in grayscale',
   wellnessFooter: `These settings are partly based on guidelines from the
     <a rel="noopener" target="_blank" href="https://humanetech.com">Center for Humane Technology</a>.`,
@@ -733,6 +737,8 @@ export default {
   updatedFilter: 'Updated filter',
   createdFilter: 'Created filter',
   failedToModifyFilter: 'Failed to modify filter: {error}',
+  // Shown when the backend (e.g. GoToSocial) does not support irreversible "drop" filters
+  dropFiltersNotSupported: 'This server doesn’t support irreversible (drop) filters. Leave “Irreversible” unchecked to hide matching posts behind a warning instead.',
   deletedFilter: 'Deleted filter',
   required: 'Required',
   // Dialogs

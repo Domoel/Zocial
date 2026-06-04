@@ -8,7 +8,7 @@ import {
   setWebShareData,
   closeKeyValIDBConnection
 } from './routes/_database/webShare.js'
-import { getLastTheme, getIconColors } from './routes/_database/theme.js'
+import { getLastTheme } from './routes/_database/theme.js'
 import { getKnownInstances } from './routes/_database/knownInstances.js'
 import { basename } from './routes/_api/utils.js'
 import { canonicalStatusUrl } from './routes/_utils/canonicalStatusUrl.js'
@@ -108,15 +108,7 @@ self.addEventListener('fetch', event => {
         manifest.theme_color =
           process.env.THEME_COLORS[await getLastTheme()] ||
           manifest.theme_color
-        manifest.name = manifest.short_name = process.env.UPSTREAM ? 'Zocial' : location.hostname
-        if ((await getIconColors()) === 'alt') {
-          for (const icon of manifest.icons) {
-            icon.src = icon.src.replace(
-              /^(\/icons\/(?:apple-touch-icon|icon-(?:512|192)(?:-maskable)?)).png$/,
-              '$1-alt.png'
-            )
-          }
-        }
+        manifest.name = manifest.short_name = 'Zocial'
         await closeKeyValIDBConnection() // don't need to keep the IDB connection open
         return new Response(JSON.stringify(manifest), {
           headers: {

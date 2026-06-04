@@ -46,7 +46,14 @@ export async function createOrUpdateFilter (instanceName, filter) {
     }
     emit('wordFiltersChanged', instanceName)
   } catch (err) {
-    /* no await */ toast.say(formatIntl('intl.failedToModifyFilter', { error: err.message || '' }))
+    // Some backends (e.g. GoToSocial) don't implement irreversible / server-side "drop"
+    // filters and reject them with a 422. Show a neutral, actionable message instead of the
+    // raw error in that case.
+    if (filter.irreversible && err && err.status === 422) {
+      /* no await */ toast.say('intl.dropFiltersNotSupported')
+    } else {
+      /* no await */ toast.say(formatIntl('intl.failedToModifyFilter', { error: err.message || '' }))
+    }
   }
 }
 
