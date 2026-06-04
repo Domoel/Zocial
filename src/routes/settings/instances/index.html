@@ -10,6 +10,7 @@
 {/if}
 
 <script>
+  import { getSingleInstance } from '../../_utils/getSingleInstance.js'
   import Title from '../../_components/Title.html'
   import LazyPage from '../../_components/LazyPage.html'
   import pageComponent from '../../_pages/settings/instances/index.html'
@@ -23,7 +24,7 @@
     },
     data: () => ({
       pageComponent,
-      singleInstance: process.env.SINGLE_INSTANCE
+      singleInstance: getSingleInstance()
     })
   }
 </script>

@@ -19,6 +19,7 @@
 {/each}
 
 <script>
+  import { getSingleInstance } from '../_utils/getSingleInstance.js'
   import Shortcut from './shortcut/Shortcut.html'
   import { goto } from '../../../__sapper__/client.js'
   import { importShowShortcutHelpDialog } from './dialog/asyncDialogs/importShowShortcutHelpDialog.js'
@@ -64,7 +65,7 @@
       }
     },
     data: () => ({
-      singleInstance: process.env.SINGLE_INSTANCE
+      singleInstance: getSingleInstance()
     })
   }
 </script>

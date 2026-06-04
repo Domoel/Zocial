@@ -88,6 +88,7 @@
   import { logInToInstance, handleOauthCode } from '../../../_actions/addInstance.js'
   import { testHasIndexedDB, testHasLocalStorage } from '../../../_utils/testStorage.js'
   import Tooltip from '../../../_components/Tooltip.html'
+  import { getSingleInstance } from '../../../_utils/getSingleInstance.js'
 
   export default {
     async oncreate () {
@@ -111,22 +112,19 @@
     data: () => ({
       hasIndexedDB: true,
       hasLocalStorage: true,
-      // ZOCIAL_IS_BROWSER is false during SSR (Sapper export), so the input
-      // field is always rendered in the pre-built HTML. The runtime sed
-      // replacement in entrypoint.sh only updates JS bundles, not HTML files,
-      // so the SSR output must default to multi-instance mode.
-      singleInstance: ZOCIAL_IS_BROWSER && process.env.SINGLE_INSTANCE
+      singleInstance: getSingleInstance()
     }),
     computed: {
       pageLabel: ({ $isUserLoggedIn }) => $isUserLoggedIn ? 'intl.addInstance' : 'intl.logIn',
-      instance: ({ $instanceNameInSearch }) => process.env.SINGLE_INSTANCE || $instanceNameInSearch
+      instance: ({ $instanceNameInSearch }) => getSingleInstance() || $instanceNameInSearch
     },
     methods: {
       onSubmitInstance (event) {
         event.preventDefault()
         event.stopPropagation()
-        if (process.env.SINGLE_INSTANCE) {
-          this.store.set({ instanceNameInSearch: process.env.SINGLE_INSTANCE })
+        const singleInstance = getSingleInstance()
+        if (singleInstance) {
+          this.store.set({ instanceNameInSearch: singleInstance })
         }
         logInToInstance()
       }

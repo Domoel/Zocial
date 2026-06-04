@@ -23,6 +23,7 @@
   }
 </style>
 <script>
+  import { getSingleInstance } from '../../../_utils/getSingleInstance.js'
   import { store } from '../../../_store/store.js'
   import SettingsLayout from '../../../_components/settings/SettingsLayout.html'
   import InstanceUserProfile from '../../../_components/settings/instance/InstanceUserProfile.html'
@@ -55,7 +56,7 @@
       WordFilterSettings
     },
     data: () => ({
-      singleInstance: process.env.SINGLE_INSTANCE
+      singleInstance: getSingleInstance()
     })
   }
 </script>

@@ -9,6 +9,7 @@ import { auth } from '../_api/utils.js'
 import { database } from '../_database/database.js'
 import { importVirtualListStore } from '../_utils/asyncModules/importVirtualListStore.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { getSingleInstance } from '../_utils/getSingleInstance.js'
 
 export function changeTheme (instanceName, newTheme) {
   const { instanceThemes } = store.get()
@@ -106,7 +107,7 @@ export async function logOutOfInstance (instanceName, message) {
   const { enableGrayscale } = store.get()
   switchToTheme(instanceThemes[newInstance], enableGrayscale)
   /* no await */ database.clearDatabaseForInstance(instanceName)
-  goto(process.env.SINGLE_INSTANCE ? '/' : '/settings/instances')
+  goto(getSingleInstance() ? '/' : '/settings/instances')
 }
 
 function setStoreVerifyCredentials (instanceName, thisVerifyCredentials) {

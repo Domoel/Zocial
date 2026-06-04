@@ -68,6 +68,7 @@
 </style>
 
 <script>
+  import { getSingleInstance } from '../../_utils/getSingleInstance.js'
   import SettingsLayout from '../../_components/settings/SettingsLayout.html'
   import SettingsList from '../../_components/settings/SettingsList.html'
   import SettingsListRow from '../../_components/settings/SettingsListRow.html'
@@ -96,7 +97,7 @@
       }
     },
     data: () => ({
-      singleInstance: process.env.SINGLE_INSTANCE
+      singleInstance: getSingleInstance()
     })
   }
 </script>

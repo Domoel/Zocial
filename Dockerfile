@@ -21,8 +21,7 @@ RUN pnpm install
 # Copy source
 COPY . .
 
-# Bake in a placeholder — replaced at container start via entrypoint.sh
-RUN SINGLE_INSTANCE=__ZOCIAL_INSTANCE__ pnpm run build \
+RUN pnpm run build \
  && cp __sapper__/export/service-worker-index.html __sapper__/export/404.html
 
 # -----------------------------

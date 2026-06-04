@@ -229,6 +229,7 @@
   }
 </style>
 <script>
+  import { getSingleInstance } from '../../_utils/getSingleInstance.js'
   import SettingsLayout from '../../_components/settings/SettingsLayout.html'
   import ThemeSettings from '../../_components/settings/instance/ThemeSettings.html'
   import NotificationFilterSettings from '../../_components/settings/instance/NotificationFilterSettings.html'
@@ -332,7 +333,7 @@
       )
     },
     data: () => ({
-      singleInstance: process.env.SINGLE_INSTANCE
+      singleInstance: getSingleInstance()
     })
   }
 </script>

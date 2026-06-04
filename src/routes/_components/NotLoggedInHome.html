@@ -64,6 +64,7 @@
   import HiddenFromSSR from './HiddenFromSSR.html'
   import SvgIcon from './SvgIcon.html'
   import { logInToInstance } from '../_actions/addInstance.js'
+  import { getSingleInstance } from '../_utils/getSingleInstance.js'
 
   export default {
     components: {
@@ -74,12 +75,12 @@
     data: () => {
       return {
         appName: process.env.UPSTREAM ? 'Zocial' : ZOCIAL_IS_BROWSER ? location.hostname : '',
-        singleInstance: process.env.SINGLE_INSTANCE
+        singleInstance: getSingleInstance()
       }
     },
     methods: {
       logIn () {
-        this.store.set({ instanceNameInSearch: process.env.SINGLE_INSTANCE })
+        this.store.set({ instanceNameInSearch: getSingleInstance() })
         logInToInstance()
       }
     }

@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
 
-# Replace the build-time placeholder with the runtime SINGLE_INSTANCE value.
-# Empty or unset = multi-instance mode (instance input field shown on login screen).
+# Generate runtime config so SINGLE_INSTANCE can be set via docker-compose
+# without rebuilding the image. The JS reads window.__ZOCIAL_SINGLE_INSTANCE__
+# at runtime, bypassing webpack/terser build-time optimization.
 INSTANCE="${SINGLE_INSTANCE:-}"
-
-find /usr/share/nginx/html -type f -name "*.js" \
-  -exec sed -i "s|__ZOCIAL_INSTANCE__|${INSTANCE}|g" {} \;
+printf 'window.__ZOCIAL_SINGLE_INSTANCE__=%s;\n' "\"${INSTANCE}\"" \
+  > /usr/share/nginx/html/config.js
 
 exec nginx -g "daemon off;"
