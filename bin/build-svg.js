@@ -38,42 +38,74 @@ async function render (svg, size) {
   }).render().asPng()
 }
 
+// Returns an SVG string for the Zocial app icon.
+// paddingFraction: extra padding as fraction of size (0.1 = 10% each side for maskable safe zone)
+function makeZocialIcon (paddingFraction = 0) {
+  const total = 100
+  const pad = total * paddingFraction
+  const inner = total - pad * 2
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7B35BE"/>
+      <stop offset="100%" stop-color="#2B80D0"/>
+    </linearGradient>
+  </defs>
+  <rect width="${total}" height="${total}" fill="url(#g)"/>
+  <svg x="${pad}" y="${pad}" width="${inner}" height="${inner}" viewBox="0 0 128 128">
+    <path fill="white" d="M31 15h68a7 7 0 0 1 7 7v13a9 9 0 0 1-2 5L57 94h45a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H29a7 7 0 0 1-7-7v-13a9 9 0 0 1 2-5l47-54H31a7 7 0 0 1-7-7V22a7 7 0 0 1 7-7Z"/>
+  </svg>
+</svg>`
+}
+
 async function buildIcons () {
   await mkdir(path.resolve(__dirname, '../static/icons'), {
     recursive: true
   })
-  for (const theme of [{ name: '' }, { name: '-alt', bg: '#3c2947', fg: '#d4bbff' }]) {
-    const icon = Buffer.from(makeIcon(theme))
-    const iosIcon = Buffer.from(makeIcon({ ...theme, ios: true }))
-    const maskableIcon = Buffer.from(makeIcon({ ...theme, maskable: true }))
+
+  // Main icons — gradient design matching the Zocial brand
+  const icon = Buffer.from(makeZocialIcon(0))
+  const maskableIcon = Buffer.from(makeZocialIcon(0.1))
+
+  for (const size of [192, 512]) {
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/icon-${size}.png`),
+      await render(icon, size)
+    )
+    await writeFile(
+      path.resolve(__dirname, `../static/icons/icon-${size}-maskable.png`),
+      await render(maskableIcon, size)
+    )
+  }
+  await writeFile(
+    path.resolve(__dirname, '../static/icons/apple-touch-icon.png'),
+    await render(icon, 180)
+  )
+
+  // Alt theme icons (used for notification/badge variants)
+  for (const theme of [{ name: '-alt', bg: '#3c2947', fg: '#d4bbff' }]) {
+    const altIcon = Buffer.from(makeIcon(theme))
+    const altIosIcon = Buffer.from(makeIcon({ ...theme, ios: true }))
+    const altMaskableIcon = Buffer.from(makeIcon({ ...theme, maskable: true }))
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-192${theme.name}.png`),
-      await render(icon, 192)
+      await render(altIcon, 192)
     )
     await writeFile(
       path.resolve(__dirname, `../static/icons/icon-512${theme.name}.png`),
-      await render(icon, 512)
+      await render(altIcon, 512)
     )
     await writeFile(
-      path.resolve(
-        __dirname,
-        `../static/icons/icon-192-maskable${theme.name}.png`
-      ),
-      await render(maskableIcon, 192)
+      path.resolve(__dirname, `../static/icons/icon-192-maskable${theme.name}.png`),
+      await render(altMaskableIcon, 192)
     )
     await writeFile(
-      path.resolve(
-        __dirname,
-        `../static/icons/icon-512-maskable${theme.name}.png`
-      ),
-      await render(maskableIcon, 512)
+      path.resolve(__dirname, `../static/icons/icon-512-maskable${theme.name}.png`),
+      await render(altMaskableIcon, 512)
     )
     await writeFile(
-      path.resolve(
-        __dirname,
-        `../static/icons/apple-touch-icon${theme.name}.png`
-      ),
-      await render(iosIcon, 180)
+      path.resolve(__dirname, `../static/icons/apple-touch-icon${theme.name}.png`),
+      await render(altIosIcon, 180)
     )
   }
 }
