@@ -735,6 +735,8 @@ export default {
   updatedFilter: 'Updated filter',
   createdFilter: 'Created filter',
   failedToModifyFilter: 'Failed to modify filter: {error}',
+  // Shown when the backend (e.g. GoToSocial) does not support irreversible "drop" filters
+  dropFiltersNotSupported: 'This server doesn’t support irreversible (drop) filters. Leave “Irreversible” unchecked to hide matching posts behind a warning instead.',
   deletedFilter: 'Deleted filter',
   required: 'Required',
   // Dialogs
