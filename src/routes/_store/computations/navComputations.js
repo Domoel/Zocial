@@ -1,6 +1,6 @@
 import { mark, stop } from '../../_utils/marks.js'
 
-function pageToNavObject (page, pinnedListTitle) {
+function pageToNavObject (page, lists) {
   if (page === '/federated') {
     return { name: 'federated', href: '/federated', svg: '#fa-globe', label: 'intl.federated' }
   } else if (page === '/bubble') {
@@ -12,11 +12,15 @@ function pageToNavObject (page, pinnedListTitle) {
   } else if (page === '/bookmarks') {
     return { name: 'bookmarks', href: '/bookmarks', svg: '#fa-bookmark', label: 'intl.bookmarks' }
   } else if (page && page.startsWith('/lists/')) {
+    // Resolve each pinned list's title from its own id, so multiple pinned lists
+    // are labeled correctly (not all with the first list's title).
+    const listId = page.split('/').slice(-1)[0]
+    const list = lists && lists.find(_ => _.id === listId)
     return {
-      name: `lists/${page.split('/').slice(-1)[0]}`,
+      name: `lists/${listId}`,
       href: page,
       svg: '#fa-bars',
-      label: pinnedListTitle
+      label: (list && list.title) || 'intl.list'
     }
   }
 
@@ -27,29 +31,9 @@ export function navComputations (store) {
   mark('navComputations')
 
   store.compute(
-    'pinnedListTitle',
-    ['lists', 'pinnedPagesForInstance'],
-    (lists, pinnedPagesForInstance) => {
-      const pages = Array.isArray(pinnedPagesForInstance)
-        ? pinnedPagesForInstance
-        : [pinnedPagesForInstance]
-
-      const listPage = pages.find(page => page && page.startsWith('/lists/'))
-
-      if (!listPage) {
-        return ''
-      }
-
-      const listId = listPage.split('/').slice(-1)[0]
-      const list = lists.find(_ => _.id === listId)
-      return list ? list.title : ''
-    }
-  )
-
-  store.compute(
     'navPages',
-    ['pinnedPagesForInstance', 'pinnedListTitle', 'navTabOrderForInstance'],
-    (pinnedPagesForInstance, pinnedListTitle, navTabOrderForInstance) => {
+    ['pinnedPagesForInstance', 'lists', 'navTabOrderForInstance'],
+    (pinnedPagesForInstance, lists, navTabOrderForInstance) => {
       const pages = Array.isArray(pinnedPagesForInstance)
         ? pinnedPagesForInstance
         : [pinnedPagesForInstance || '/bookmarks']
@@ -57,7 +41,7 @@ export function navComputations (store) {
       const pinnedPageObjects = pages
         .filter(Boolean)
         .slice(0, 2)
-        .map(page => pageToNavObject(page, pinnedListTitle))
+        .map(page => pageToNavObject(page, lists))
 
       const defaultOrder = [
         { name: 'home', href: '/', svg: '#logo', label: 'intl.home' },
