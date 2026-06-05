@@ -1,28 +1,54 @@
 <FocusRestoration realm="settings/logs">
   <SettingsNav page="settings/logs" label="{'intl.logs'}" />
+  <h1 class="logs-heading">{'intl.logs'}</h1>
   <pre class="logs-banner">{banner}</pre>
   <label class="logs-toggle">
     <input type="checkbox" bind:checked="$showAllLogs">
     {'intl.showAllLogs'}
   </label>
+  <p class="logs-hint">{'intl.showAllLogsHint'}</p>
+  <button type="button" class="logs-copy" on:click="copyLogs()">{'intl.copyLogs'}</button>
   <div class="{$showAllLogs ? '' : 'logs-critical-only'}">
     <easrng-console-logs></easrng-console-logs>
   </div>
 </FocusRestoration>
 <style>
+.logs-heading {
+  margin: 0 20px 20px;
+}
 .logs-banner {
   font-family: monospace;
   white-space: pre;
   margin: 0;
   padding: 16px 20px 4px;
-  color: var(--deemphasized-text-color);
+  color: var(--body-text-color);
   overflow-x: auto;
 }
 .logs-toggle {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 20px 4px;
+}
+.logs-hint {
+  margin: 0;
+  padding: 0 20px 12px;
+  font-size: 0.85em;
+  line-height: 1.4;
+  color: var(--deemphasized-text-color);
+}
+.logs-copy {
+  margin: 0 20px 12px;
+  font-size: 0.85em;
+  padding: 6px 14px;
+  border: 1px solid var(--main-border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  color: var(--anchor-text);
+}
+.logs-copy:hover {
+  border-color: var(--anchor-text);
 }
 /* default view: only error/warn lines; the toggle removes this class to show all levels */
 :global(.logs-critical-only easrng-console-logs .log:not(.log-error):not(.log-warn)) {
@@ -87,14 +113,46 @@
   import SettingsNav from '../../_components/settings/SettingsNav.html'
   import FocusRestoration from '../../_components/FocusRestoration.html'
   import { store } from '../../_store/store.js'
-  import { banner } from '../../_utils/console/hook.ts'
+  import { banner, logs } from '../../_utils/console/hook.ts'
+  import { toast } from '../../_components/toast/toast.js'
   import '../../_utils/console/element.ts'
+
+  function formatLogLine (log) {
+    const message = log.args.map(arg => {
+      if (typeof arg === 'string') {
+        return arg
+      }
+      try {
+        return JSON.stringify(arg)
+      } catch (e) {
+        return String(arg)
+      }
+    }).join(' ')
+    return `[${log.type}] ${message}`
+  }
 
   export default {
     store: () => store,
     data: () => ({
       banner
     }),
+    methods: {
+      async copyLogs () {
+        const { showAllLogs } = this.store.get()
+        // copy what's currently shown: only error/warn by default, everything when "show all" is on
+        const visible = showAllLogs
+          ? logs
+          : logs.filter(log => log.type === 'error' || log.type === 'warn')
+        // prepend the banner so the paste includes version/build context (handy for support)
+        const text = banner + '\n\n' + visible.map(formatLogLine).join('\n')
+        try {
+          await navigator.clipboard.writeText(text)
+          /* no await */ toast.say('intl.logsCopied')
+        } catch (e) {
+          /* no await */ toast.say('intl.logsCopyFailed')
+        }
+      }
+    },
     components: {
       SettingsNav,
       FocusRestoration
