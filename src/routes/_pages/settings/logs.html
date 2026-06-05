@@ -12,7 +12,7 @@
     <button type="button" class="logs-btn" on:click="clearLogs()">{'intl.clearLogs'}</button>
   </div>
   <div class="{$showAllLogs ? '' : 'logs-critical-only'}">
-    <easrng-console-logs></easrng-console-logs>
+    <easrng-console-logs ref:consoleLogs></easrng-console-logs>
   </div>
 </FocusRestoration>
 <style>
@@ -120,23 +120,9 @@
   import SettingsNav from '../../_components/settings/SettingsNav.html'
   import FocusRestoration from '../../_components/FocusRestoration.html'
   import { store } from '../../_store/store.js'
-  import { banner, logs, clearLogs as clearLogBuffer } from '../../_utils/console/hook.ts'
+  import { banner, clearLogs as clearLogBuffer } from '../../_utils/console/hook.ts'
   import { toast } from '../../_components/toast/toast.js'
   import '../../_utils/console/element.ts'
-
-  function formatLogLine (log) {
-    const message = log.args.map(arg => {
-      if (typeof arg === 'string') {
-        return arg
-      }
-      try {
-        return JSON.stringify(arg)
-      } catch (e) {
-        return String(arg)
-      }
-    }).join(' ')
-    return `[${log.type}] ${message}`
-  }
 
   export default {
     store: () => store,
@@ -145,13 +131,18 @@
     }),
     methods: {
       async copyLogs () {
-        const { showAllLogs } = this.store.get()
-        // copy what's currently shown: only error/warn by default, everything when "show all" is on
-        const visible = showAllLogs
-          ? logs
-          : logs.filter(log => log.type === 'error' || log.type === 'warn')
+        // Copy the rendered log lines so formatting matches what's shown — JSON.stringify
+        // can't serialise Error objects (they come out as "{}"), but element.ts already
+        // formats errors/%o/tables correctly. offsetParent === null drops lines hidden by
+        // the level filter, so this copies exactly what's visible.
+        const root = this.refs.consoleLogs
+        const lines = root
+          ? Array.from(root.querySelectorAll('.log'))
+            .filter(el => el.offsetParent !== null)
+            .map(el => el.innerText.trim())
+          : []
         // prepend the banner so the paste includes version/build context (handy for support)
-        const text = banner + '\n\n' + visible.map(formatLogLine).join('\n')
+        const text = banner + '\n\n' + lines.join('\n')
         try {
           await navigator.clipboard.writeText(text)
           /* no await */ toast.say('intl.logsCopied')
