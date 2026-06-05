@@ -2,7 +2,7 @@
 {#if $isUserLoggedIn}
   <div class="scheduled-page">
     {#if loading}
-      <p class="scheduled-empty">{'intl.loading'}</p>
+      <LoadingPage />
     {:elseif error}
       <p class="scheduled-error" role="alert">{error}</p>
     {:elseif !scheduledStatuses.length}
@@ -156,7 +156,8 @@
   import DynamicPageBanner from '../_components/DynamicPageBanner.html'
   import SvgIcon from '../_components/SvgIcon.html'
   import { toast } from '../_components/toast/toast.js'
-  import { getScheduledStatuses, cancelScheduledStatus, rescheduleStatus, SCHEDULED_STATUSES_LIMIT } from '../_api/scheduledStatuses.js'
+  import { getScheduledStatuses, cancelScheduledStatus, rescheduleStatus } from '../_api/scheduledStatuses.js'
+  import LoadingPage from '../_components/LoadingPage.html'
 
   const MIN_LEAD_MS = 5 * 60 * 1000 // the server requires scheduled posts to be >= 5 minutes out
 
@@ -169,18 +170,22 @@
     store: () => store,
     components: {
       DynamicPageBanner,
-      SvgIcon
+      SvgIcon,
+      LoadingPage
     },
     data: () => ({
       scheduledStatuses: [],
       loading: true,
       loadingMore: false,
-      hasMore: false,
+      nextMaxId: null,
       error: '',
       editingId: null,
       editValue: '',
       minDateTime: undefined
     }),
+    computed: {
+      hasMore: ({ nextMaxId }) => !!nextMaxId
+    },
     async oncreate () {
       this.set({ minDateTime: toLocalInputValue(new Date(Date.now() + MIN_LEAD_MS)) })
       await this.load()
@@ -200,31 +205,25 @@
       async load () {
         const { currentInstance, accessToken } = this.store.get()
         try {
-          const scheduledStatuses = await getScheduledStatuses(currentInstance, accessToken)
-          this.set({
-            scheduledStatuses,
-            loading: false,
-            error: '',
-            hasMore: scheduledStatuses.length === SCHEDULED_STATUSES_LIMIT
-          })
+          const { items, nextMaxId } = await getScheduledStatuses(currentInstance, accessToken)
+          this.set({ scheduledStatuses: items, nextMaxId, loading: false, error: '' })
         } catch (e) {
           this.set({ loading: false, error: e.message || 'intl.error' })
         }
       },
       async loadMore () {
-        const { scheduledStatuses, loadingMore, hasMore } = this.get()
-        if (loadingMore || !hasMore || !scheduledStatuses.length) {
+        const { scheduledStatuses, loadingMore, nextMaxId } = this.get()
+        if (loadingMore || !nextMaxId) {
           return
         }
         this.set({ loadingMore: true })
         const { currentInstance, accessToken } = this.store.get()
-        const maxId = scheduledStatuses[scheduledStatuses.length - 1].id
         try {
-          const page = await getScheduledStatuses(currentInstance, accessToken, maxId)
+          const { items, nextMaxId: newMaxId } = await getScheduledStatuses(currentInstance, accessToken, nextMaxId)
           this.set({
-            scheduledStatuses: scheduledStatuses.concat(page),
-            loadingMore: false,
-            hasMore: page.length === SCHEDULED_STATUSES_LIMIT
+            scheduledStatuses: scheduledStatuses.concat(items),
+            nextMaxId: newMaxId,
+            loadingMore: false
           })
         } catch (e) {
           this.set({ loadingMore: false })

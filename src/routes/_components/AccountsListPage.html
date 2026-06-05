@@ -11,6 +11,11 @@
         />
       {/each}
     </ul>
+    {#if hasMore}
+      <button type="button" class="accounts-load-more" on:click="loadMore()" disabled={loadingMore}>
+        {loadingMore ? 'intl.loading' : 'intl.loadMore'}
+      </button>
+    {/if}
   {/if}
 </div>
 <style>
@@ -23,6 +28,25 @@
     box-sizing: border-box;
     border: 1px solid var(--main-border);
     border-radius: 2px;
+  }
+  .accounts-load-more {
+    display: block;
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    font-size: 0.9em;
+    border: 1px solid var(--main-border);
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    color: var(--anchor-text);
+  }
+  .accounts-load-more:hover {
+    border-color: var(--anchor-text);
+  }
+  .accounts-load-more[disabled] {
+    opacity: 0.6;
+    cursor: default;
   }
   @media (max-width: 767px) {
     .accounts-page {
@@ -38,7 +62,8 @@
   import { on } from '../_utils/eventBus.ts'
   import { formatIntl } from '../_utils/formatIntl.js'
 
-  // TODO: paginate
+  // Fetchers may return either a plain array (no pagination) or { accounts, nextMaxId }
+  // (paginated, "load more"). This keeps older callers working unchanged.
   export default {
     async oncreate () {
       try {
@@ -52,9 +77,15 @@
     },
     data: () => ({
       loading: true,
+      loadingMore: false,
       accounts: [],
+      nextMaxId: null,
+      paginated: false,
       accountActions: undefined
     }),
+    computed: {
+      hasMore: ({ paginated, nextMaxId }) => paginated && !!nextMaxId
+    },
     store: () => store,
     components: {
       LoadingPage,
@@ -67,8 +98,28 @@
       },
       async refreshAccounts () {
         const { accountsFetcher } = this.get()
-        const accounts = await accountsFetcher()
-        this.set({ accounts })
+        const result = await accountsFetcher()
+        if (Array.isArray(result)) {
+          this.set({ accounts: result, paginated: false, nextMaxId: null })
+        } else {
+          this.set({ accounts: result.accounts, paginated: true, nextMaxId: result.nextMaxId })
+        }
+      },
+      async loadMore () {
+        const { accountsFetcher, accounts, nextMaxId, loadingMore } = this.get()
+        if (loadingMore || !nextMaxId) {
+          return
+        }
+        this.set({ loadingMore: true })
+        try {
+          const result = await accountsFetcher(nextMaxId)
+          const more = Array.isArray(result) ? result : result.accounts
+          const newMaxId = Array.isArray(result) ? null : result.nextMaxId
+          this.set({ accounts: accounts.concat(more), nextMaxId: newMaxId, loadingMore: false })
+        } catch (e) {
+          this.set({ loadingMore: false })
+          /* no await */ toast.say(formatIntl('intl.error', { error: (e.message || '') }))
+        }
       }
     }
   }

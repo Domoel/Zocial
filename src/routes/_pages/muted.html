@@ -23,7 +23,7 @@
       ]
     }),
     computed: {
-      accountsFetcher: ({ $currentInstance, $accessToken }) => () => getMutedAccounts($currentInstance, $accessToken)
+      accountsFetcher: ({ $currentInstance, $accessToken }) => (maxId) => getMutedAccounts($currentInstance, $accessToken, maxId)
     },
     store: () => store,
     components: {

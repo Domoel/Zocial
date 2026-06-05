@@ -9,7 +9,7 @@
   export default {
     computed: {
       statusId: ({ params }) => params.statusId,
-      accountsFetcher: ({ $currentInstance, $accessToken, statusId }) => () => getReblogs($currentInstance, $accessToken, statusId)
+      accountsFetcher: ({ $currentInstance, $accessToken, statusId }) => (maxId) => getReblogs($currentInstance, $accessToken, statusId, maxId)
     },
     store: () => store,
     components: {
