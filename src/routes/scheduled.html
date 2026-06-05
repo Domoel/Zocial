@@ -1,0 +1,19 @@
+<Title name="{'intl.scheduledPosts'}" />
+
+<LazyPage {pageComponent} {params} />
+
+<script>
+  import Title from './_components/Title.html'
+  import LazyPage from './_components/LazyPage.html'
+  import pageComponent from './_pages/scheduled.html'
+
+  export default {
+    components: {
+      Title,
+      LazyPage
+    },
+    data: () => ({
+      pageComponent
+    })
+  }
+</script>

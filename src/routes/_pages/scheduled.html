@@ -1,0 +1,226 @@
+<DynamicPageBanner title="{'intl.scheduledPosts'}" icon="#fa-clock" />
+{#if $isUserLoggedIn}
+  <div class="scheduled-page">
+    {#if loading}
+      <p class="scheduled-empty">{'intl.loading'}</p>
+    {:elseif error}
+      <p class="scheduled-error" role="alert">{error}</p>
+    {:elseif !scheduledStatuses.length}
+      <p class="scheduled-empty">{'intl.noScheduledPosts'}</p>
+    {:else}
+      <ul class="scheduled-list">
+        {#each scheduledStatuses as s (s.id)}
+          <li class="scheduled-item">
+            <div class="scheduled-when">
+              <SvgIcon className="scheduled-icon" href="#fa-clock" />
+              <span>{formatTime(s.scheduled_at)}</span>
+            </div>
+            {#if statusText(s)}
+              <p class="scheduled-text">{statusText(s)}</p>
+            {/if}
+            {#if mediaCount(s)}
+              <p class="scheduled-meta">{mediaCount(s)} 🖼</p>
+            {/if}
+
+            {#if editingId === s.id}
+              <div class="scheduled-reschedule">
+                <input type="datetime-local" bind:value=editValue min={minDateTime}
+                       aria-label="{'intl.scheduleDateTimeLabel'}">
+                <button type="button" class="scheduled-btn primary" on:click="saveReschedule(s.id)">
+                  {'intl.save'}
+                </button>
+                <button type="button" class="scheduled-btn" on:click="cancelReschedule()">
+                  {'intl.cancel'}
+                </button>
+              </div>
+            {:else}
+              <div class="scheduled-actions">
+                <button type="button" class="scheduled-btn" on:click="startReschedule(s)">
+                  {'intl.rescheduleLabel'}
+                </button>
+                <button type="button" class="scheduled-btn danger" on:click="cancel(s.id)">
+                  {'intl.cancelScheduledPost'}
+                </button>
+              </div>
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </div>
+{/if}
+<style>
+  .scheduled-page {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .scheduled-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--main-border);
+    border-radius: 2px;
+  }
+  .scheduled-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--main-border);
+  }
+  .scheduled-item:last-child {
+    border-bottom: none;
+  }
+  .scheduled-when {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: var(--deemphasized-text-color);
+  }
+  :global(.scheduled-icon) {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    fill: var(--deemphasized-text-color);
+  }
+  .scheduled-text {
+    margin: 8px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .scheduled-meta {
+    margin: 4px 0;
+    color: var(--deemphasized-text-color);
+    font-size: 0.9em;
+  }
+  .scheduled-actions, .scheduled-reschedule {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .scheduled-btn {
+    font-size: 0.85em;
+    padding: 5px 12px;
+    border: 1px solid var(--main-border);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--deemphasized-text-color);
+    background: none;
+  }
+  .scheduled-btn:hover {
+    border-color: var(--anchor-text);
+    color: var(--body-text-color);
+  }
+  .scheduled-btn.danger:hover {
+    border-color: var(--warn-color);
+    color: var(--warn-color);
+  }
+  .scheduled-empty {
+    color: var(--deemphasized-text-color);
+    font-style: italic;
+  }
+  .scheduled-error {
+    color: var(--warn-color);
+  }
+  @media (max-width: 767px) {
+    .scheduled-page { padding: 20px 10px; }
+    .scheduled-item { padding: 12px 10px; }
+  }
+</style>
+<script>
+  import { store } from '../_store/store.js'
+  import DynamicPageBanner from '../_components/DynamicPageBanner.html'
+  import SvgIcon from '../_components/SvgIcon.html'
+  import { toast } from '../_components/toast/toast.js'
+  import { getScheduledStatuses, cancelScheduledStatus, rescheduleStatus } from '../_api/scheduledStatuses.js'
+
+  const MIN_LEAD_MS = 5 * 60 * 1000 // the server requires scheduled posts to be >= 5 minutes out
+
+  function toLocalInputValue (date) {
+    const pad = n => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  }
+
+  export default {
+    store: () => store,
+    components: {
+      DynamicPageBanner,
+      SvgIcon
+    },
+    data: () => ({
+      scheduledStatuses: [],
+      loading: true,
+      error: '',
+      editingId: null,
+      editValue: '',
+      minDateTime: undefined
+    }),
+    async oncreate () {
+      this.set({ minDateTime: toLocalInputValue(new Date(Date.now() + MIN_LEAD_MS)) })
+      await this.load()
+    },
+    helpers: {
+      formatTime (iso) {
+        return new Date(iso).toLocaleString()
+      },
+      statusText (s) {
+        return (s.params && s.params.text) || ''
+      },
+      mediaCount (s) {
+        return (s.media_attachments && s.media_attachments.length) || 0
+      }
+    },
+    methods: {
+      async load () {
+        const { currentInstance, accessToken } = this.store.get()
+        try {
+          const scheduledStatuses = await getScheduledStatuses(currentInstance, accessToken)
+          this.set({ scheduledStatuses, loading: false, error: '' })
+        } catch (e) {
+          this.set({ loading: false, error: e.message || 'intl.error' })
+        }
+      },
+      async cancel (id) {
+        const { currentInstance, accessToken } = this.store.get()
+        try {
+          await cancelScheduledStatus(currentInstance, accessToken, id)
+          const { scheduledStatuses } = this.get()
+          this.set({ scheduledStatuses: scheduledStatuses.filter(_ => _.id !== id) })
+          /* no await */ toast.say('intl.scheduledPostCancelled')
+        } catch (e) {
+          /* no await */ toast.say(e.message || 'intl.error')
+        }
+      },
+      startReschedule (s) {
+        this.set({ editingId: s.id, editValue: toLocalInputValue(new Date(s.scheduled_at)) })
+      },
+      cancelReschedule () {
+        this.set({ editingId: null, editValue: '' })
+      },
+      async saveReschedule (id) {
+        const { editValue } = this.get()
+        if (!editValue) {
+          return
+        }
+        const date = new Date(editValue)
+        if (date.getTime() < Date.now() + MIN_LEAD_MS) {
+          /* no await */ toast.say('intl.scheduleTooSoon')
+          return
+        }
+        const { currentInstance, accessToken } = this.store.get()
+        try {
+          const updated = await rescheduleStatus(currentInstance, accessToken, id, date.toISOString())
+          const { scheduledStatuses } = this.get()
+          this.set({
+            scheduledStatuses: scheduledStatuses.map(_ => _.id === id ? (updated || { ..._, scheduled_at: date.toISOString() }) : _),
+            editingId: null,
+            editValue: ''
+          })
+          /* no await */ toast.say('intl.scheduledPostRescheduled')
+        } catch (e) {
+          /* no await */ toast.say(e.message || 'intl.error')
+        }
+      }
+    }
+  }
+</script>

@@ -75,6 +75,14 @@
           icon="#fa-thumb-tack"
         />
 
+        {#if $enableScheduledPosts}
+        <PageListItem
+          href="/scheduled"
+          label="{'intl.scheduledPosts'}"
+          icon="#fa-clock"
+        />
+        {/if}
+
         <PageListItem
           href="/followed-tags"
           label="{'intl.followedHashtags'}"
