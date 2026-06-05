@@ -9,6 +9,7 @@ import {
   resolve,
   inlineSvgs,
   version,
+  channel,
   isUpstream
 } from './shared.config.js'
 
@@ -81,6 +82,7 @@ export default {
       'process.env.INLINE_SVGS': JSON.stringify(inlineSvgs),
       'process.env.LOCALE': JSON.stringify(LOCALE),
       ZOCIAL_VERSION: JSON.stringify(version),
+      ZOCIAL_CHANNEL: JSON.stringify(channel),
       ZOCIAL_ENV: JSON.stringify(mode),
       ZOCIAL_IS_SERVICE_WORKER: 'false',
       ZOCIAL_IS_BROWSER: 'false',

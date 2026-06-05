@@ -40,6 +40,14 @@ jobs:
             echo "IMAGE_TAG=latest" >> $GITHUB_ENV
           fi
 
+      - name: Set release channel
+        run: |
+          if [ "${{ inputs.branch }}" = "main" ]; then
+            echo "CHANNEL=prod" >> $GITHUB_ENV
+          else
+            echo "CHANNEL=dev" >> $GITHUB_ENV
+          fi
+
       - name: Login to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
@@ -49,6 +57,7 @@ jobs:
       - name: Build image
         run: |
           docker build \
+            --build-arg ZOCIAL_CHANNEL=${CHANNEL} \
             -t domoel/zocial:${IMAGE_TAG} \
             -t domoel/zocial:${IMAGE_TAG}-${TAG} \
             .

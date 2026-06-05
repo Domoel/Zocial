@@ -1,5 +1,6 @@
 import svgs from '../bin/svgs.js'
 import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
 import { themes } from '../src/routes/_static/themes.js'
 
 export const inlineSvgs = svgs.filter(_ => _.inline).map(_ => `#${_.id}`)
@@ -18,22 +19,25 @@ export const resolve = {
   }
 }
 
-// --- Git metadata (safe fallback for Docker/CI environments) ---
-let commitCount = '0'
-let commitHash = 'dev'
-
+// --- App version (manually bumped in package.json; always available, even in Docker) ---
+let appVersion = '0.0.0'
 try {
-  commitCount = process.env.GIT_COMMIT_COUNT ||
-    execSync('git rev-list --count HEAD').toString().trim()
+  appVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version || appVersion
+} catch (e) { /* keep fallback */ }
 
-  commitHash = process.env.GIT_COMMIT_HASH ||
-    execSync('git rev-parse --short HEAD').toString().trim()
-} catch (e) {
-  // No git available (e.g. Docker build without .git)
-  // Fallback values already set above
+export const version = appVersion
+
+// --- Release channel: 'prod' for the main branch, 'dev' otherwise ---
+// ZOCIAL_CHANNEL is injected by the Docker build (build-arg, set by CI from the branch).
+// Outside Docker we fall back to the current git branch, then to 'dev'.
+let branch = process.env.ZOCIAL_CHANNEL
+if (!branch) {
+  try {
+    branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim()
+  } catch (e) { /* no git available */ }
 }
-
-export const version = 'v' + commitCount + '-' + commitHash
+export const channel =
+  (branch === 'main' || branch === 'prod' || branch === 'stable') ? 'prod' : 'dev'
 
 export const inlineThemeColors = Object.fromEntries(
   themes.map(_ => ([_.name, _.color]))

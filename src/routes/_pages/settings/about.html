@@ -10,11 +10,14 @@
   import UISettingsStyles from '../../_components/settings/UISettingsStyles.html'
 
   const version = ZOCIAL_VERSION
+  const channel = ZOCIAL_CHANNEL
+  // e.g. "1.0.0 (prod)" on main builds, "1.0.0 (dev)" on dev builds
+  const versionLabel = `${version} (${channel})`
 
   export default {
     oncreate () {
       for (const node of this.refs.node.querySelectorAll('.zocial-version')) {
-        node.textContent = version
+        node.textContent = versionLabel
       }
     },
     components: {

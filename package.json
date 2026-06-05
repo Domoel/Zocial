@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "version": "1.0.0",
   "scripts": {
     "lint": "standard && standard --plugin html 'src/routes/**/*.html' && tsc && prettier -c 'src/**/*.ts'",
     "lint-fix": "standard --fix && standard --fix --plugin html 'src/routes/**/*.html' && prettier -w 'src/**/*.ts'",
@@ -121,7 +122,8 @@
       "Audio",
       "HTMLElement",
       "ZOCIAL_IS_BROWSER",
-      "ZOCIAL_VERSION"
+      "ZOCIAL_VERSION",
+      "ZOCIAL_CHANNEL"
     ]
   },
   "prettier": {

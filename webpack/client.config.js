@@ -11,7 +11,8 @@ import {
   isUpstream,
   mode,
   resolve,
-  version
+  version,
+  channel
 } from './shared.config.js'
 import VirtualModulesPlugin from 'webpack-virtual-modules'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
@@ -135,6 +136,7 @@ export default {
         ? JSON.stringify(emojiPickerI18n)
         : 'undefined',
       ZOCIAL_VERSION: JSON.stringify(version),
+      ZOCIAL_CHANNEL: JSON.stringify(channel),
       ZOCIAL_IS_SERVICE_WORKER: 'false',
       ZOCIAL_IS_BROWSER: 'true',
       'process.env.THEME_COLORS': 'null',

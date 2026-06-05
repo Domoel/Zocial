@@ -21,6 +21,11 @@ RUN pnpm install
 # Copy source
 COPY . .
 
+# Release channel (prod/dev) — CI passes this based on the branch; defaults to dev.
+# Consumed by webpack/shared.config.js to set ZOCIAL_CHANNEL.
+ARG ZOCIAL_CHANNEL=dev
+ENV ZOCIAL_CHANNEL=$ZOCIAL_CHANNEL
+
 RUN pnpm run build \
  && cp __sapper__/export/service-worker-index.html __sapper__/export/404.html
 
