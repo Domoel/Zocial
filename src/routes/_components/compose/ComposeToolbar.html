@@ -45,7 +45,7 @@
       pressable={true}
       pressed={contentWarningShown}
     />
-    {#if $enableScheduledPosts && !editId}
+    {#if !editId}
     <IconButton
       className="compose-toolbar-button"
       label="{'intl.schedulePost'}"
@@ -76,7 +76,8 @@
     flex-wrap: wrap;
   }
 
-  @media (max-width: 340px) {
+  /* tighten icon spacing on phones so all toolbar buttons fit on one row */
+  @media (max-width: 480px) {
     :global(button.icon-button.compose-toolbar-button) {
       padding-inline: 5px;
     }
