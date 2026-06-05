@@ -3,7 +3,7 @@ import { DEFAULT_TIMEOUT, get, post, put, WRITE_TIMEOUT } from '../_utils/ajax.j
 
 // post is create, put is edit
 async function postOrPutStatus (url, accessToken, method, text, inReplyToId, mediaIds,
-  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly) {
+  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt) {
   const body = {
     status: text,
     media_ids: mediaIds,
@@ -17,7 +17,9 @@ async function postOrPutStatus (url, accessToken, method, text, inReplyToId, med
     ...(method === 'post' && {
       // you can't change these properties when editing
       in_reply_to_id: inReplyToId,
-      visibility
+      visibility,
+      // ISO8601 timestamp; when set the server returns a ScheduledStatus instead of a Status
+      scheduled_at: scheduledAt
     })
   }
 
@@ -35,10 +37,10 @@ async function postOrPutStatus (url, accessToken, method, text, inReplyToId, med
 }
 
 export async function postStatus (instanceName, accessToken, text, inReplyToId, mediaIds,
-  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly) {
+  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt) {
   const url = `${basename(instanceName)}/api/v1/statuses`
   return postOrPutStatus(url, accessToken, 'post', text, inReplyToId, mediaIds,
-    sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly)
+    sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt)
 }
 
 export async function putStatus (instanceName, accessToken, id, text, inReplyToId, mediaIds,

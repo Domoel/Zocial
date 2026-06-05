@@ -1,0 +1,96 @@
+<GenericConfirmationDialog
+  {id}
+  {label}
+  {title}
+  {positiveText}
+  {confirmationButtonDisabled}
+  on:positive="save()">
+  <div class="compose-schedule-dialog">
+    <label class="compose-schedule-label" for="compose-schedule-input">
+      {'intl.scheduleDateTimeLabel'}
+    </label>
+    <input type="datetime-local"
+           id="compose-schedule-input"
+           ref:dateInput
+           min={minDateTime}
+           on:input="onInput(event)">
+  </div>
+</GenericConfirmationDialog>
+<style>
+  .compose-schedule-dialog {
+    padding: 20px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .compose-schedule-label {
+    font-size: 1.1em;
+  }
+  #compose-schedule-input {
+    font-size: 1.1em;
+    padding: 5px;
+  }
+</style>
+<script>
+  import GenericConfirmationDialog from './GenericConfirmationDialog.html'
+  import { store } from '../../../_store/store.js'
+  import { toast } from '../../toast/toast.js'
+  import { show } from '../helpers/showDialog.js'
+  import { close } from '../helpers/closeDialog.js'
+
+  const MIN_LEAD_MS = 5 * 60 * 1000 // the server requires scheduled posts to be >= 5 minutes out
+
+  function toLocalInputValue (date) {
+    // format a Date as the local "YYYY-MM-DDTHH:mm" string a datetime-local input expects
+    const pad = n => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  }
+
+  export default {
+    oncreate () {
+      const { realm } = this.get()
+      const existing = store.getComposeData(realm, 'scheduledAt')
+      // pre-fill with the existing schedule, or ~10 minutes from now (past the 5-min minimum)
+      const initial = existing ? new Date(existing) : new Date(Date.now() + 10 * 60 * 1000)
+      this.refs.dateInput.value = toLocalInputValue(initial)
+      this.set({ minDateTime: toLocalInputValue(new Date(Date.now() + MIN_LEAD_MS)) })
+      this.computeConfirmationButtonDisabled()
+    },
+    store: () => store,
+    data: () => ({
+      realm: undefined,
+      positiveText: 'intl.scheduleSet',
+      minDateTime: undefined,
+      confirmationButtonDisabled: true
+    }),
+    methods: {
+      show,
+      close,
+      onInput () {
+        this.computeConfirmationButtonDisabled()
+      },
+      computeConfirmationButtonDisabled () {
+        const value = this.refs.dateInput.value
+        const valid = !!value && (new Date(value).getTime() >= Date.now() + MIN_LEAD_MS)
+        this.set({ confirmationButtonDisabled: !valid })
+      },
+      save () {
+        const { realm } = this.get()
+        const value = this.refs.dateInput.value
+        if (!value) {
+          return
+        }
+        const date = new Date(value)
+        if (date.getTime() < Date.now() + MIN_LEAD_MS) {
+          /* no await */ toast.say('intl.scheduleTooSoon')
+          return
+        }
+        store.setComposeData(realm, { scheduledAt: date.toISOString() })
+        store.save()
+      }
+    },
+    components: {
+      GenericConfirmationDialog
+    }
+  }
+</script>

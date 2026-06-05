@@ -20,7 +20,7 @@
       ]
     }),
     computed: {
-      accountsFetcher: ({ $currentInstance, $accessToken }) => () => getBlockedAccounts($currentInstance, $accessToken)
+      accountsFetcher: ({ $currentInstance, $accessToken }) => (maxId) => getBlockedAccounts($currentInstance, $accessToken, maxId)
     },
     store: () => store,
     components: {

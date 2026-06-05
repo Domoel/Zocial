@@ -9,7 +9,7 @@
   export default {
     computed: {
       statusId: ({ params }) => params.statusId,
-      accountsFetcher: ({ $currentInstance, $accessToken, statusId }) => () => getFavorites($currentInstance, $accessToken, statusId)
+      accountsFetcher: ({ $currentInstance, $accessToken, statusId }) => (maxId) => getFavorites($currentInstance, $accessToken, statusId, maxId)
     },
     store: () => store,
     components: {

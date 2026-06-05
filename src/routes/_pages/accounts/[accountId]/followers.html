@@ -9,7 +9,7 @@
   export default {
     computed: {
       accountId: ({ params }) => params.accountId,
-      accountsFetcher: ({ $currentInstance, $accessToken, accountId }) => () => getFollowers($currentInstance, $accessToken, accountId)
+      accountsFetcher: ({ $currentInstance, $accessToken, accountId }) => (maxId) => getFollowers($currentInstance, $accessToken, accountId, maxId)
     },
     store: () => store,
     components: {

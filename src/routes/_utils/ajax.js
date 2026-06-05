@@ -104,3 +104,14 @@ export function paramsString (paramsObject) {
   })
   return res
 }
+
+// Extract the `max_id` of the rel="next" link from a Mastodon-style Link header.
+// Returns null when there is no next page. Some endpoints (e.g. /mutes, /blocks)
+// paginate by an internal id that is only exposed here, not by the item's own id.
+export function parseNextMaxId (linkHeader) {
+  if (!linkHeader) {
+    return null
+  }
+  const match = /<[^>]*[?&]max_id=([^&>]+)[^>]*>;\s*rel="next"/.exec(linkHeader)
+  return match ? decodeURIComponent(match[1]) : null
+}
