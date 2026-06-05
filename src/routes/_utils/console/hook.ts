@@ -49,7 +49,7 @@ if (ZOCIAL_IS_BROWSER) {
       }
     },
   })
-  console.info(String.raw`  /|\    Starting Zocial
-_/_|_)_  Version ${ZOCIAL_VERSION}
-\_____/  Built for ${ZOCIAL_ENV}`)
+  console.info(String.raw`=====    Starting Zocial
+  //     Version ${ZOCIAL_VERSION}
+=====    Built for ${ZOCIAL_ENV}`)
 }
