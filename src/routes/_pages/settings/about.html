@@ -11,13 +11,14 @@
 
   const version = ZOCIAL_VERSION
   const channel = ZOCIAL_CHANNEL
-  // e.g. "1.0.0 (prod)" on main builds, "1.0.0 (dev)" on dev builds
-  const versionLabel = `${version} (${channel})`
 
   export default {
     oncreate () {
       for (const node of this.refs.node.querySelectorAll('.zocial-version')) {
-        node.textContent = versionLabel
+        // keep the version number in the monospace <code>, but put the channel right
+        // after it as normal text — a monospace space would look too wide otherwise
+        node.textContent = version
+        node.insertAdjacentText('afterend', ` (${channel})`)
       }
     },
     components: {

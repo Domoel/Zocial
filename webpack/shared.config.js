@@ -22,7 +22,9 @@ export const resolve = {
 // --- App version (manually bumped in package.json; always available, even in Docker) ---
 let appVersion = '0.0.0'
 try {
-  appVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version || appVersion
+  // Read relative to the build's working directory (repo root). We can't rely on
+  // import.meta.url here because this file is bundled into webpack.config.cjs (CJS).
+  appVersion = JSON.parse(readFileSync('package.json', 'utf8')).version || appVersion
 } catch (e) { /* keep fallback */ }
 
 export const version = appVersion
