@@ -398,6 +398,12 @@ export default {
   </p>`,
   logs: 'Logs',
   showAllLogs: 'Show all logs (debug & info)',
+  showAllLogsHint: 'By default only warnings and errors are shown. Turn this on to also include debug and info logs.',
+  copyLogs: 'Copy logs',
+  logsCopied: 'Logs copied to clipboard',
+  logsCopyFailed: 'Could not copy logs',
+  clearLogs: 'Clear logs',
+  logsCleared: 'Logs cleared',
   // Settings
   settings: 'Settings',
   general: 'General',
