@@ -28,7 +28,7 @@ export async function insertHandleForReply (realm, statusId) {
 
 export async function postStatus (realm, text, inReplyToId, mediaIds,
   sensitive, spoilerText, visibility,
-  mediaDescriptions, inReplyToUuid, poll, mediaFocalPoints, contentType, quoteId, localOnly, editId) {
+  mediaDescriptions, inReplyToUuid, poll, mediaFocalPoints, contentType, quoteId, localOnly, editId, scheduledAt) {
   const { currentInstance, accessToken, online } = store.get()
 
   if (!online) {
@@ -64,9 +64,15 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
       emit('statusUpdated', status)
       emit('postedStatus', realm, inReplyToUuid)
     } else {
-      const status = await postStatusToServer(currentInstance, accessToken, text,
-        inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly)
-      addStatusOrNotification(currentInstance, 'home', status)
+      const result = await postStatusToServer(currentInstance, accessToken, text,
+        inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt)
+      if (scheduledAt) {
+        // when scheduled, the server returns a ScheduledStatus (not a real status yet),
+        // so don't add it to the timeline — just confirm it was scheduled
+        /* no await */ toast.say('intl.scheduledStatusCreated')
+      } else {
+        addStatusOrNotification(currentInstance, 'home', result)
+      }
       emit('postedStatus', realm, inReplyToUuid)
     }
     store.clearComposeData(realm)

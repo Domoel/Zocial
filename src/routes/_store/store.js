@@ -22,6 +22,8 @@ const persistedState = {
   // When true, replies default to "unlisted" visibility (never more public than the
   // post being replied to). See setReplyVisibility() in _actions/compose.js.
   defaultUnlistedReplies: false,
+  // Show the "schedule post" (clock) button in the composer toolbar.
+  enableScheduledPosts: true,
   disableFollowRequestCount: false,
   hideLongPosts: true,
   longPostLength: 1024,

@@ -68,7 +68,7 @@
         <ComposePoll {realm} {poll} />
       </div>
     {/if}
-    <ComposeToolbar {realm} {postPrivacy} {media} {contentWarningShown} {text} {poll} {contentType} {editId} {length} {overLimit} {localOnly} />
+    <ComposeToolbar {realm} {postPrivacy} {media} {contentWarningShown} {text} {poll} {contentType} {editId} {length} {overLimit} {localOnly} {scheduledAt} />
     <ComposeMedia {realm} {media} />
     {#if showSensitive}
     <ComposeMediaSensitive {realm} {media} {sensitive} {contentWarning} {contentWarningShown} />
@@ -278,6 +278,7 @@
       quoteId: ({ composeData }) => composeData.quoteId,
       quoteHandle: ({ composeData }) => composeData.quoteHandle,
       editId: ({ composeData }) => composeData.editId,
+      scheduledAt: ({ composeData }) => composeData.scheduledAt,
       showSensitive: ({ $currentSupportedToggles }) => $currentSupportedToggles ? $currentSupportedToggles.sensitive : true
     },
     transitions: {
@@ -316,7 +317,8 @@
           sensitive,
           contentType,
           editId,
-          localOnly
+          localOnly,
+          scheduledAt
         } = this.get()
         const { statusPollExpiryOptions } = this.store.get()
         const mediaIds = media.map(_ => _.data.id)
@@ -346,7 +348,9 @@
         /* no await */ postStatus(realm, text, inReplyTo, mediaIds,
           sensitive, contentWarning, postPrivacyKey,
           mediaDescriptions, inReplyToUuid, pollToPost,
-          mediaFocalPoints, contentType, quoteId, localOnly, editId)
+          mediaFocalPoints, contentType, quoteId, localOnly, editId,
+          // only schedule new posts, never edits
+          editId ? undefined : scheduledAt)
       },
       onDontReplyClick () {
         const { realm } = this.get()

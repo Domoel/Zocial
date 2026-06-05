@@ -45,6 +45,17 @@
       pressable={true}
       pressed={contentWarningShown}
     />
+    {#if $enableScheduledPosts && !editId}
+    <IconButton
+      className="compose-toolbar-button"
+      label="{'intl.schedulePost'}"
+      pressedLabel="{'intl.removeSchedule'}"
+      href="#fa-clock"
+      on:click="onScheduleClick()"
+      pressable={true}
+      pressed={!!scheduledAt}
+    />
+    {/if}
     <ComposeLengthIndicator {length} {overLimit} />
   </div>
   <input ref:input
@@ -83,6 +94,7 @@
   import { importShowEmojiDialog } from '../dialog/asyncDialogs/importShowEmojiDialog.js'
   import { importShowPostPrivacyDialog } from '../dialog/asyncDialogs/importShowPostPrivacyDialog.js'
   import { importShowContentTypeDialog } from '../dialog/asyncDialogs/importShowContentTypeDialog.js'
+  import { importShowComposeScheduleDialog } from '../dialog/asyncDialogs/importShowComposeScheduleDialog.js'
   import { doMediaUpload } from '../../_actions/media.js'
   import { toggleContentWarningShown } from '../../_actions/contentWarnings.js'
   import { mediaAccept } from '../../_static/media.js'
@@ -143,6 +155,17 @@
         const { realm } = this.get()
         const showContentTypeDialog = await importShowContentTypeDialog()
         showContentTypeDialog(realm)
+      },
+      async onScheduleClick () {
+        const { realm, scheduledAt } = this.get()
+        if (scheduledAt) {
+          // pressed while already scheduled → clear the schedule
+          this.store.setComposeData(realm, { scheduledAt: null })
+          this.store.save()
+        } else {
+          const showComposeScheduleDialog = await importShowComposeScheduleDialog()
+          showComposeScheduleDialog(realm)
+        }
       },
       onContentWarningClick () {
         const { realm } = this.get()
