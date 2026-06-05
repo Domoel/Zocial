@@ -39,7 +39,6 @@ export default {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(mode),
-      ZOCIAL_ENV: JSON.stringify(mode),
       'process.env.SAPPER_TIMESTAMP': process.env.SAPPER_TIMESTAMP || Date.now(),
       'process.env.LOCALE': JSON.stringify(LOCALE),
       ZOCIAL_IS_SERVICE_WORKER: 'true',

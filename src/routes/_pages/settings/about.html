@@ -10,7 +10,8 @@
   import UISettingsStyles from '../../_components/settings/UISettingsStyles.html'
 
   const version = ZOCIAL_VERSION
-  const channel = ZOCIAL_CHANNEL
+  // branch-based channel, spelled out to match the startup banner
+  const channelLabel = ZOCIAL_CHANNEL === 'prod' ? 'Production' : 'Development'
 
   export default {
     oncreate () {
@@ -18,7 +19,7 @@
         // keep the version number in the monospace <code>, but put the channel right
         // after it as normal text — a monospace space would look too wide otherwise
         node.textContent = version
-        node.insertAdjacentText('afterend', ` (${channel})`)
+        node.insertAdjacentText('afterend', ` (${channelLabel})`)
       }
     },
     components: {

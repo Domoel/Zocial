@@ -6,7 +6,20 @@ export type Log = {
   stack?: string
 }
 export const logs: Log[] = []
+
+// Startup banner — shown in the devtools console and, separately, as an always-visible
+// header on the Logs page (so it's exempt from the error/warn level filter).
+// "Built for" reflects the branch-based channel: main → Production, otherwise Development.
+const channelLabel = ZOCIAL_CHANNEL === 'prod' ? 'Production' : 'Development'
+export const banner = String.raw`=====    Starting Zocial
+  //     Version ${ZOCIAL_VERSION}
+=====    Built for ${channelLabel}`
+
 if (ZOCIAL_IS_BROWSER) {
+  // Print to the real console BEFORE installing the capture proxy, so the banner shows
+  // in devtools but is NOT captured into the in-app logs (it's rendered there separately).
+  console.info(banner)
+
   function add(log: Log) {
     if (logs.length > 100) {
       logs.shift()
@@ -49,7 +62,4 @@ if (ZOCIAL_IS_BROWSER) {
       }
     },
   })
-  console.info(String.raw`=====    Starting Zocial
-  //     Version ${ZOCIAL_VERSION}
-=====    Built for ${ZOCIAL_ENV}`)
 }

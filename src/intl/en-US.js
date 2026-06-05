@@ -397,6 +397,7 @@ export default {
     You are running Zocial version <code class="zocial-version"></code>.
   </p>`,
   logs: 'Logs',
+  showAllLogs: 'Show all logs (debug & info)',
   // Settings
   settings: 'Settings',
   general: 'General',

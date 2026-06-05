@@ -128,7 +128,6 @@ export default {
     new VirtualModulesPlugin(),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(mode),
-      ZOCIAL_ENV: JSON.stringify(mode),
       'process.env.INLINE_SVGS': JSON.stringify(inlineSvgs),
       'process.env.URL_REGEX': urlRegex().toString(),
       'process.env.LOCALE': JSON.stringify(LOCALE),
