@@ -57,7 +57,7 @@ function logToStored(log: Log) {
 // header on the Logs page (so it's exempt from the error/warn level filter).
 // "Built for" reflects the branch-based channel: main → Production, otherwise Development.
 const channelLabel = ZOCIAL_CHANNEL === 'prod' ? 'Production' : 'Development'
-export const banner = String.raw`=====    Starting Zocial
+export const banner = String.raw`=====    Zocial
   //     Version ${ZOCIAL_VERSION}
 =====    Built for ${channelLabel}`
 
