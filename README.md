@@ -46,6 +46,10 @@ Post headers work harder too. When a post is a reply, the header tells you exact
 
 Self-reply threads are automatically collapsed into a single bundle. The oldest post is shown at the top with a `1/N` position counter in the header, middle posts are hidden, and the newest post closes the bundle — keeping your timeline clean without losing context. Only same-author chains are bundled, so no other person's posts are ever hidden.
 
+### Filters that warn, not vanish
+
+Word filters set to *"hide with a warning"* finally behave as intended: matching posts stay in your timeline behind a collapsible **Filtered** notice you can reveal with a tap, instead of silently disappearing — a quirk inherited all the way from Pinafore. Filters set to *"drop"* still remove matching posts entirely.
+
 ### Hashtags, first-class
 
 Followed hashtags get their own header in the timeline — a subtle tag indicator that confirms why a post is appearing in your feed. Tapping that header takes you straight to the hashtag timeline. A long-press or right-click opens a context menu for follow, unfollow, and more.
@@ -57,6 +61,14 @@ Clicking a link to another Mastodon post or profile no longer kicks you out to a
 ### Bookmarks, with personality
 
 The bookmark action lives directly in the reaction bar with a satisfying animation and a persistent indicator — so you always know which posts you've saved, without hunting through the overflow menu.
+
+### Scheduled posts
+
+Write now, post later. A clock button in the composer opens a date-and-time picker — set when a post should go out (at least five minutes ahead) and your server takes it from there, publishing it at the chosen moment whether or not the app is open. A dedicated **Scheduled posts** page (under *Settings → Community*) lists everything in the queue, where you can reschedule or cancel any post before it's sent.
+
+### Reply visibility, your way
+
+Optionally default every reply to **unlisted** — handy for keeping back-and-forth conversations out of the public timeline — while never making a reply more public than the post it answers. Flip it on in *Settings → Composer*.
 
 ### Navigation that bends to you
 
@@ -77,6 +89,10 @@ The navigation bar has room for two fully customisable pin slots, sitting right 
 ### Manage followed hashtags
 
 A dedicated section in Settings lets you view, follow, and unfollow hashtags without leaving the app — no more navigating to a hashtag timeline first. Manage all your tag subscriptions in one place.
+
+### Lists that load on demand
+
+Followers and following, muted and blocked accounts, who-boosted and who-favourited a post, and your scheduled posts all fetch more entries on demand with a **Load more** button — no longer capped at the first page.
 
 ### Desktop notifications
 
