@@ -1,8 +1,33 @@
 <FocusRestoration realm="settings/logs">
   <SettingsNav page="settings/logs" label="{'intl.logs'}" />
-  <easrng-console-logs></easrng-console-logs>
+  <pre class="logs-banner">{banner}</pre>
+  <label class="logs-toggle">
+    <input type="checkbox" bind:checked="$showAllLogs">
+    {'intl.showAllLogs'}
+  </label>
+  <div class="{$showAllLogs ? '' : 'logs-critical-only'}">
+    <easrng-console-logs></easrng-console-logs>
+  </div>
 </FocusRestoration>
 <style>
+.logs-banner {
+  font-family: monospace;
+  white-space: pre;
+  margin: 0;
+  padding: 16px 20px 4px;
+  color: var(--deemphasized-text-color);
+  overflow-x: auto;
+}
+.logs-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+}
+/* default view: only error/warn lines; the toggle removes this class to show all levels */
+:global(.logs-critical-only easrng-console-logs .log:not(.log-error):not(.log-warn)) {
+  display: none;
+}
 :global(easrng-console-logs) {
   font-family: monospace;
   font-size: 1rem;
@@ -61,9 +86,15 @@
 <script>
   import SettingsNav from '../../_components/settings/SettingsNav.html'
   import FocusRestoration from '../../_components/FocusRestoration.html'
+  import { store } from '../../_store/store.js'
+  import { banner } from '../../_utils/console/hook.ts'
   import '../../_utils/console/element.ts'
 
   export default {
+    store: () => store,
+    data: () => ({
+      banner
+    }),
     components: {
       SettingsNav,
       FocusRestoration

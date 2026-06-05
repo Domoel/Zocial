@@ -3,7 +3,7 @@ export default {
   mangle: true,
   compress: {
     pure_funcs: [
-      'console.log' // remove console logs in production
+      'console.log' // remove console.log in production (perf); dev keeps them
     ]
   },
   output: {

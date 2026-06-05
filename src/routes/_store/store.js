@@ -64,6 +64,9 @@ const persistedState = {
   reduceMotion:
     !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,
   underlineLinks: true,
+  // Logs page: when false (default) only error/warn lines are shown; when true, all
+  // captured log levels (info/log/debug/…) are shown too. Persisted like other UI prefs.
+  showAllLogs: false,
   lastContentTypes: {}
 }
 
