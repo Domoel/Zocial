@@ -10,6 +10,7 @@ import { database } from '../_database/database.js'
 import { importVirtualListStore } from '../_utils/asyncModules/importVirtualListStore.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { getSingleInstance } from '../_utils/getSingleInstance.js'
+import { clearLogs } from '../_utils/console/hook.ts'
 
 export function changeTheme (instanceName, newTheme) {
   const { instanceThemes } = store.get()
@@ -104,6 +105,8 @@ export async function logOutOfInstance (instanceName, message) {
   const { virtualListStore } = await importVirtualListStore()
   virtualListStore.clearRealmByPrefix(currentInstance + '/') // TODO: this is a hacky way to clear the vlist cache
   toast.say(message)
+  // wipe captured logs (incl. the persisted copy) so nothing is left behind on logout
+  clearLogs()
   const { enableGrayscale } = store.get()
   switchToTheme(instanceThemes[newInstance], enableGrayscale)
   /* no await */ database.clearDatabaseForInstance(instanceName)

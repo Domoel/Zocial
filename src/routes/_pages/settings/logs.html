@@ -139,7 +139,15 @@
         const lines = root
           ? Array.from(root.querySelectorAll('.log'))
             .filter(el => el.offsetParent !== null)
-            .map(el => el.innerText.trim())
+            .map(el => {
+              // build "icon message" on one line (the .log is a flex row, so reading the
+              // whole element's innerText would split the icon and message onto two lines)
+              const iconEl = el.querySelector('.icon')
+              const msgEl = el.querySelector('.message')
+              const icon = iconEl ? iconEl.textContent.trim() : ''
+              const message = (msgEl ? msgEl.innerText : el.textContent).trim()
+              return icon ? `${icon} ${message}` : message
+            })
           : []
         // prepend the banner so the paste includes version/build context (handy for support)
         const text = banner + '\n\n' + lines.join('\n')
