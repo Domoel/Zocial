@@ -46,6 +46,11 @@
           </li>
         {/each}
       </ul>
+      {#if hasMore}
+        <button type="button" class="scheduled-load-more" on:click="loadMore()" disabled={loadingMore}>
+          {loadingMore ? 'intl.loading' : 'intl.loadMore'}
+        </button>
+      {/if}
     {/if}
   </div>
 {/if}
@@ -122,6 +127,25 @@
   .scheduled-error {
     color: var(--warn-color);
   }
+  .scheduled-load-more {
+    display: block;
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    font-size: 0.9em;
+    border: 1px solid var(--main-border);
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    color: var(--anchor-text);
+  }
+  .scheduled-load-more:hover {
+    border-color: var(--anchor-text);
+  }
+  .scheduled-load-more[disabled] {
+    opacity: 0.6;
+    cursor: default;
+  }
   @media (max-width: 767px) {
     .scheduled-page { padding: 20px 10px; }
     .scheduled-item { padding: 12px 10px; }
@@ -132,7 +156,7 @@
   import DynamicPageBanner from '../_components/DynamicPageBanner.html'
   import SvgIcon from '../_components/SvgIcon.html'
   import { toast } from '../_components/toast/toast.js'
-  import { getScheduledStatuses, cancelScheduledStatus, rescheduleStatus } from '../_api/scheduledStatuses.js'
+  import { getScheduledStatuses, cancelScheduledStatus, rescheduleStatus, SCHEDULED_STATUSES_LIMIT } from '../_api/scheduledStatuses.js'
 
   const MIN_LEAD_MS = 5 * 60 * 1000 // the server requires scheduled posts to be >= 5 minutes out
 
@@ -150,6 +174,8 @@
     data: () => ({
       scheduledStatuses: [],
       loading: true,
+      loadingMore: false,
+      hasMore: false,
       error: '',
       editingId: null,
       editValue: '',
@@ -175,9 +201,34 @@
         const { currentInstance, accessToken } = this.store.get()
         try {
           const scheduledStatuses = await getScheduledStatuses(currentInstance, accessToken)
-          this.set({ scheduledStatuses, loading: false, error: '' })
+          this.set({
+            scheduledStatuses,
+            loading: false,
+            error: '',
+            hasMore: scheduledStatuses.length === SCHEDULED_STATUSES_LIMIT
+          })
         } catch (e) {
           this.set({ loading: false, error: e.message || 'intl.error' })
+        }
+      },
+      async loadMore () {
+        const { scheduledStatuses, loadingMore, hasMore } = this.get()
+        if (loadingMore || !hasMore || !scheduledStatuses.length) {
+          return
+        }
+        this.set({ loadingMore: true })
+        const { currentInstance, accessToken } = this.store.get()
+        const maxId = scheduledStatuses[scheduledStatuses.length - 1].id
+        try {
+          const page = await getScheduledStatuses(currentInstance, accessToken, maxId)
+          this.set({
+            scheduledStatuses: scheduledStatuses.concat(page),
+            loadingMore: false,
+            hasMore: page.length === SCHEDULED_STATUSES_LIMIT
+          })
+        } catch (e) {
+          this.set({ loadingMore: false })
+          /* no await */ toast.say(e.message || 'intl.error')
         }
       },
       async cancel (id) {

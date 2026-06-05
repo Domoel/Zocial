@@ -1,9 +1,16 @@
 import { auth, basename } from './utils.js'
-import { get, del, put, DEFAULT_TIMEOUT, WRITE_TIMEOUT } from '../_utils/ajax.js'
+import { get, del, put, paramsString, DEFAULT_TIMEOUT, WRITE_TIMEOUT } from '../_utils/ajax.js'
 
-// Fetches the current user's scheduled statuses (first page).
-export async function getScheduledStatuses (instanceName, accessToken) {
-  const url = `${basename(instanceName)}/api/v1/scheduled_statuses`
+export const SCHEDULED_STATUSES_LIMIT = 20
+
+// Fetches a page of the current user's scheduled statuses. Pass the id of the last item
+// from the previous page as `maxId` to load the next page (Mastodon-style pagination).
+export async function getScheduledStatuses (instanceName, accessToken, maxId) {
+  const params = { limit: SCHEDULED_STATUSES_LIMIT }
+  if (maxId) {
+    params.max_id = maxId
+  }
+  const url = `${basename(instanceName)}/api/v1/scheduled_statuses?${paramsString(params)}`
   const statuses = await get(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })
   // work around backends that may return a non-array when there are none
   return Array.isArray(statuses) ? statuses : []
