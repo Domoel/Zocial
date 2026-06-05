@@ -402,6 +402,8 @@ export default {
   copyLogs: 'Copy logs',
   logsCopied: 'Logs copied to clipboard',
   logsCopyFailed: 'Could not copy logs',
+  clearLogs: 'Clear logs',
+  logsCleared: 'Logs cleared',
   // Settings
   settings: 'Settings',
   general: 'General',

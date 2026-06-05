@@ -7,7 +7,10 @@
     {'intl.showAllLogs'}
   </label>
   <p class="logs-hint">{'intl.showAllLogsHint'}</p>
-  <button type="button" class="logs-copy" on:click="copyLogs()">{'intl.copyLogs'}</button>
+  <div class="logs-actions">
+    <button type="button" class="logs-btn" on:click="copyLogs()">{'intl.copyLogs'}</button>
+    <button type="button" class="logs-btn" on:click="clearLogs()">{'intl.clearLogs'}</button>
+  </div>
   <div class="{$showAllLogs ? '' : 'logs-critical-only'}">
     <easrng-console-logs></easrng-console-logs>
   </div>
@@ -37,8 +40,12 @@
   line-height: 1.4;
   color: var(--deemphasized-text-color);
 }
-.logs-copy {
+.logs-actions {
+  display: flex;
+  gap: 10px;
   margin: 0 20px 12px;
+}
+.logs-btn {
   font-size: 0.85em;
   padding: 6px 14px;
   border: 1px solid var(--main-border);
@@ -47,7 +54,7 @@
   cursor: pointer;
   color: var(--anchor-text);
 }
-.logs-copy:hover {
+.logs-btn:hover {
   border-color: var(--anchor-text);
 }
 /* default view: only error/warn lines; the toggle removes this class to show all levels */
@@ -113,7 +120,7 @@
   import SettingsNav from '../../_components/settings/SettingsNav.html'
   import FocusRestoration from '../../_components/FocusRestoration.html'
   import { store } from '../../_store/store.js'
-  import { banner, logs } from '../../_utils/console/hook.ts'
+  import { banner, logs, clearLogs as clearLogBuffer } from '../../_utils/console/hook.ts'
   import { toast } from '../../_components/toast/toast.js'
   import '../../_utils/console/element.ts'
 
@@ -151,6 +158,10 @@
         } catch (e) {
           /* no await */ toast.say('intl.logsCopyFailed')
         }
+      },
+      clearLogs () {
+        clearLogBuffer()
+        /* no await */ toast.say('intl.logsCleared')
       }
     },
     components: {

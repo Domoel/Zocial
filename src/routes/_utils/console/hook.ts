@@ -15,6 +15,12 @@ export const banner = String.raw`=====    Starting Zocial
   //     Version ${ZOCIAL_VERSION}
 =====    Built for ${channelLabel}`
 
+// Empty the in-memory log buffer and tell the Logs view to clear what it's showing.
+export function clearLogs() {
+  logs.length = 0
+  emit('clearConsole')
+}
+
 if (ZOCIAL_IS_BROWSER) {
   // Print to the real console BEFORE installing the capture proxy, so the banner shows
   // in devtools but is NOT captured into the in-app logs (it's rendered there separately).

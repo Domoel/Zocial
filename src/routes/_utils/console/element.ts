@@ -342,6 +342,7 @@ if (ZOCIAL_IS_BROWSER) {
     constructor() {
       super()
       this._onLog = this._onLog.bind(this)
+      this._onClear = this._onClear.bind(this)
     }
     connectedCallback() {
       this.textContent = ''
@@ -350,6 +351,7 @@ if (ZOCIAL_IS_BROWSER) {
       this._times = new Map()
       this._counts = new Map()
       eventBus.on('console', this._onLog)
+      eventBus.on('clearConsole', this._onClear)
       this.firstElementChild!.append(
         render(
           ({ html }) => html`
@@ -365,6 +367,12 @@ if (ZOCIAL_IS_BROWSER) {
     disconnectedCallback() {
       this.textContent = ''
       eventBus.off('console', this._onLog)
+      eventBus.off('clearConsole', this._onClear)
+    }
+    _onClear() {
+      if (this.firstElementChild) {
+        this.firstElementChild.textContent = ''
+      }
     }
     _onLog(log: Log) {
       this.firstElementChild!.append(
