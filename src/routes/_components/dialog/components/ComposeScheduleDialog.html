@@ -35,6 +35,8 @@
   import GenericConfirmationDialog from './GenericConfirmationDialog.html'
   import { store } from '../../../_store/store.js'
   import { toast } from '../../toast/toast.js'
+  import { show } from '../helpers/showDialog.js'
+  import { close } from '../helpers/closeDialog.js'
 
   const MIN_LEAD_MS = 5 * 60 * 1000 // the server requires scheduled posts to be >= 5 minutes out
 
@@ -62,6 +64,8 @@
       confirmationButtonDisabled: true
     }),
     methods: {
+      show,
+      close,
       onInput () {
         this.computeConfirmationButtonDisabled()
       },
