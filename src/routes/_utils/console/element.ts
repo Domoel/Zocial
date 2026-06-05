@@ -251,6 +251,14 @@ if (ZOCIAL_IS_BROWSER) {
   const TimesContext = createContext<Map<string, number>>()
   const CountsContext = createContext<Map<string, number>>()
   const LogLine: Component<{ log: Log }> = ({ log, html, context }) => {
+    // Logs restored from storage carry pre-formatted text — render as-is and skip the
+    // live formatting/normalisation (their original args no longer exist).
+    if (typeof log.message === 'string') {
+      const restoredIcon = icons[log.type]
+        ? html`<span class="icon" title=${log.type} aria-label=${log.type}>${icons[log.type]}</span>`
+        : ''
+      return html`<li class=${'log log-' + log.type}>${restoredIcon} <span class="message">${log.message}</span></li>`
+    }
     const times = context(TimesContext)!
     const counts = context(CountsContext)!
     let stackEle: Node | string = ''
