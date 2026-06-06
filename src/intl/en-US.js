@@ -403,6 +403,7 @@ export default {
   logsCopied: 'Logs copied to clipboard',
   logsCopyFailed: 'Could not copy logs',
   clearLogs: 'Clear logs',
+  clearLogsConfirm: 'Clear all logs? This cannot be undone.',
   logsCleared: 'Logs cleared',
   // Settings
   settings: 'Settings',

@@ -2,9 +2,11 @@ export default {
   ecma: 8,
   mangle: true,
   compress: {
-    pure_funcs: [
-      'console.log' // remove console.log in production (perf); dev keeps them
-    ]
+    // Strip console.log only on the production channel (main builds). Dev-channel builds
+    // (and `npm run dev`, which doesn't minify) keep them, so the Logs page can show the
+    // full debug output. NOTE: every Docker build runs with NODE_ENV=production, so we key
+    // off the release channel here, not the build mode.
+    pure_funcs: process.env.ZOCIAL_CHANNEL === 'prod' ? ['console.log'] : []
   },
   output: {
     comments: false

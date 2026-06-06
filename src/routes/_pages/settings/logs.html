@@ -122,6 +122,7 @@
   import { store } from '../../_store/store.js'
   import { banner, clearLogs as clearLogBuffer } from '../../_utils/console/hook.ts'
   import { toast } from '../../_components/toast/toast.js'
+  import { importShowTextConfirmationDialog } from '../../_components/dialog/asyncDialogs/importShowTextConfirmationDialog.js'
   import '../../_utils/console/element.ts'
 
   export default {
@@ -158,9 +159,15 @@
           /* no await */ toast.say('intl.logsCopyFailed')
         }
       },
-      clearLogs () {
-        clearLogBuffer()
-        /* no await */ toast.say('intl.logsCleared')
+      async clearLogs () {
+        const showTextConfirmationDialog = await importShowTextConfirmationDialog()
+        showTextConfirmationDialog({
+          text: 'intl.clearLogsConfirm',
+          positiveText: 'intl.clearLogs'
+        }).on('positive', () => {
+          clearLogBuffer()
+          /* no await */ toast.say('intl.logsCleared')
+        })
       }
     },
     components: {
