@@ -80,6 +80,10 @@ const nonPersistedState = {
   instanceFilters: {},
   online: !ZOCIAL_IS_BROWSER || navigator.onLine,
   pinnedStatuses: {},
+  // cache of profile posting-stats (original/replies/boosts) keyed by `instance/accountId`,
+  // so switching account tabs (separate routes) reuses the result instead of refetching and
+  // flickering the bar in/out. Not persisted.
+  postingStatsByAccount: {},
   polls: {},
   pushNotificationsSupport:
     ZOCIAL_IS_BROWSER &&

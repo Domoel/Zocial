@@ -93,6 +93,7 @@
   import { formatIntl } from '../../_utils/formatIntl.js'
   import { LOCALE } from '../../_static/intl.js'
   import { thunk } from '../../_utils/thunk.js'
+  import { observe } from 'svelte-extras'
 
   const DAY_MS = 86400000
   const STATS_LIMIT = 20
@@ -100,13 +101,16 @@
 
   export default {
     oncreate () {
-      this._loadStats()
+      // (re)load whenever the target account changes; _loadStats no-ops if already cached
+      this.observe('cacheKey', () => this._loadStats())
     },
-    data: () => ({
-      stats: null
-    }),
     store: () => store,
     computed: {
+      cacheKey: ({ account, $currentInstance }) => (account && $currentInstance ? `${$currentInstance}/${account.id}` : null),
+      // Read from the shared cache so the bar is already present on the very first render after a
+      // tab switch (each tab is its own route → the component re-mounts). Avoids the brief
+      // empty-then-fill layout shift; the network fetch only runs on the first visit.
+      stats: ({ cacheKey, $postingStatsByAccount }) => ((cacheKey && $postingStatsByAccount && $postingStatsByAccount[cacheKey]) || null),
       originalsPct: ({ stats }) => (stats && stats.total ? (stats.originals / stats.total) * 100 : 0),
       repliesPct: ({ stats }) => (stats && stats.total ? (stats.replies / stats.total) * 100 : 0),
       boostsPct: ({ stats }) => (stats && stats.total ? (stats.boosts / stats.total) * 100 : 0),
@@ -138,11 +142,15 @@
       }
     },
     methods: {
+      observe,
       async _loadStats () {
-        const { account } = this.get()
-        const { currentInstance, accessToken } = this.store.get()
-        if (!account || !currentInstance) {
+        const { account, cacheKey } = this.get()
+        const { currentInstance, accessToken, postingStatsByAccount } = this.store.get()
+        if (!account || !currentInstance || !cacheKey) {
           return
+        }
+        if (postingStatsByAccount[cacheKey]) {
+          return // already cached from a previous visit → rendered synchronously, no refetch
         }
         try {
           const statuses = await getAccountStatusesForStats(currentInstance, accessToken, account.id, STATS_LIMIT)
@@ -165,7 +173,10 @@
           // statuses are newest-first, so the last one is the oldest in the batch
           const oldest = statuses[statuses.length - 1]
           const daysSinceLastPost = Math.max(1, Math.ceil((Date.now() - Date.parse(oldest.created_at)) / DAY_MS))
-          this.set({ stats: { total: statuses.length, originals, replies, boosts, daysSinceLastPost } })
+          const next = Object.assign({}, this.store.get().postingStatsByAccount, {
+            [cacheKey]: { total: statuses.length, originals, replies, boosts, daysSinceLastPost }
+          })
+          this.store.set({ postingStatsByAccount: next })
         } catch (e) {
           // best-effort; never disrupt the profile if this fails (or the component was destroyed)
         }
