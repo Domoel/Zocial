@@ -19,6 +19,7 @@
       <AccountProfileDetails {account} {relationship} {verifyCredentials} />
     </div>
   </div>
+  <AccountProfilePostingStats {account} />
   <AccountProfileFilters account={$currentAccountProfile} {filter} />
 </div>
 <style>
@@ -119,6 +120,7 @@
   import AccountProfileNote from './AccountProfileNote.html'
   import AccountProfileMeta from './AccountProfileMeta.html'
   import AccountProfileDetails from './AccountProfileDetails.html'
+  import AccountProfilePostingStats from './AccountProfilePostingStats.html'
   import AccountProfileMovedBanner from './AccountProfileMovedBanner.html'
   import AccountProfileFilters from './AccountProfileFilters.html'
   import { store } from '../../_store/store.js'
@@ -154,6 +156,7 @@
       AccountProfileNote,
       AccountProfileMeta,
       AccountProfileDetails,
+      AccountProfilePostingStats,
       AccountProfileMovedBanner,
       AccountProfileFilters
     }

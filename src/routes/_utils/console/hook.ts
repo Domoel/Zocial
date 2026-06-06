@@ -105,30 +105,39 @@ if (ZOCIAL_IS_BROWSER) {
   console.info(banner)
 
   function add(log: Log) {
-    if (logs.length > MAX_LOGS) {
-      logs.shift()
-    }
     logs.push(log)
+    if (logs.length > MAX_LOGS) {
+      // A flood of console.log (e.g. the timeline's debug breadcrumbs) must not evict the
+      // errors/warns we actually want to keep. Drop the oldest low-priority entry first,
+      // and only fall back to plain FIFO when everything left is an error/warn.
+      let idx = logs.findIndex((l) => l.type !== 'error' && l.type !== 'warn')
+      if (idx === -1) idx = 0
+      logs.splice(idx, 1)
+    }
     emit('console', log)
     persist()
   }
   globalThis.addEventListener('unhandledrejection', (event) => {
-    const log = {
+    // capture the ORIGINAL error's stack (event.reason), not the handler's, and fold it into
+    // the message so the source is visible live, in "Copy logs", and after a reload
+    const reason: any = event.reason
+    const detail = (reason && reason.stack) || (reason && reason.message) || String(reason)
+    add({
       type: 'error',
-      args: ['Uncaught (in promise) %o', event.reason],
+      args: ['Uncaught (in promise): ' + detail],
       time: Date.now(),
-      stack: new Error().stack,
-    }
-    add(log)
+      stack: reason && reason.stack,
+    })
   })
   globalThis.addEventListener('error', (event) => {
-    const log = {
+    const err: any = event.error
+    const detail = (err && err.stack) || (err && err.message) || event.message || String(err)
+    add({
       type: 'error',
-      args: ['%o', event.error],
+      args: [detail],
       time: Date.now(),
-      stack: new Error().stack,
-    }
-    add(log)
+      stack: err && err.stack,
+    })
   })
   globalThis.console = new Proxy(console, {
     get(target, key) {

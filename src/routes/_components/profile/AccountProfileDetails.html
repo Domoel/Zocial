@@ -36,13 +36,30 @@
       {'intl.followers'}
     </span>
   </a>
+  {#if joinedDisplay}
+  <div class="account-profile-details-item account-profile-details-joined" title={joinedFull}>
+    <span class="account-profile-details-item-datum">
+      {joinedDisplay}
+    </span>
+    <span class="account-profile-details-item-title">
+      {'intl.joined'}
+    </span>
+  </div>
+  {/if}
 </div>
 <style>
   .account-profile-details {
     grid-area: details;
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 0 20px;
     margin-bottom: 10px;
+  }
+
+  /* On wide screens push the join date into the free space on the right.
+     On phones (see the media query below) it instead joins the evenly-spread row. */
+  .account-profile-details-joined {
+    margin-inline-start: auto;
   }
 
   .account-profile-details-item {
@@ -62,33 +79,35 @@
     color: var(--body-text-color);
   }
 
-  @media (max-width: 374px) {
+  /* On phones, switch to a compact stacked layout (value over label) spread evenly across
+     the row. Each item is much narrower this way, so all four (incl. the join date) fit on
+     a single line. The join date no longer gets pushed right; if anything ever wraps it
+     now flows left, not into a lonely right-aligned second line. */
+  @media (max-width: 540px) {
     .account-profile-details {
       margin-bottom: 0;
+      gap: 0 12px;
+      justify-content: space-between;
     }
     .account-profile-details-item {
       flex-direction: column;
-      margin-inline: 5px;
+      align-items: center;
+      justify-content: flex-start;
+      margin-inline: 0;
+      padding: 8px 0;
+      font-size: 1em;
     }
-
-    .account-profile-details-item:last-child {
-      margin-inline-end: 0;
-    }
-
-    .account-profile-details-item:first-child {
+    .account-profile-details-joined {
       margin-inline-start: 0;
     }
-
     .account-profile-details-item-title {
       margin-inline-end: 0;
       text-align: center;
     }
     .account-profile-details-item-datum {
       margin-inline-start: 0;
+      margin-inline-end: 0;
       text-align: center;
-    }
-    .account-profile-details-item {
-      font-size: 1em;
     }
   }
 </style>
@@ -98,9 +117,14 @@
   import { thunk } from '../../_utils/thunk.js'
 
   const numberFormat = thunk(() => new Intl.NumberFormat(LOCALE))
+  // compact for the visible label ("Sep 2024"), full date for the tooltip
+  const joinDateFormat = thunk(() => new Intl.DateTimeFormat(LOCALE, { year: 'numeric', month: 'short' }))
+  const joinDateFullFormat = thunk(() => new Intl.DateTimeFormat(LOCALE, { year: 'numeric', month: 'long', day: 'numeric' }))
 
   export default {
     computed: {
+      joinedDisplay: ({ account }) => account.created_at ? joinDateFormat().format(new Date(account.created_at)) : '',
+      joinedFull: ({ account }) => account.created_at ? joinDateFullFormat().format(new Date(account.created_at)) : '',
       numStatuses: ({ account }) => account.statuses_count || 0,
       numFollowing: ({ account }) => account.following_count || 0,
       numFollowers: ({ account }) => account.followers_count || 0,
