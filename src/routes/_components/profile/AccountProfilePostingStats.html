@@ -97,6 +97,9 @@
 
   const DAY_MS = 86400000
   const STATS_LIMIT = 20
+  // How long a cached result stays fresh within a session before it's refetched on the next
+  // profile visit (matches Phanpy's ACCOUNT_INFO_MAX_AGE). A full page reload always refetches.
+  const STATS_MAX_AGE = 1000 * 60 * 10 // 10 minutes
   const percentFormat = thunk(() => new Intl.NumberFormat(LOCALE, { style: 'percent' }))
 
   export default {
@@ -149,9 +152,11 @@
         if (!account || !currentInstance || !cacheKey) {
           return
         }
-        if (postingStatsByAccount[cacheKey]) {
-          return // already cached from a previous visit → rendered synchronously, no refetch
+        const cached = postingStatsByAccount[cacheKey]
+        if (cached && (Date.now() - cached.fetchedAt) < STATS_MAX_AGE) {
+          return // still fresh → rendered synchronously from cache, no refetch
         }
+        // stale or missing: a stale value keeps showing (no flicker) while we refetch below
         try {
           const statuses = await getAccountStatusesForStats(currentInstance, accessToken, account.id, STATS_LIMIT)
           if (!statuses || !statuses.length) {
@@ -174,7 +179,7 @@
           const oldest = statuses[statuses.length - 1]
           const daysSinceLastPost = Math.max(1, Math.ceil((Date.now() - Date.parse(oldest.created_at)) / DAY_MS))
           const next = Object.assign({}, this.store.get().postingStatsByAccount, {
-            [cacheKey]: { total: statuses.length, originals, replies, boosts, daysSinceLastPost }
+            [cacheKey]: { total: statuses.length, originals, replies, boosts, daysSinceLastPost, fetchedAt: Date.now() }
           })
           this.store.set({ postingStatsByAccount: next })
         } catch (e) {
