@@ -113,22 +113,26 @@ if (ZOCIAL_IS_BROWSER) {
     persist()
   }
   globalThis.addEventListener('unhandledrejection', (event) => {
-    const log = {
+    // capture the ORIGINAL error's stack (event.reason), not the handler's, and fold it into
+    // the message so the source is visible live, in "Copy logs", and after a reload
+    const reason: any = event.reason
+    const detail = (reason && reason.stack) || (reason && reason.message) || String(reason)
+    add({
       type: 'error',
-      args: ['Uncaught (in promise) %o', event.reason],
+      args: ['Uncaught (in promise): ' + detail],
       time: Date.now(),
-      stack: new Error().stack,
-    }
-    add(log)
+      stack: reason && reason.stack,
+    })
   })
   globalThis.addEventListener('error', (event) => {
-    const log = {
+    const err: any = event.error
+    const detail = (err && err.stack) || (err && err.message) || event.message || String(err)
+    add({
       type: 'error',
-      args: ['%o', event.error],
+      args: [detail],
       time: Date.now(),
-      stack: new Error().stack,
-    }
-    add(log)
+      stack: err && err.stack,
+    })
   })
   globalThis.console = new Proxy(console, {
     get(target, key) {
