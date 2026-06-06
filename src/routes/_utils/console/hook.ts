@@ -105,10 +105,15 @@ if (ZOCIAL_IS_BROWSER) {
   console.info(banner)
 
   function add(log: Log) {
-    if (logs.length > MAX_LOGS) {
-      logs.shift()
-    }
     logs.push(log)
+    if (logs.length > MAX_LOGS) {
+      // A flood of console.log (e.g. the timeline's debug breadcrumbs) must not evict the
+      // errors/warns we actually want to keep. Drop the oldest low-priority entry first,
+      // and only fall back to plain FIFO when everything left is an error/warn.
+      let idx = logs.findIndex((l) => l.type !== 'error' && l.type !== 'warn')
+      if (idx === -1) idx = 0
+      logs.splice(idx, 1)
+    }
     emit('console', log)
     persist()
   }
