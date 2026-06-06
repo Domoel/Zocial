@@ -114,7 +114,12 @@ virtualListStore.compute('allVisibleItemsHaveHeight',
       return false
     }
     for (const visibleItem of visibleItems) {
-      if (!itemHeights[visibleItem.data.id]) {
+      // `=== undefined` (not `!height`): distinguish "not measured yet" from "measured as 0".
+      // Bundled-thread middle posts are intentionally collapsed to height:0; treating their
+      // measured 0 as "no height" would block initialisation forever (the list never inits
+      // while such a bundle is in the visible range). A genuine 0 is fine here — offsets use
+      // `itemHeights[id] || 0` and the item re-measures on load/resize anyway.
+      if (itemHeights[visibleItem.data.id] === undefined) {
         return false
       }
     }
