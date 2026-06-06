@@ -45,6 +45,7 @@
     showMoreItemsForCurrentTimeline
   } from '../../_actions/timeline.js'
   import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
+  import { virtualListStore } from '../virtualList/virtualListStore.js'
   import { mark, stop } from '../../_utils/marks.js'
   import { isEqual } from '../../_utils/lodash-lite.js'
   import { doubleRAF } from '../../_utils/doubleRAF.js'
@@ -69,10 +70,34 @@
           setupTimeline()
         }
       })
+      // TEMP DIAGNOSTIC: if the list never initialises (timelineInitialized stays false) even
+      // though items are present, capture the virtual-list state once so we can see WHY —
+      // empty filtered items (filter issue) vs. a visible item stuck at height 0/undefined
+      // (render/measure issue). console.warn so it survives the log buffer's priority eviction
+      // and shows in the default (error/warn) Logs view. Cleared on destroy.
+      this._stuckTimer = setTimeout(() => {
+        const { timelineInitialized } = this.store.get()
+        if (timelineInitialized) return
+        const { items } = this.get()
+        const vls = virtualListStore.get()
+        const visibleItems = vls.visibleItems || []
+        const itemHeights = vls.itemHeights || {}
+        console.warn('[timeline-stuck] not initialized after 2.5s', {
+          itemsCount: items ? items.length : items,
+          allVisibleItemsHaveHeight: vls.allVisibleItemsHaveHeight,
+          offsetHeight: vls.offsetHeight,
+          visibleItemsCount: visibleItems.length,
+          visibleItemIds: visibleItems.map(i => i.data.id),
+          missingHeightIds: visibleItems.filter(i => !itemHeights[i.data.id]).map(i => i.data.id)
+        })
+      }, 2500)
     },
     ondestroy () {
       if (this._visibilityObserver) {
         this._visibilityObserver.cancel()
+      }
+      if (this._stuckTimer) {
+        clearTimeout(this._stuckTimer)
       }
     },
     data: () => ({
