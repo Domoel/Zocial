@@ -1,0 +1,153 @@
+{#if stats && stats.total}
+<div class="posting-stats">
+  <p class="posting-stats-summary">{summaryText}</p>
+  <div class="posting-stats-bar" role="img" aria-label={summaryText}>
+    {#if stats.originals}
+    <div class="posting-stats-bar-section posting-stats-originals"
+         style="width: {originalsPct}%"
+         title="{stats.originals}"></div>
+    {/if}
+    {#if stats.replies}
+    <div class="posting-stats-bar-section posting-stats-replies"
+         style="width: {repliesPct}%"
+         title="{stats.replies}"></div>
+    {/if}
+    {#if stats.boosts}
+    <div class="posting-stats-bar-section posting-stats-boosts"
+         style="width: {boostsPct}%"
+         title="{stats.boosts}"></div>
+    {/if}
+  </div>
+  <div class="posting-stats-legend">
+    <span class="posting-stats-legend-item">
+      <span class="posting-stats-swatch posting-stats-originals"></span>{'intl.postingStatsOriginal'}
+    </span>
+    <span class="posting-stats-legend-item">
+      <span class="posting-stats-swatch posting-stats-replies"></span>{'intl.postingStatsReplies'}
+    </span>
+    <span class="posting-stats-legend-item">
+      <span class="posting-stats-swatch posting-stats-boosts"></span>{'intl.postingStatsBoosts'}
+    </span>
+  </div>
+</div>
+{/if}
+<style>
+  .posting-stats {
+    padding: 10px 20px 14px;
+    border-top: 1px solid var(--main-border);
+  }
+  .posting-stats-summary {
+    margin: 0 0 8px;
+    font-size: 0.9em;
+    color: var(--deemphasized-text-color);
+  }
+  .posting-stats-bar {
+    display: flex;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--main-border);
+  }
+  .posting-stats-bar-section {
+    height: 100%;
+    min-width: 2px;
+  }
+  .posting-stats-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 8px;
+    font-size: 0.8em;
+    color: var(--deemphasized-text-color);
+  }
+  .posting-stats-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .posting-stats-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  /* Shared colours for bar sections and legend swatches */
+  .posting-stats-originals {
+    background: #e0a13b;
+  }
+  .posting-stats-replies {
+    background: #4a9fd4;
+  }
+  .posting-stats-boosts {
+    background: #9b6dd7;
+  }
+</style>
+<script>
+  import { store } from '../../_store/store.js'
+  import { getAccountStatusesForStats } from '../../_api/accountStatuses.js'
+  import { formatIntl } from '../../_utils/formatIntl.js'
+
+  const DAY_MS = 86400000
+  const STATS_LIMIT = 20
+
+  export default {
+    oncreate () {
+      this._loadStats()
+    },
+    data: () => ({
+      stats: null
+    }),
+    store: () => store,
+    computed: {
+      originalsPct: ({ stats }) => (stats && stats.total ? (stats.originals / stats.total) * 100 : 0),
+      repliesPct: ({ stats }) => (stats && stats.total ? (stats.replies / stats.total) * 100 : 0),
+      boostsPct: ({ stats }) => (stats && stats.total ? (stats.boosts / stats.total) * 100 : 0),
+      summaryText: ({ stats }) => {
+        if (!stats || !stats.total) {
+          return ''
+        }
+        const posts = formatIntl('intl.postingStatsPosts', { total: stats.total })
+        const duration = stats.daysSinceLastPost >= 365
+          ? formatIntl('intl.postingStatsYears', { years: Math.round(stats.daysSinceLastPost / 365) })
+          : formatIntl('intl.postingStatsDays', { days: stats.daysSinceLastPost })
+        return formatIntl('intl.postingStatsSummary', { posts, duration })
+      }
+    },
+    methods: {
+      async _loadStats () {
+        const { account } = this.get()
+        const { currentInstance, accessToken } = this.store.get()
+        if (!account || !currentInstance) {
+          return
+        }
+        try {
+          const statuses = await getAccountStatusesForStats(currentInstance, accessToken, account.id, STATS_LIMIT)
+          if (!statuses || !statuses.length) {
+            return
+          }
+          let originals = 0
+          let replies = 0
+          let boosts = 0
+          for (const status of statuses) {
+            if (status.reblog) {
+              boosts++
+            } else if (status.in_reply_to_id && status.in_reply_to_account_id !== account.id) {
+              // a reply to someone else; self-replies (threads) count as originals
+              replies++
+            } else {
+              originals++
+            }
+          }
+          // statuses are newest-first, so the last one is the oldest in the batch
+          const oldest = statuses[statuses.length - 1]
+          const daysSinceLastPost = Math.max(1, Math.ceil((Date.now() - Date.parse(oldest.created_at)) / DAY_MS))
+          this.set({ stats: { total: statuses.length, originals, replies, boosts, daysSinceLastPost } })
+        } catch (e) {
+          // best-effort; never disrupt the profile if this fails (or the component was destroyed)
+        }
+      }
+    }
+  }
+</script>
