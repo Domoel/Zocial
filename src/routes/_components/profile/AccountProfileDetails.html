@@ -36,13 +36,29 @@
       {'intl.followers'}
     </span>
   </a>
+  {#if joinedDisplay}
+  <div class="account-profile-details-item account-profile-details-joined" title={joinedFull}>
+    <span class="account-profile-details-item-datum">
+      {joinedDisplay}
+    </span>
+    <span class="account-profile-details-item-title">
+      {'intl.joined'}
+    </span>
+  </div>
+  {/if}
 </div>
 <style>
   .account-profile-details {
     grid-area: details;
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 0 20px;
     margin-bottom: 10px;
+  }
+
+  /* Push the join date into the free space on the right; wraps below on narrow widths. */
+  .account-profile-details-joined {
+    margin-inline-start: auto;
   }
 
   .account-profile-details-item {
@@ -98,9 +114,14 @@
   import { thunk } from '../../_utils/thunk.js'
 
   const numberFormat = thunk(() => new Intl.NumberFormat(LOCALE))
+  // compact for the visible label ("Sep 2024"), full date for the tooltip
+  const joinDateFormat = thunk(() => new Intl.DateTimeFormat(LOCALE, { year: 'numeric', month: 'short' }))
+  const joinDateFullFormat = thunk(() => new Intl.DateTimeFormat(LOCALE, { year: 'numeric', month: 'long', day: 'numeric' }))
 
   export default {
     computed: {
+      joinedDisplay: ({ account }) => account.created_at ? joinDateFormat().format(new Date(account.created_at)) : '',
+      joinedFull: ({ account }) => account.created_at ? joinDateFullFormat().format(new Date(account.created_at)) : '',
       numStatuses: ({ account }) => account.statuses_count || 0,
       numFollowing: ({ account }) => account.following_count || 0,
       numFollowers: ({ account }) => account.followers_count || 0,

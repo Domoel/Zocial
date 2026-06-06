@@ -331,6 +331,7 @@ export default {
   statuses: 'Posts',
   follows: 'Follows',
   followers: 'Followers',
+  joined: 'Joined',
   moreOptions: 'More options',
   followersLabel: 'Followed by {count}',
   followingLabel: 'Follows {count}',
