@@ -5,17 +5,17 @@
     {#if stats.originals}
     <div class="posting-stats-bar-section posting-stats-originals"
          style="width: {originalsPct}%"
-         title={originalsTitle}></div>
+         title={breakdownTitle}></div>
     {/if}
     {#if stats.replies}
     <div class="posting-stats-bar-section posting-stats-replies"
          style="width: {repliesPct}%"
-         title={repliesTitle}></div>
+         title={breakdownTitle}></div>
     {/if}
     {#if stats.boosts}
     <div class="posting-stats-bar-section posting-stats-boosts"
          style="width: {boostsPct}%"
-         title={boostsTitle}></div>
+         title={breakdownTitle}></div>
     {/if}
   </div>
   <div class="posting-stats-legend">
@@ -117,8 +117,9 @@
       originalsPct: ({ stats }) => (stats && stats.total ? (stats.originals / stats.total) * 100 : 0),
       repliesPct: ({ stats }) => (stats && stats.total ? (stats.replies / stats.total) * 100 : 0),
       boostsPct: ({ stats }) => (stats && stats.total ? (stats.boosts / stats.total) * 100 : 0),
-      // Per-category hover hints (count + locale-formatted percent), reused on both the bar
-      // section and its legend swatch so hovering either the line or the symbol shows detail.
+      // Per-category hover hints (count + locale-formatted percent) for the legend items below.
+      // The bar itself (and every segment) uses breakdownTitle so hovering the line always shows
+      // the whole picture.
       originalsTitle: ({ stats }) => (stats && stats.total ? formatIntl('intl.postingStatsOriginalTitle', { count: stats.originals, percent: percentFormat().format(stats.originals / stats.total) }) : ''),
       repliesTitle: ({ stats }) => (stats && stats.total ? formatIntl('intl.postingStatsRepliesTitle', { count: stats.replies, percent: percentFormat().format(stats.replies / stats.total) }) : ''),
       boostsTitle: ({ stats }) => (stats && stats.total ? formatIntl('intl.postingStatsBoostsTitle', { count: stats.boosts, percent: percentFormat().format(stats.boosts / stats.total) }) : ''),
