@@ -56,7 +56,8 @@
     margin-bottom: 10px;
   }
 
-  /* Push the join date into the free space on the right; wraps below on narrow widths. */
+  /* On wide screens push the join date into the free space on the right.
+     On phones (see the media query below) it instead joins the evenly-spread row. */
   .account-profile-details-joined {
     margin-inline-start: auto;
   }
@@ -78,33 +79,35 @@
     color: var(--body-text-color);
   }
 
-  @media (max-width: 374px) {
+  /* On phones, switch to a compact stacked layout (value over label) spread evenly across
+     the row. Each item is much narrower this way, so all four (incl. the join date) fit on
+     a single line. The join date no longer gets pushed right; if anything ever wraps it
+     now flows left, not into a lonely right-aligned second line. */
+  @media (max-width: 540px) {
     .account-profile-details {
       margin-bottom: 0;
+      gap: 0 12px;
+      justify-content: space-between;
     }
     .account-profile-details-item {
       flex-direction: column;
-      margin-inline: 5px;
+      align-items: center;
+      justify-content: flex-start;
+      margin-inline: 0;
+      padding: 8px 0;
+      font-size: 1em;
     }
-
-    .account-profile-details-item:last-child {
-      margin-inline-end: 0;
-    }
-
-    .account-profile-details-item:first-child {
+    .account-profile-details-joined {
       margin-inline-start: 0;
     }
-
     .account-profile-details-item-title {
       margin-inline-end: 0;
       text-align: center;
     }
     .account-profile-details-item-datum {
       margin-inline-start: 0;
+      margin-inline-end: 0;
       text-align: center;
-    }
-    .account-profile-details-item {
-      font-size: 1em;
     }
   }
 </style>
