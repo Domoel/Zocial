@@ -1,31 +1,31 @@
 {#if stats && stats.total}
 <div class="posting-stats">
   <p class="posting-stats-summary">{summaryText}</p>
-  <div class="posting-stats-bar" role="img" aria-label={summaryText}>
+  <div class="posting-stats-bar" role="img" aria-label={breakdownTitle} title={breakdownTitle}>
     {#if stats.originals}
     <div class="posting-stats-bar-section posting-stats-originals"
          style="width: {originalsPct}%"
-         title="{stats.originals}"></div>
+         title={originalsTitle}></div>
     {/if}
     {#if stats.replies}
     <div class="posting-stats-bar-section posting-stats-replies"
          style="width: {repliesPct}%"
-         title="{stats.replies}"></div>
+         title={repliesTitle}></div>
     {/if}
     {#if stats.boosts}
     <div class="posting-stats-bar-section posting-stats-boosts"
          style="width: {boostsPct}%"
-         title="{stats.boosts}"></div>
+         title={boostsTitle}></div>
     {/if}
   </div>
   <div class="posting-stats-legend">
-    <span class="posting-stats-legend-item">
+    <span class="posting-stats-legend-item" title={originalsTitle}>
       <span class="posting-stats-swatch posting-stats-originals"></span>{'intl.postingStatsOriginal'}
     </span>
-    <span class="posting-stats-legend-item">
+    <span class="posting-stats-legend-item" title={repliesTitle}>
       <span class="posting-stats-swatch posting-stats-replies"></span>{'intl.postingStatsReplies'}
     </span>
-    <span class="posting-stats-legend-item">
+    <span class="posting-stats-legend-item" title={boostsTitle}>
       <span class="posting-stats-swatch posting-stats-boosts"></span>{'intl.postingStatsBoosts'}
     </span>
   </div>
@@ -35,6 +35,7 @@
   .posting-stats {
     padding: 10px 20px 14px;
     border-top: 1px solid var(--main-border);
+    border-bottom: 1px solid var(--main-border);
   }
   .posting-stats-summary {
     margin: 0 0 8px;
@@ -51,6 +52,7 @@
   .posting-stats-bar-section {
     height: 100%;
     min-width: 2px;
+    cursor: help;
   }
   .posting-stats-legend {
     display: flex;
@@ -65,6 +67,7 @@
     align-items: center;
     gap: 6px;
     white-space: nowrap;
+    cursor: help;
   }
   .posting-stats-swatch {
     display: inline-block;
@@ -88,9 +91,12 @@
   import { store } from '../../_store/store.js'
   import { getAccountStatusesForStats } from '../../_api/accountStatuses.js'
   import { formatIntl } from '../../_utils/formatIntl.js'
+  import { LOCALE } from '../../_static/intl.js'
+  import { thunk } from '../../_utils/thunk.js'
 
   const DAY_MS = 86400000
   const STATS_LIMIT = 20
+  const percentFormat = thunk(() => new Intl.NumberFormat(LOCALE, { style: 'percent' }))
 
   export default {
     oncreate () {
@@ -104,6 +110,22 @@
       originalsPct: ({ stats }) => (stats && stats.total ? (stats.originals / stats.total) * 100 : 0),
       repliesPct: ({ stats }) => (stats && stats.total ? (stats.replies / stats.total) * 100 : 0),
       boostsPct: ({ stats }) => (stats && stats.total ? (stats.boosts / stats.total) * 100 : 0),
+      // Per-category hover hints (count + locale-formatted percent), reused on both the bar
+      // section and its legend swatch so hovering either the line or the symbol shows detail.
+      originalsTitle: ({ stats }) => (stats && stats.total ? formatIntl('intl.postingStatsOriginalTitle', { count: stats.originals, percent: percentFormat().format(stats.originals / stats.total) }) : ''),
+      repliesTitle: ({ stats }) => (stats && stats.total ? formatIntl('intl.postingStatsRepliesTitle', { count: stats.replies, percent: percentFormat().format(stats.replies / stats.total) }) : ''),
+      boostsTitle: ({ stats }) => (stats && stats.total ? formatIntl('intl.postingStatsBoostsTitle', { count: stats.boosts, percent: percentFormat().format(stats.boosts / stats.total) }) : ''),
+      // Full breakdown for hovering the whole bar (non-zero categories only).
+      breakdownTitle: ({ stats, originalsTitle, repliesTitle, boostsTitle }) => {
+        if (!stats || !stats.total) {
+          return ''
+        }
+        return [
+          stats.originals ? originalsTitle : '',
+          stats.replies ? repliesTitle : '',
+          stats.boosts ? boostsTitle : ''
+        ].filter(Boolean).join(' · ')
+      },
       summaryText: ({ stats }) => {
         if (!stats || !stats.total) {
           return ''
