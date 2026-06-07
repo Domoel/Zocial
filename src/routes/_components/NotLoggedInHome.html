@@ -15,7 +15,6 @@
       {/if}
       <div class="not-logged-in-home-meta">
         <span class="not-logged-in-home-version">Zocial v{version}</span>
-        <a class="not-logged-in-home-privacy" href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
       </div>
     </div>
   </FreeTextLayout>
@@ -32,14 +31,14 @@
     min-height: calc(70vh - 60px);
   }
 
-  /* bottom row: version (greyish, like the slogan) on the left, privacy link on the right */
+  /* version (greyish, like the slogan), centered and pinned to the bottom of the container
+     box (~1cm above its bottom edge); anchored to <main> which is position:relative */
   .not-logged-in-home-meta {
-    margin-top: auto;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding-top: 24px;
+    position: absolute;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+    text-align: center;
     font-size: 0.9em;
   }
 
@@ -76,6 +75,7 @@
   .not-logged-in-home h1 {
     color: var(--main-text-color);
     font-size: 3em;
+    font-weight: 700;
     margin: 0 0 4px;
   }
 
