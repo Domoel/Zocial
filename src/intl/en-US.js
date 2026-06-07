@@ -13,7 +13,7 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a> · <a rel="noopener" target="_blank" href="https://www.paypal.com/donate?token=mEz-R6kRKti5JoxCJanesH5SeGv8DZa39x3pxTEoC9Z9fbgwm5rn4FrL263BF7-UTa0-LHeOQlIJ9x4W">Donation</a>
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a> · <a href="/settings/about#donations" rel="prefetch">Donation</a>
     </p>
   `,
   // Manifest
@@ -398,6 +398,16 @@ export default {
 
   <p>
     Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> 
+  </p>
+
+  <h2 id="donations">Donations</h2>
+
+  <p>
+    Zocial is a non-profit project and free to use. Donations are entirely optional — they simply help cover the running costs of the public instance (domain and hosting).
+  </p>
+
+  <p>
+    If you'd like to support it: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate?token=mEz-R6kRKti5JoxCJanesH5SeGv8DZa39x3pxTEoC9Z9fbgwm5rn4FrL263BF7-UTa0-LHeOQlIJ9x4W">Donate via PayPal</a>.
   </p>
 
   <h2>Version</h2>
