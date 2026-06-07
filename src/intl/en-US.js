@@ -4,7 +4,7 @@ export default {
   appDescription: 'A fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.',
   homeDescription: `
     <p>
-      Zocial is a fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.
+      A minimalistic opinionated Mastodon web client.
     </p>`,
   homeMultiInstance: `
     <p>
@@ -13,10 +13,7 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">open-source software</a> distributed under the
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL License</a>.
-      Here is the <a href="/settings/about#privacy-policy" rel="prefetch">privacy policy</a>.
+      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
     </p>
   `,
   // Manifest
@@ -342,6 +339,7 @@ export default {
   postingStatsOriginalTitle: '{count, plural, one {# original post} other {# original posts}} ({percent})',
   postingStatsRepliesTitle: '{count, plural, one {# reply} other {# replies}} ({percent})',
   postingStatsBoostsTitle: '{count, plural, one {# boost} other {# boosts}} ({percent})',
+  scrollToTopOfConversation: 'Scroll to top of conversation',
   moreOptions: 'More options',
   followersLabel: 'Followed by {count}',
   followingLabel: 'Follows {count}',
@@ -400,6 +398,16 @@ export default {
 
   <p>
     Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> 
+  </p>
+
+  <h2 id="donations">Donations</h2>
+
+  <p>
+    Zocial is a non-profit project and free to use. Donations are entirely optional — they simply help cover the running costs of the public instance (domain and hosting).
+  </p>
+
+  <p>
+    If you'd like to support it: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Donate via PayPal</a>.
   </p>
 
   <h2>Version</h2>

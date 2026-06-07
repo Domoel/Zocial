@@ -4,28 +4,12 @@ export default {
   appDescription: 'Альтернативный веб-клиент для Mastodon, ориентированный на скорость и простоту.',
   homeDescription: `
     <p>
-    Zocial — веб-клиент для
-      <a rel="noopener" target="_blank" href="https://joinmastodon.org">Mastodon</a>,
-      разработан для скорости и простоты.
-    </p>
-    <p>
-    Прочитайте
-      <a rel="noopener" target="_blank"
-         href="https://nolanlawson.com/2018/04/09/introducing-pinafore-for-mastodon/">вводную запись в блоге</a>,
-         или начните работу, войдя в инстанс:
+      Минималистичный веб-клиент Mastodon со своим видением интерфейса.
     </p>`,
   logIn: 'Войти',
   footer: `
     <p>
-      Zocial — это
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">программное обеспечение с открытым исходным кодом</a>
-      созданное
-      <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>
-      и распространяемое под лицензией
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL License</a>.
-      Здесь <a href="/settings/about#privacy-policy" rel="prefetch">политика конфиденциальности</a>.
-      Это продолжение проекта Zocial, созданного <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>.
+      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
     </p>
   `,
   // Manifest
@@ -329,36 +313,47 @@ export default {
   aboutApp: 'О Zocial',
   aboutAppDescription: `
   <p>
-    Zocial — это
-    <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">программное обеспечение с открытым исходным кодом</a>.
-    и распространяемое под лицензией
-    <a rel="noopener" target="_blank"
-      href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL License</a>.
-    Это продолжение проекта Zocial, созданного <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>.
+    Zocial — это <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">программное обеспечение с открытым исходным кодом</a> и форк <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">Enafore</a>, созданный <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">Dome</a>.
   </p>
 
   <h2 id="privacy-policy">Политика конфиденциальности</h2>
 
   <p>
-    Zocial не хранит никакой личной информации на своих серверах,
-    включая, помимо прочего, имена, адреса электронной почты,
-    IP-адреса, сообщения и фотографии.
+    Zocial не хранит никакой персональной информации на своих серверах, включая, помимо прочего, имена, адреса электронной почты, IP-адреса, записи и фотографии.
   </p>
 
   <p>
-  Zocial — это статический сайт. Все данные хранятся локально в вашем браузере и передаются через Федиверс
-    инстансы, к которым вы подключаетесь.
+    Zocial — это статический сайт, который можно разместить где угодно (например, на GitHub Pages). Он предоставляется в виде <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/zocial">Docker-образа</a> и может быть развёрнут с помощью веб-сервера nginx. Все данные хранятся локально в вашем браузере и передаются только тем инстансам Федиверса, к которым вы подключаетесь.
+  </p>
+
+  <p>
+    Перевод записей выполняется с помощью Google Translate через <a href="https://simplytranslate.org">SimplyTranslate.org</a>.
   </p>
 
   <h2>Кредиты</h2>
 
   <p>
-  Иконки предоставлены <a rel="noopener" target="_blank" href="http://fontawesome.io/">Font Awesome</a>.
+    Иконки предоставлены <a rel="noopener" target="_blank" href="http://fontawesome.io/">Font Awesome</a>.
   </p>
 
   <p>
-    Logo thanks to "sailboat" by Gregor Cresnar from
-    <a rel="noopener" target="_blank" href="https://thenounproject.com/">the Noun Project</a>.
+    Zocial распространяется под <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a>
+  </p>
+
+  <h2 id="donations">Пожертвования</h2>
+
+  <p>
+    Zocial — некоммерческий проект, бесплатный в использовании. Пожертвования полностью добровольны — они лишь помогают покрывать текущие расходы публичного инстанса (домен и хостинг).
+  </p>
+
+  <p>
+    Если вы хотите поддержать проект: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Поддержать через PayPal</a>.
+  </p>
+
+  <h2>Версия</h2>
+
+  <p>
+    Вы используете Zocial версии <code class="zocial-version"></code>.
   </p>`,
   // Settings
   settings: 'Настройки',

@@ -1,14 +1,19 @@
 <HiddenFromSSR>
   <footer>
-    {@html 'intl.footer'}
+    {@html footerHtml}
   </footer>
 </HiddenFromSSR>
 <script>
   import HiddenFromSSR from './HiddenFromSSR.html'
+  import { formatIntl } from '../_utils/formatIntl.js'
 
   export default {
     components: {
       HiddenFromSSR
-    }
+    },
+    data: () => ({
+      // inject the current version (ZOCIAL_VERSION) into the footer's {version} placeholder
+      footerHtml: formatIntl('intl.footer', { version: ZOCIAL_VERSION })
+    })
   }
 </script>

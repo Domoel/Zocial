@@ -4,26 +4,12 @@ export default {
   appDescription: 'Un cliente web alternativo para Mastodon, centrado en la velocidad y la sencillez.',
   homeDescription: `
     <p>
-      Zocial es un cliente web para
-      <a rel="noopener" target="_blank" href="https://joinmastodon.org">Mastodon</a>,
-      diseñado para ser rápido y sencillo.
-    </p>
-    <p>
-      Comienza iniciando sesión en una instancia:
+      Un cliente web minimalista para Mastodon que hace las cosas a su manera.
     </p>`,
   logIn: 'Iniciar sesión',
   footer: `
     <p>
-      Zocial es
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">software de código abierto</a>
-      creado por
-      <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
-      y distribuido bajo la
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">Licencia AGPL</a>.
-      Aquí está la <a href="/settings/about#privacy-policy" rel="prefetch">política de privacidad</a>.
-      Es una continuación de Zocial creado por
-        <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>.
+      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
     </p>
   `,
   // Manifest
@@ -329,27 +315,21 @@ export default {
   aboutApp: 'Acerca de Zocial',
   aboutAppDescription: `
   <p>
-    Zocial es
-    <a rel="noopener" target="_blank"
-       href="https://git.ztfr.eu/Dome/Zocial">software libre y de código abierto</a>
-    creado por
-    <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
-    y distribuido bajo la
-    <a rel="noopener" target="_blank"
-       href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>.
+    Zocial es software <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">de código abierto</a> y un fork de <a rel="noopener" target="_blank" href="https://github.com/enafore/enafore">Enafore</a>, creado por <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">Dome</a>.
   </p>
 
   <h2 id="privacy-policy">Política de privacidad</h2>
 
   <p>
-    Zocial no almacena ninguna información personal en sus servidores,
-    incluyendo, pero no limitándose a nombres, direcciones de correo electrónico,
-    direcciones IP, posts y fotos.
+    Zocial no almacena ninguna información personal en sus servidores, incluyendo, entre otros, nombres, direcciones de correo electrónico, direcciones IP, publicaciones y fotos.
   </p>
 
   <p>
-    Zocial es un sitio estático. Todos los datos son almacenados en tu navegador y compartidos con las instancias del fediverso
-    a las que te conectas.
+    Zocial es un sitio estático que puede alojarse en cualquier lugar (por ejemplo, GitHub Pages). Se ofrece como una <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/zocial">imagen de Docker</a> y puede desplegarse con un servidor web nginx. Todos los datos se almacenan localmente en tu navegador y solo se comparten con la(s) instancia(s) del fediverso a la(s) que te conectas.
+  </p>
+
+  <p>
+    La traducción de publicaciones funciona con Google Translate a través de <a href="https://simplytranslate.org">SimplyTranslate.org</a>.
   </p>
 
   <h2>Créditos</h2>
@@ -359,8 +339,23 @@ export default {
   </p>
 
   <p>
-    Logo thanks to "sailboat" by Gregor Cresnar from
-    <a rel="noopener" target="_blank" href="https://thenounproject.com/">the Noun Project</a>.
+    Zocial se distribuye bajo la <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">Licencia Pública General Affero de GNU</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a>
+  </p>
+
+  <h2 id="donations">Donaciones</h2>
+
+  <p>
+    Zocial es un proyecto sin ánimo de lucro y de uso gratuito. Las donaciones son totalmente opcionales: simplemente ayudan a cubrir los gastos de funcionamiento de la instancia pública (dominio y alojamiento).
+  </p>
+
+  <p>
+    Si quieres apoyarlo: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Donar con PayPal</a>.
+  </p>
+
+  <h2>Versión</h2>
+
+  <p>
+    Estás usando la versión <code class="zocial-version"></code> de Zocial.
   </p>`,
   // Settings
   settings: 'Opciones de configuración',

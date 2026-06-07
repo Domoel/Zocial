@@ -1,0 +1,108 @@
+<div class="thread-scroll-top-wrapper {visible ? 'visible' : ''}">
+  <div class="thread-scroll-top-halo">
+    <button class="primary thread-scroll-top-button"
+            aria-label="{'intl.scrollToTopOfConversation'}"
+            title="{'intl.scrollToTopOfConversation'}"
+            on:click="scrollToTop()">
+      <SvgIcon className="thread-scroll-top-svg" href="#fa-angle-up" />
+    </button>
+  </div>
+</div>
+<style>
+  /* Sticks to the top of the viewport (within the content column, like the compose FAB) but
+     takes no layout space so it floats over the thread. */
+  .thread-scroll-top-wrapper {
+    position: -webkit-sticky;
+    position: sticky;
+    top: var(--fab-gap-top);
+    z-index: 5000;
+    height: 0;
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+  /* hidden until scrolled past the first post; fade in/out */
+  .thread-scroll-top-halo {
+    border-radius: 9px;
+    margin: 5px 15px 15px 5px;
+    background-color: var(--compose-button-halo);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s linear;
+  }
+  .thread-scroll-top-wrapper.visible .thread-scroll-top-halo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .thread-scroll-top-button {
+    position: relative;
+    margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+  }
+  :global(.thread-scroll-top-svg) {
+    width: 24px;
+    height: 24px;
+    fill: var(--button-primary-text);
+  }
+
+  @media (max-width: 767px) {
+    .thread-scroll-top-halo {
+      margin: 5px;
+    }
+  }
+</style>
+<script>
+  import SvgIcon from '../SvgIcon.html'
+  import { store } from '../../_store/store.js'
+  import { smoothScroll } from '../../_utils/smoothScroll.js'
+  import { getScrollContainer, addScrollListener, removeScrollListener } from '../../_utils/scrollContainer.js'
+
+  export default {
+    oncreate () {
+      this._onScroll = this._onScroll.bind(this)
+      addScrollListener(this._onScroll)
+      // initial check: threads open scrolled to the focused post, so we may already be
+      // past the first post
+      this._update()
+    },
+    ondestroy () {
+      removeScrollListener(this._onScroll)
+      if (this._raf) {
+        cancelAnimationFrame(this._raf)
+      }
+    },
+    store: () => store,
+    data: () => ({
+      visible: false
+    }),
+    methods: {
+      _onScroll () {
+        if (this._raf) {
+          return
+        }
+        this._raf = requestAnimationFrame(() => {
+          this._raf = null
+          this._update()
+        })
+      },
+      _update () {
+        // Show once the first (root) post's bottom divider has scrolled above the top of the
+        // viewport. In a thread all items are in the DOM, so the first .status-article is the root.
+        const firstPost = document.querySelector('.status-article')
+        const visible = !!firstPost && firstPost.getBoundingClientRect().bottom <= 0
+        if (this.get().visible !== visible) {
+          this.set({ visible })
+        }
+      },
+      scrollToTop () {
+        smoothScroll(getScrollContainer(), 0, false, true)
+      }
+    },
+    components: {
+      SvgIcon
+    }
+  }
+</script>

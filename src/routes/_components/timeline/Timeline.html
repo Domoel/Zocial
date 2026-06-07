@@ -1,5 +1,8 @@
 <DynamicHeading className="sr-only" level={headingLevel}>{label}</DynamicHeading>
 <FocusRestoration realm={focusRealm}>
+  {#if timelineType === 'status'}
+    <ThreadScrollTopButton />
+  {/if}
   <div class="timeline" role="feed">
     {#if components}
       <svelte:component this={components.listComponent}
@@ -52,6 +55,7 @@
   import { createMakeProps } from '../../_actions/createMakeProps.js'
   import { showMoreAndScrollToTop } from '../../_actions/showMoreAndScrollToTop.js'
   import FocusRestoration from '../FocusRestoration.html'
+  import ThreadScrollTopButton from './ThreadScrollTopButton.html'
   import { formatIntl } from '../../_utils/formatIntl.js'
 
   export default {
@@ -253,7 +257,8 @@
       ScrollListShortcuts,
       Shortcut,
       FocusRestoration,
-      DynamicHeading
+      DynamicHeading,
+      ThreadScrollTopButton
     }
   }
 </script>

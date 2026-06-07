@@ -4,24 +4,12 @@ export default {
   appDescription: 'Ein alternativer Web Client für Mastodon, der auf Geschwindigkeit und einfache Bedienung ausgelegt ist.',
   homeDescription: `
     <p>
-      Zocial ist ein Web Client für
-      <a rel="noopener" target="_blank" href="https://joinmastodon.org">Mastodon</a>,
-      der für Geschwindigkeit und einfache Bedienung konzipiert wurde.
-    </p>
-    <p>
-      Dich bei einer Instanz anmeldest:
+      Ein minimalistischer, eigenwilliger Mastodon Webclient.
     </p>`,
   logIn: 'Anmelden',
   footer: `
     <p>
-      Zocial ist
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">quelloffene Software</a>,
-      erstellt von <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
-      und verteilt unter der
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL Lizenz</a>.
-      Hier ist die <a href="/settings/about#privacy-policy" rel="prefetch">Datenschutzerklärung</a>.
-      Es ist eine Fortsetzung des Zocial-Projekts von <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>.
+      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
     </p>
   `,
   // Generic UI
@@ -342,6 +330,16 @@ export default {
 
   <p>
     Zocial ist unter der <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a> lizenziert. Ein <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> Angebot.
+  </p>
+
+  <h2 id="donations">Spenden</h2>
+
+  <p>
+    Zocial ist ein nicht-kommerzielles Projekt und kostenlos nutzbar. Spenden sind völlig optional – sie helfen lediglich, die laufenden Kosten der öffentlichen Instanz (Domain und Hosting) zu decken.
+  </p>
+
+  <p>
+    Wenn du das Projekt unterstützen möchtest: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Per PayPal spenden</a>.
   </p>
 
   <h2>Version</h2>
