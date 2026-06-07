@@ -407,7 +407,7 @@ export default {
   </p>
 
   <p>
-    If you'd like to support it: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate?token=mEz-R6kRKti5JoxCJanesH5SeGv8DZa39x3pxTEoC9Z9fbgwm5rn4FrL263BF7-UTa0-LHeOQlIJ9x4W">Donate via PayPal</a>.
+    If you'd like to support it: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Donate via PayPal</a>.
   </p>
 
   <h2>Version</h2>
