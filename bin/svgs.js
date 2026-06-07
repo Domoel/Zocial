@@ -48,6 +48,7 @@ export default [
   { id: 'fa-angle-left', src: 'src/thirdparty/font-awesome-svg-png/white/svg/angle-left.svg' },
   { id: 'fa-angle-right', src: 'src/thirdparty/font-awesome-svg-png/white/svg/angle-right.svg' },
   { id: 'fa-angle-down', src: 'src/thirdparty/font-awesome-svg-png/white/svg/angle-down.svg' },
+  { id: 'fa-angle-up', src: 'src/thirdparty/font-awesome-svg-png/white/svg/angle-up.svg' },
   { id: 'fa-search-minus', src: 'src/thirdparty/font-awesome-svg-png/white/svg/search-minus.svg' },
   { id: 'fa-search-plus', src: 'src/thirdparty/font-awesome-svg-png/white/svg/search-plus.svg' },
   { id: 'fa-share-square-o', src: 'src/thirdparty/font-awesome-svg-png/white/svg/share-square-o.svg' },

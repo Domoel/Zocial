@@ -342,6 +342,7 @@ export default {
   postingStatsOriginalTitle: '{count, plural, one {# original post} other {# original posts}} ({percent})',
   postingStatsRepliesTitle: '{count, plural, one {# reply} other {# replies}} ({percent})',
   postingStatsBoostsTitle: '{count, plural, one {# boost} other {# boosts}} ({percent})',
+  scrollToTopOfConversation: 'Scroll to top of conversation',
   moreOptions: 'More options',
   followersLabel: 'Followed by {count}',
   followingLabel: 'Follows {count}',
