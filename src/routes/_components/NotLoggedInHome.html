@@ -1,50 +1,71 @@
 <HiddenFromSSR>
   <FreeTextLayout>
     <div class="not-logged-in-home">
-      <div class="banner">
-        <SvgIcon className="not-logged-in-home-svg" href="#logo" />
-        <h1>{appName}</h1>
+      <div class="logo-wrap">
+        <img class="not-logged-in-home-logo" src="/icons/icon-source.svg" alt="" />
       </div>
-      <div>
+      <h1>{appName}</h1>
+      <div class="not-logged-in-home-description">
         {@html 'intl.homeDescription'}
-        {#if singleInstance}
-          <p style="text-align: right;">
-            <button class="button primary" on:click="logIn()">{'intl.logIn'}</button>
-          </p>
-        {:else}
-          {@html 'intl.homeMultiInstance'}
-          <p style="text-align: right;">
-            <a class="button primary" rel="prefetch" href="/settings/instances/add">{'intl.logIn'}</a>
-          </p>
-        {/if}
       </div>
+      {#if singleInstance}
+        <button class="button primary not-logged-in-home-button" on:click="logIn()">{'intl.logIn'}</button>
+      {:else}
+        <a class="button primary not-logged-in-home-button" rel="prefetch" href="/settings/instances/add">{'intl.logIn'}</a>
+      {/if}
     </div>
   </FreeTextLayout>
 </HiddenFromSSR>
 <style>
   .not-logged-in-home {
     margin: 10px;
-  }
-
-  .not-logged-in-home .banner {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    margin: 0 0 30px;
+    text-align: center;
   }
 
-  :global(.not-logged-in-home-svg) {
-  width: 70px;
-  height: 70px;
-  color: var(--main-text-color);
-  fill: currentColor;
-  display: inline-block;
+  .logo-wrap {
+    position: relative;
+    display: inline-flex;
+    margin: 24px 0 28px;
+  }
+
+  /* subtle glow/shimmer behind the logo */
+  .logo-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -45%;
+    background: radial-gradient(circle, rgba(108, 99, 255, 0.45) 0%, rgba(108, 99, 255, 0) 70%);
+    filter: blur(12px);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .not-logged-in-home-logo {
+    width: 104px;
+    height: 104px;
+    border-radius: 22px;
+    display: block;
   }
 
   .not-logged-in-home h1 {
     color: var(--main-text-color);
-    display: inline-block;
     font-size: 3em;
-    margin: auto 15px;
+    margin: 0 0 4px;
+  }
+
+  .not-logged-in-home-description {
+    color: var(--deemphasized-text-color);
+    font-size: 1.1em;
+  }
+
+  .not-logged-in-home-description :global(p) {
+    margin: 8px 0 20px;
+  }
+
+  .not-logged-in-home-button {
+    margin-top: 8px;
   }
 
   @media (max-width: 767px) {
@@ -62,15 +83,13 @@
 <script>
   import FreeTextLayout from './FreeTextLayout.html'
   import HiddenFromSSR from './HiddenFromSSR.html'
-  import SvgIcon from './SvgIcon.html'
   import { logInToInstance } from '../_actions/addInstance.js'
   import { getSingleInstance } from '../_utils/getSingleInstance.js'
 
   export default {
     components: {
       FreeTextLayout,
-      HiddenFromSSR,
-      SvgIcon
+      HiddenFromSSR
     },
     data: () => {
       return {

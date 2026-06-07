@@ -4,7 +4,7 @@ export default {
   appDescription: 'A fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.',
   homeDescription: `
     <p>
-      Zocial is a fediverse client with better support for Akkoma, glitch-soc, and Iceshrimp instances.
+      A minimalistic opinionated Mastodon web client.
     </p>`,
   homeMultiInstance: `
     <p>
@@ -13,10 +13,7 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Zocial is <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">open-source software</a> distributed under the
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL License</a>.
-      Here is the <a href="/settings/about#privacy-policy" rel="prefetch">privacy policy</a>.
+      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a>. <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a>. <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
     </p>
   `,
   // Manifest
