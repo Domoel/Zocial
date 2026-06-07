@@ -4,7 +4,7 @@
       <div class="logo-wrap">
         <img class="not-logged-in-home-logo" src="/icons/icon-source.svg" alt="" />
       </div>
-      <h1>{appName}</h1>
+      <h1>{'intl.appName'}</h1>
       <div class="not-logged-in-home-description">
         {@html 'intl.homeDescription'}
       </div>
@@ -38,14 +38,16 @@
     inset: -45%;
     background: radial-gradient(circle, rgba(108, 99, 255, 0.45) 0%, rgba(108, 99, 255, 0) 70%);
     filter: blur(12px);
-    z-index: -1;
+    z-index: 0; /* above the panel background, behind the logo (z-index:-1 hid it) */
     pointer-events: none;
   }
 
   .not-logged-in-home-logo {
+    position: relative;
+    z-index: 1;
     width: 104px;
     height: 104px;
-    border-radius: 22px;
+    border-radius: 5px;
     display: block;
   }
 
@@ -93,7 +95,6 @@
     },
     data: () => {
       return {
-        appName: process.env.UPSTREAM ? 'Zocial' : ZOCIAL_IS_BROWSER ? location.hostname : '',
         singleInstance: getSingleInstance()
       }
     },
