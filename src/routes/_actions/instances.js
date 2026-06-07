@@ -160,7 +160,11 @@ export async function updateInstanceInfo (instanceName) {
 
 export function logOutOnUnauthorized (instanceName) {
   return async error => {
-    if (error.message.startsWith('401:')) {
+    // ajax.js throws `Error('Request failed: <status>')` with `err.status` set; older code threw
+    // `'401: …'`. Match the status code (keeping the legacy message check as a fallback) so a
+    // revoked token is actually detected and we log out cleanly, instead of the 401 slipping
+    // through and re-throwing as an uncaught promise rejection on every credentials refresh.
+    if (error.status === 401 || (error.message && error.message.startsWith('401:'))) {
       await logOutOfInstance(instanceName, formatIntl('intl.accessTokenRevoked', { instance: instanceName }))
     }
 
