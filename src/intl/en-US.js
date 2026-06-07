@@ -13,7 +13,7 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
+      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
     </p>
   `,
   // Manifest
