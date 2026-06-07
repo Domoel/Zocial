@@ -13,7 +13,7 @@ A beautifully refined fediverse client — built for the edges of the Mastodon e
 </h4>
 
 <h6 align="center">
-  <a href="https://zocial.ztfr.eu">🌐 Live Instance</a>
+  <a href="https://zocial.social">🌐 Live Instance</a>
   ·
   <a href="https://ztfr.eu">🏰 Website</a>
   ·
