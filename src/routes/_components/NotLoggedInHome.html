@@ -13,6 +13,10 @@
       {:else}
         <a class="button primary not-logged-in-home-button" rel="prefetch" href="/settings/instances/add">{'intl.logIn'}</a>
       {/if}
+      <div class="not-logged-in-home-meta">
+        <span class="not-logged-in-home-version">Zocial v{version}</span>
+        <a class="not-logged-in-home-privacy" href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
+      </div>
     </div>
   </FreeTextLayout>
 </HiddenFromSSR>
@@ -23,6 +27,24 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+    /* fill the main box (min-height:70vh) minus the surrounding margins, so the meta row
+       can sit at the very bottom */
+    min-height: calc(70vh - 60px);
+  }
+
+  /* bottom row: version (greyish, like the slogan) on the left, privacy link on the right */
+  .not-logged-in-home-meta {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 24px;
+    font-size: 0.9em;
+  }
+
+  .not-logged-in-home-version {
+    color: var(--deemphasized-text-color);
   }
 
   .logo-wrap {
@@ -95,6 +117,7 @@
     },
     data: () => {
       return {
+        version: ZOCIAL_VERSION,
         singleInstance: getSingleInstance()
       }
     },

@@ -9,7 +9,7 @@ export default {
   logIn: 'Iniciar sesión',
   footer: `
     <p>
-      Zocial v{version} · Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a>. <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a>. <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a>
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> by <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a> · <a rel="noopener" target="_blank" href="https://www.paypal.com/donate?token=mEz-R6kRKti5JoxCJanesH5SeGv8DZa39x3pxTEoC9Z9fbgwm5rn4FrL263BF7-UTa0-LHeOQlIJ9x4W">Donation</a>
     </p>
   `,
   // Manifest
