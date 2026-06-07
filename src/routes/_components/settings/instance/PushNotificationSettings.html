@@ -102,8 +102,9 @@
         } catch (err) {
           e.target.checked = !e.target.checked
 
-          // TODO: Better way to detect missing authorization scope
-          if (err.message.startsWith('403:')) {
+          // missing authorization scope → prompt re-auth. ajax.js sets err.status (message is
+          // "Request failed: 403"), so detect by status, keeping the legacy message as fallback.
+          if (err.status === 403 || (err.message && err.message.startsWith('403:'))) {
             const showTextConfirmationDialog = await importShowTextConfirmationDialog()
             showTextConfirmationDialog({
               text: formatIntl('intl.needToReauthenticate', { instance: instanceName })

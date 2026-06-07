@@ -48,7 +48,7 @@ async function refreshInstanceData (instanceName) {
   scheduleIdleTask(() => setupListsForInstance(instanceName))
   scheduleIdleTask(() => setupFollowedHashtagsForInstance(instanceName))
   scheduleIdleTask(() => setupFiltersForInstance(instanceName))
-  scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName))
+  scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName).catch(e => console.error('failed to update push subscription', e)))
   scheduleIdleTask(() => updateNodeInfoForInstance(instanceName))
 
   // these are the only critical ones
