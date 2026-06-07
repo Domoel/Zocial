@@ -4,28 +4,12 @@ export default {
   appDescription: 'Альтернативный веб-клиент для Mastodon, ориентированный на скорость и простоту.',
   homeDescription: `
     <p>
-    Zocial — веб-клиент для
-      <a rel="noopener" target="_blank" href="https://joinmastodon.org">Mastodon</a>,
-      разработан для скорости и простоты.
-    </p>
-    <p>
-    Прочитайте
-      <a rel="noopener" target="_blank"
-         href="https://nolanlawson.com/2018/04/09/introducing-pinafore-for-mastodon/">вводную запись в блоге</a>,
-         или начните работу, войдя в инстанс:
+      Минималистичный веб-клиент для Mastodon с характером.
     </p>`,
   logIn: 'Войти',
   footer: `
     <p>
-      Zocial — это
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">программное обеспечение с открытым исходным кодом</a>
-      созданное
-      <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>
-      и распространяемое под лицензией
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">AGPL License</a>.
-      Здесь <a href="/settings/about#privacy-policy" rel="prefetch">политика конфиденциальности</a>.
-      Это продолжение проекта Zocial, созданного <a rel="noopener" target="_blank" href="https://nolanlawson.com">Ноланом Лоусоном</a>.
+      Zocial v{version} · При поддержке <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a>. <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> от <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a>. <a href="/settings/about#privacy-policy" rel="prefetch">Политика конфиденциальности</a>
     </p>
   `,
   // Manifest

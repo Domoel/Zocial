@@ -4,26 +4,12 @@ export default {
   appDescription: 'Un client alternatif pour Mastodon, concentré sur la vitesse et la simplicité',
   homeDescription: `
     <p>
-      Zocial est un client web pour
-      <a rel="noopener" target="_blank" href="https://joinmastodon.org">Mastodon</a>,
-      dessiné pour la vitesse et la simplicité.
-    </p>
-    <p>
-      Se connecter à une instance:
+      Un client web Mastodon minimaliste et au parti pris.
     </p>`,
   logIn: 'Se connecter',
   footer: `
     <p>
-      Zocial est
-      <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">logiciel open-source</a>
-      créé par
-      <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>
-      et distribué sous la
-      <a rel="noopener" target="_blank"
-         href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">License AGPL</a>.
-      Lire la <a href="/settings/about#privacy-policy" rel="prefetch">politique de confidentialité</a>.
-      C'est une continuation du projet Zocial créé par
-      <a rel="noopener" target="_blank" href="https://nolanlawson.com">Nolan Lawson</a>.
+      Zocial v{version} · Propulsé par <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a>. <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial">Build</a> par <a rel="noopener" target="_blank" href="https://social.ztfr.eu/@dome">@Dome</a>. <a href="/settings/about#privacy-policy" rel="prefetch">Politique de confidentialité</a>
     </p>
   `,
   // Generic UI
