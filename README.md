@@ -46,6 +46,10 @@ Post headers work harder too. When a post is a reply, the header tells you exact
 
 Self-reply threads are automatically collapsed into a single bundle. The oldest post is shown at the top with a `1/N` position counter in the header, middle posts are hidden, and the newest post closes the bundle — keeping your timeline clean without losing context. Only same-author chains are bundled, so no other person's posts are ever hidden.
 
+### Jump to the top of a conversation
+
+Arrive in the middle of a thread via a reply or a boost? A floating button appears as soon as you scroll past the first post and smoothly takes you back to the start of the conversation — so you can always find where it began. It shows only in thread views and otherwise stays out of the way.
+
 ### Filters that warn, not vanish
 
 Word filters set to *"hide with a warning"* finally behave as intended: matching posts stay in your timeline behind a collapsible **Filtered** notice you can reveal with a tap, instead of silently disappearing — a quirk inherited all the way from Pinafore. Filters set to *"drop"* still remove matching posts entirely.
@@ -69,6 +73,10 @@ Write now, post later. A clock button in the composer opens a date-and-time pick
 ### Reply visibility, your way
 
 Optionally default every reply to **unlisted** — handy for keeping back-and-forth conversations out of the public timeline — while never making a reply more public than the post it answers. Flip it on in *Settings → Composer*.
+
+### Local-only posts, by default
+
+On servers that support it, you can default every new post to **local-only** — kept on your own instance and never federated out. The toggle lives in *Settings → Composer*, and politely greys itself out (with a tooltip) on instances that don't support local-only, so you always know whether it applies.
 
 ### Navigation that bends to you
 
@@ -97,6 +105,18 @@ Followers and following, muted and blocked accounts, who-boosted and who-favouri
 ### Desktop notifications
 
 Fine-grained control over which interactions trigger a desktop or browser notification. Choose exactly which events you want to be alerted about — mentions, boosts, follows, favourites, or all of the above.
+
+### Profiles at a glance
+
+Every profile shows when the account joined, plus a compact **posting-activity** bar that breaks down their most recent posts into originals, replies, and boosts — a quick read on how someone actually uses the fediverse before you decide to follow. Hover the bar for the full breakdown with percentages.
+
+### Edit your profile, in-app
+
+Update your profile without ever leaving Zocial. An **Edit profile** button on your own profile opens a dialog to change your display name, bio, and up to four metadata fields (your links), and to upload a new avatar and header image with a live preview. Changes save through the standard Mastodon API and appear instantly — no page reload, no detour to the web UI.
+
+### Built-in logs
+
+A **Logs** page (under *Settings*) captures the app's console output for troubleshooting — errors and warnings by default, with a toggle to show everything. Logs survive a reload, can be copied to the clipboard in a single tap (handy for bug reports), and are cleared on logout so nothing is left behind on shared devices.
 
 ---
 
@@ -151,6 +171,8 @@ npm run dev          # dev server at http://localhost:4002
 Refer to the [user guide](docs/User-Guide.md) for general usage, and the [admin guide](docs/Admin-Guide.md) if your instance has trouble connecting.
 
 If you need support or want to participate in development, join the <a href="https://ztfr.eu/matrix">Zeitfresser Matrix Community</a> or the <a href="https://look.ztfr.eu/#/#support:ztfr.eu">Development & Support Channel</a> on Matrix.
+
+Zocial is a non-profit project and free to use — if you'd like to help cover the running costs of the public instance (domain and hosting), [donations](https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C) are entirely optional but always appreciated.
 
 ---
 
