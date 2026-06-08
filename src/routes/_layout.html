@@ -53,6 +53,7 @@
 <script>
   import { store } from './_store/store.js'
   import { observe } from 'svelte-extras'
+  import { normalizePageName } from './_utils/normalizePageName.js'
 
   const SWIPE_MIN_X = 60   // minimum horizontal distance to count as a swipe
   const SWIPE_DIR_RATIO = 2 // horizontal must be at least 2× the vertical
@@ -87,7 +88,7 @@
 
         const { navPages } = this.store.get()
         const { page } = this.get()
-        const currentIdx = navPages.findIndex(p => p.name === page)
+        const currentIdx = navPages.findIndex(p => p.name === normalizePageName(page))
         if (currentIdx === -1) return // not a top-level nav page
 
         const goLeft = dx < 0
