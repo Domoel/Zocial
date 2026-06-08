@@ -57,7 +57,9 @@
     background-position: center;
     background-color: var(--main-border);
     display: flex;
-    align-items: flex-end;
+    /* keep the button at the TOP of the header — the avatar row overlaps the bottom (margin-top
+       -44px) and would otherwise cover it, making it unclickable */
+    align-items: flex-start;
     justify-content: flex-end;
     padding: 8px;
   }
