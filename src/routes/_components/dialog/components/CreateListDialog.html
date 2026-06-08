@@ -1,0 +1,78 @@
+<GenericConfirmationDialog
+  {id}
+  {label}
+  title="{'intl.createList'}"
+  positiveText="{'intl.createList'}"
+  {confirmationButtonDisabled}
+  on:positive="onCreate()">
+  <div class="create-list-dialog">
+    <label class="create-list-label" for="create-list-title">
+      {'intl.listTitle'}
+    </label>
+    <input
+      type="text"
+      id="create-list-title"
+      class="create-list-input"
+      ref:titleInput
+      autocomplete="off"
+      on:input="onInput(event)"
+    />
+  </div>
+</GenericConfirmationDialog>
+<style>
+  .create-list-dialog {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 10px;
+    gap: 8px;
+  }
+  .create-list-label {
+    font-size: 1.1em;
+  }
+  .create-list-input {
+    font-size: 1.1em;
+    padding: 6px 8px;
+    border: 1px solid var(--settings-list-item-border);
+    background: var(--input-bg);
+    color: var(--body-text-color);
+    border-radius: 2px;
+  }
+</style>
+<script>
+  import GenericConfirmationDialog from './GenericConfirmationDialog.html'
+  import { show } from '../helpers/showDialog.js'
+  import { close } from '../helpers/closeDialog.js'
+  import { createNewList } from '../../../_actions/lists.js'
+
+  export default {
+    oncreate () {
+      requestAnimationFrame(() => {
+        if (this.refs.titleInput) {
+          this.refs.titleInput.focus()
+        }
+      })
+    },
+    data: () => ({
+      title: ''
+    }),
+    computed: {
+      confirmationButtonDisabled: ({ title }) => !title.trim()
+    },
+    methods: {
+      show,
+      close,
+      onInput (e) {
+        this.set({ title: e.target.value })
+      },
+      async onCreate () {
+        const { title } = this.get()
+        if (!title.trim()) return
+        await createNewList(title.trim())
+        this.close()
+      }
+    },
+    components: {
+      GenericConfirmationDialog
+    }
+  }
+</script>

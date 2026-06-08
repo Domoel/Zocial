@@ -153,9 +153,15 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
       await storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
     } catch (e) {
       console.error(e)
-      /* no await */ toast.say('intl.showingOfflineContent')
-      items = await database.getTimeline(instanceName, timelineName, lastTimelineItemId, TIMELINE_BATCH_SIZE)
-      stale = true
+      if (e.status && timelineName.startsWith('list/')) {
+        // Server returned an HTTP error for a list timeline (e.g. GoToSocial returns
+        // an error for empty lists). Not a network/offline issue — show empty timeline.
+        items = []
+      } else {
+        /* no await */ toast.say('intl.showingOfflineContent')
+        items = await database.getTimeline(instanceName, timelineName, lastTimelineItemId, TIMELINE_BATCH_SIZE)
+        stale = true
+      }
     }
   }
   stop('fetchTimelineItems')

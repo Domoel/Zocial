@@ -26,10 +26,21 @@ export async function updateProfile ({ displayName, note, fields, avatarFile, he
   const updated = await updateCredentials(currentInstance, accessToken, formData)
 
   // Live update: refresh both the cached credentials and the currently displayed profile.
-  const { verifyCredentials } = store.get()
-  store.set({
-    verifyCredentials: Object.assign({}, verifyCredentials, { [currentInstance]: updated }),
-    currentAccountProfile: updated
+  // Merge rather than replace currentAccountProfile: the PATCH response (CredentialAccount) from
+  // some servers (e.g. GoToSocial) returns a different/lower followers_count than GET /accounts/:id,
+  // which would steadily corrupt the displayed count on every profile save.
+  store.runIfLoggedIn(currentInstance, ({ verifyCredentials, currentAccountProfile }) => {
+    const mergedProfile = currentAccountProfile
+      ? Object.assign({}, updated, {
+          followers_count: currentAccountProfile.followers_count,
+          following_count: currentAccountProfile.following_count,
+          statuses_count: currentAccountProfile.statuses_count
+        })
+      : updated
+    store.set({
+      verifyCredentials: Object.assign({}, verifyCredentials, { [currentInstance]: updated }),
+      currentAccountProfile: mergedProfile
+    })
   })
 
   return updated

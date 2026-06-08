@@ -23,23 +23,26 @@
         {/each}
       </PageList>
 
-      {#if listsLength}
-        <h2 class="community-header">
-          {'intl.lists'}
-        </h2>
+      <h2 class="community-header">
+        {'intl.lists'}
+      </h2>
 
-        <PageList label="{'intl.lists'}">
-          {#each $lists as list, i}
-            <PageListItem
-              href="/lists/{list.id}"
-              label={list.title}
-              icon="#fa-bars"
-              pinnable="true"
-              pinIndex={staticPinnablesLength + i}
-            />
-          {/each}
-        </PageList>
-      {/if}
+      <PageList label="{'intl.lists'}">
+        {#each $lists as list, i}
+          <PageListItem
+            href="/lists/{list.id}"
+            label={list.title}
+            icon="#fa-bars"
+            pinnable="true"
+            pinIndex={staticPinnablesLength + i}
+          />
+        {/each}
+        <PageListActionItem
+          label="{'intl.createList'}"
+          icon="#fa-plus"
+          on:click="onCreateListClicked()"
+        />
+      </PageList>
 
     </RadioGroup>
 
@@ -124,11 +127,13 @@
   import { store } from '../../_store/store.js'
   import PageList from '../community/PageList.html'
   import PageListItem from '../community/PageListItem.html'
+  import PageListActionItem from '../community/PageListActionItem.html'
   import RadioGroup from '../radio/RadioGroup.html'
   import FocusRestoration from '../FocusRestoration.html'
   import { updateListsForInstance } from '../../_actions/lists.js'
   import { updateFollowRequestCountIfLockedAccount } from '../../_actions/followRequests.js'
   import { formatIntl } from '../../_utils/formatIntl.js'
+  import { importShowCreateListDialog } from '../dialog/asyncDialogs/importShowCreateListDialog.js'
 
   export default {
     async oncreate () {
@@ -147,8 +152,16 @@
     components: {
       PageList,
       PageListItem,
+      PageListActionItem,
       RadioGroup,
       FocusRestoration
+    },
+
+    methods: {
+      async onCreateListClicked () {
+        const showCreateListDialog = await importShowCreateListDialog()
+        await showCreateListDialog()
+      }
     },
 
     computed: {

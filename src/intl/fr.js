@@ -9,8 +9,7 @@ export default {
   logIn: 'Se connecter',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy · Zocial v{version}</a>
-    </p>
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
   `,
   // Generic UI
   loading: 'Chargement en cours',

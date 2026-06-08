@@ -13,7 +13,7 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy · Zocial v{version}</a>
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
     </p>
   `,
   // Manifest
@@ -269,6 +269,13 @@ export default {
   mentionAccount: 'Mention {account}',
   copyLinkToAccount: 'Copy link to account',
   copiedToClipboard: 'Copied to clipboard',
+  createList: 'Create list',
+  listTitle: 'List title',
+  manageInLists: 'Manage list memberships',
+  listMembership: 'List memberships for {account}',
+  noListsYet: 'No lists yet',
+  errorInListMembership: 'Error updating list membership',
+  listMembershipNotSupported: 'Not supported by this server',
   // Media dialog
   navigateMedia: 'Navigate media items',
   showPreviousMedia: 'Show previous media',
@@ -340,6 +347,7 @@ export default {
   postingStatsRepliesTitle: '{count, plural, one {# reply} other {# replies}} ({percent})',
   postingStatsBoostsTitle: '{count, plural, one {# boost} other {# boosts}} ({percent})',
   scrollToTopOfConversation: 'Scroll to top of conversation',
+  scrollToTop: 'Scroll to top',
   moreOptions: 'More options',
   followersLabel: 'Followed by {count}',
   followingLabel: 'Follows {count}',

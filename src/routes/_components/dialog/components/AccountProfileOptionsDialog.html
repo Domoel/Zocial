@@ -24,6 +24,7 @@ import { toggleMute } from '../../../_actions/toggleMute.js'
 import { reportStatusOrAccount } from '../../../_actions/report.js'
 import { formatIntl } from '../../../_utils/formatIntl.js'
 import { setAccountNotified } from '../../../_actions/setAccountNotified.js'
+import { importShowListMembershipDialog } from '../asyncDialogs/importShowListMembershipDialog.js'
 
 export default {
   store: () => store,
@@ -87,7 +88,7 @@ export default {
       blockLabel, blocking, blockIcon, muteLabel, muteIcon,
       followLabel, followIcon, following, followRequested,
       accountId, verifyCredentialsId, username, isUser, showReblogsLabel,
-      domain, blockDomainLabel, reportLabel, notifying
+      domain, blockDomainLabel, reportLabel, notifying, $lists
     }) => ([
       !isUser && {
         key: 'mention',
@@ -108,6 +109,11 @@ export default {
         key: 'denotify',
         label: formatIntl('intl.denotify', { account: `@${username}` }),
         icon: '#fa-bell-o'
+      },
+      !isUser && following && $lists && $lists.length > 0 && {
+        key: 'manageLists',
+        label: 'intl.manageInLists',
+        icon: '#fa-bars'
       },
       !isUser && {
         key: 'backfill',
@@ -155,6 +161,8 @@ export default {
           return this.onMentionClicked()
         case 'follow':
           return this.onFollowClicked()
+        case 'manageLists':
+          return this.onManageListsClicked()
         case 'backfill':
           return this.onBackfillClicked()
         case 'block':
@@ -184,6 +192,12 @@ export default {
       const { accountId, following } = this.get()
       this.close()
       await setAccountFollowed(accountId, !following, true)
+    },
+    async onManageListsClicked () {
+      const { account } = this.get()
+      const showListMembershipDialog = await importShowListMembershipDialog()
+      this.close()
+      showListMembershipDialog(account)
     },
     async onBackfillClicked () {
       const { account } = this.get()

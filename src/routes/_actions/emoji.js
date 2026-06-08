@@ -9,19 +9,19 @@ import { isEqual } from '../_utils/lodash-lite.js'
 
 async function syncEmojiForInstance (instanceName, syncMethod) {
   await syncMethod(
-    () => {
-      const { loggedInInstances } = store.get()
+    () => store.runIfLoggedIn(instanceName, ({ loggedInInstances }) => {
       const accessToken = loggedInInstances[instanceName].access_token
       return getCustomEmoji(instanceName, accessToken)
-    },
+    }) || Promise.reject(new Error('Instance no longer logged in')),
     () => database.getCustomEmoji(instanceName),
     emoji => database.setCustomEmoji(instanceName, emoji),
     emoji => {
-      const { customEmoji } = store.get()
-      if (!isEqual(customEmoji[instanceName], emoji)) { // avoid triggering updates if nothing's changed
-        customEmoji[instanceName] = emoji
-        store.set({ customEmoji })
-      }
+      store.runIfLoggedIn(instanceName, ({ customEmoji }) => {
+        if (!isEqual(customEmoji[instanceName], emoji)) { // avoid triggering updates if nothing's changed
+          customEmoji[instanceName] = emoji
+          store.set({ customEmoji })
+        }
+      })
     }
   )
 }

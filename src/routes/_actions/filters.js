@@ -8,21 +8,22 @@ import { formatIntl } from '../_utils/formatIntl.js'
 import { emit } from '../_utils/eventBus.ts'
 
 async function syncFilters (instanceName, syncMethod) {
-  const { loggedInInstances } = store.get()
-  const accessToken = loggedInInstances[instanceName].access_token
-
-  await syncMethod(
-    () => getFilters(instanceName, accessToken),
-    () => database.getFilters(instanceName),
-    filters => database.setFilters(instanceName, filters),
-    filters => {
-      const { instanceFilters } = store.get()
-      if (!isEqual(instanceFilters[instanceName], filters)) { // avoid re-render if nothing changed
-        instanceFilters[instanceName] = filters
-        store.set({ instanceFilters })
+  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
+    const accessToken = loggedInInstances[instanceName].access_token
+    await syncMethod(
+      () => getFilters(instanceName, accessToken),
+      () => database.getFilters(instanceName),
+      filters => database.setFilters(instanceName, filters),
+      filters => {
+        store.runIfLoggedIn(instanceName, ({ instanceFilters }) => {
+          if (!isEqual(instanceFilters[instanceName], filters)) { // avoid re-render if nothing changed
+            instanceFilters[instanceName] = filters
+            store.set({ instanceFilters })
+          }
+        })
       }
-    }
-  )
+    )
+  })
 }
 
 export async function updateFiltersForInstance (instanceName) {
