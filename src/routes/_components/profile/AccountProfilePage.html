@@ -1,10 +1,11 @@
 {#if $isUserLoggedIn}
 <TimelinePage {timeline} >
   <DynamicPageBanner title="" {ariaTitle} hasLeftSlot={true}>
-    <AccountProfileFollow slot="left"
-                          account={$currentAccountProfile}
-                          relationship={$currentAccountRelationship}
-                          verifyCredentials={$currentVerifyCredentials} />
+    <div slot="left">
+      <AccountProfileFollow account={$currentAccountProfile}
+                            relationship={$currentAccountRelationship}
+                            verifyCredentials={$currentVerifyCredentials} />
+    </div>
   </DynamicPageBanner>
   {#if $currentAccountProfile && $currentVerifyCredentials}
   <AccountProfile account={$currentAccountProfile}

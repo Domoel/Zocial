@@ -26,20 +26,24 @@
   {/if}
 </div>
 <style>
-  /* lives in the page banner's left slot (next to "Back"); compact to fit the banner bar */
+  /* lives in the page banner's left slot (mirroring "Back"); compact to fit the banner bar */
   .account-profile-follow {
     display: none;
-    align-items: center;
   }
   .account-profile-follow.shown {
     display: flex;
     gap: 5px;
+    align-items: center;
   }
 
+  /* fixed, identical height for the follow/edit button and the "⋯" button — so the edit
+     button (which has no "⋯" beside it) is exactly as tall as the follow button */
   :global(.account-profile-more-options-button),
   .account-profile-follow-button {
     padding: 5px 12px;
     font-size: 1em;
+    box-sizing: border-box;
+    height: 36px;
   }
 
   :global(.icon-button.icon-button.account-profile-more-options-button) {
@@ -48,7 +52,10 @@
   }
 
   .account-profile-follow-button {
-    width: max-content;
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>
 <script>
