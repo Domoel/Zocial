@@ -151,6 +151,13 @@ npm install
 npm run build        # output lands in __sapper__/export/
 ```
 
+### Development
+
+```bash
+npm install
+npm run dev          # dev server at http://localhost:4002
+```
+
 ### Environment variables
 
 | Variable | Default | Description |
@@ -161,16 +168,11 @@ npm run build        # output lands in __sapper__/export/
 
 ---
 
-## 🛠 Development & Support
-
-```bash
-npm install
-npm run dev          # dev server at http://localhost:4002
-```
+## 🛠 Support
 
 Refer to the [user guide](docs/User-Guide.md) for general usage, and the [admin guide](docs/Admin-Guide.md) if your instance has trouble connecting.
 
-If you need support or want to participate in development, join the <a href="https://ztfr.eu/matrix">Zeitfresser Matrix Community</a> or the <a href="https://look.ztfr.eu/#/#support:ztfr.eu">Development & Support Channel</a> on Matrix.
+If you need further support or want to participate in development, join the <a href="https://ztfr.eu/matrix">Zeitfresser Matrix Community</a> or the <a href="https://look.ztfr.eu/#/#support:ztfr.eu">Development & Support Channel</a> on Matrix.
 
 Zocial is a non-profit project and free to use — if you'd like to help cover the running costs of the public instance (domain and hosting), [donations](https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C) are entirely optional but always appreciated.
 
