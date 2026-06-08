@@ -1,0 +1,97 @@
+<ModalDialog {id} {label} {title} background="var(--main-bg)">
+  <GenericDialogList selectable={true} {items} on:click="onToggle(event)" />
+</ModalDialog>
+<script>
+  import ModalDialog from './ModalDialog.html'
+  import GenericDialogList from './GenericDialogList.html'
+  import { store } from '../../../_store/store.js'
+  import { show } from '../helpers/showDialog.js'
+  import { close } from '../helpers/closeDialog.js'
+  import { getListsForAccount, addAccountToList, removeAccountFromList } from '../../../_api/lists.js'
+  import { toast } from '../../toast/toast.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
+
+  export default {
+    oncreate () {
+      this.loadMembership()
+    },
+    store: () => store,
+    data: () => ({
+      memberListIds: null, // null = loading; Set<string> once loaded
+      pendingListId: null, // list ID currently being toggled
+      loadError: false
+    }),
+    computed: {
+      accountId: ({ account }) => account && account.id,
+      username: ({ account }) => account && ('@' + account.acct),
+      title: ({ username }) => formatIntl('intl.listMembership', { account: username }),
+      items: ({ $lists, memberListIds, pendingListId, loadError }) => {
+        if (!memberListIds) {
+          return [{ key: '__loading__', label: 'intl.loading', icon: '#fa-spinner', selected: false }]
+        }
+        if (loadError) {
+          return [{ key: '__error__', label: 'intl.listMembershipNotSupported', icon: '#fa-exclamation-circle', selected: false }]
+        }
+        if (!$lists || $lists.length === 0) {
+          return [{ key: '__empty__', label: 'intl.noListsYet', icon: '#fa-bars', selected: false }]
+        }
+        return $lists.map(list => ({
+          key: list.id,
+          label: list.title,
+          icon: pendingListId === list.id ? '#fa-spinner' : '#fa-bars',
+          selected: memberListIds.has(list.id)
+        }))
+      }
+    },
+    methods: {
+      show,
+      close,
+      async loadMembership () {
+        const { currentInstance, loggedInInstances } = this.store.get()
+        const { accountId } = this.get()
+        const accessToken = loggedInInstances[currentInstance].access_token
+        try {
+          const lists = await getListsForAccount(currentInstance, accessToken, accountId)
+          this.set({ memberListIds: new Set(lists.map(l => l.id)) })
+        } catch (e) {
+          console.error(e)
+          this.set({ memberListIds: new Set(), loadError: true })
+        }
+      },
+      async onToggle (item) {
+        if (item.key === '__loading__' || item.key === '__empty__' || item.key === '__error__') return
+        const { pendingListId } = this.get()
+        if (pendingListId) return // another toggle in progress
+
+        const { memberListIds, accountId } = this.get()
+        const { currentInstance, loggedInInstances } = this.store.get()
+        const accessToken = loggedInInstances[currentInstance].access_token
+        const isMember = memberListIds.has(item.key)
+
+        this.set({ pendingListId: item.key })
+        try {
+          if (isMember) {
+            await removeAccountFromList(currentInstance, accessToken, item.key, accountId)
+          } else {
+            await addAccountToList(currentInstance, accessToken, item.key, accountId)
+          }
+          const newMemberListIds = new Set(memberListIds)
+          if (isMember) {
+            newMemberListIds.delete(item.key)
+          } else {
+            newMemberListIds.add(item.key)
+          }
+          this.set({ memberListIds: newMemberListIds })
+        } catch (e) {
+          console.error(e)
+          /* no await */ toast.say('intl.errorInListMembership')
+        }
+        this.set({ pendingListId: null })
+      }
+    },
+    components: {
+      ModalDialog,
+      GenericDialogList
+    }
+  }
+</script>

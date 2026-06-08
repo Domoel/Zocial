@@ -89,6 +89,10 @@ export async function del (url, headers, options) {
   return (await _fetch(url, makeFetchOptions('DELETE', headers, options), options)).json
 }
 
+export async function delWithBody (url, body, headers, options) {
+  return (await _putOrPostOrPatch('DELETE', url, body, headers, options)).json
+}
+
 export function paramsString (paramsObject) {
   let res = ''
   let count = -1

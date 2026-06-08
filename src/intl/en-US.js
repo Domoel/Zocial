@@ -269,6 +269,11 @@ export default {
   mentionAccount: 'Mention {account}',
   copyLinkToAccount: 'Copy link to account',
   copiedToClipboard: 'Copied to clipboard',
+  manageInLists: 'Manage list memberships',
+  listMembership: 'List memberships for {account}',
+  noListsYet: 'No lists yet',
+  errorInListMembership: 'Error updating list membership',
+  listMembershipNotSupported: 'Not supported by this server',
   // Media dialog
   navigateMedia: 'Navigate media items',
   showPreviousMedia: 'Show previous media',
