@@ -1,17 +1,17 @@
-<div class="thread-scroll-top-wrapper {visible ? 'visible' : ''}">
-  <div class="thread-scroll-top-halo">
-    <button class="primary thread-scroll-top-button"
-            aria-label="{'intl.scrollToTopOfConversation'}"
-            title="{'intl.scrollToTopOfConversation'}"
+<div class="scroll-top-wrapper {visible ? 'visible' : ''}">
+  <div class="scroll-top-halo">
+    <button class="primary scroll-top-button"
+            aria-label="{label}"
+            title="{label}"
             on:click="scrollToTop()">
-      <SvgIcon className="thread-scroll-top-svg" href="#fa-angle-up" />
+      <SvgIcon className="scroll-top-svg" href="#fa-angle-up" />
     </button>
   </div>
 </div>
 <style>
   /* Sticks to the top of the viewport (within the content column, like the compose FAB) but
-     takes no layout space so it floats over the thread. */
-  .thread-scroll-top-wrapper {
+     takes no layout space so it floats over the content. */
+  .scroll-top-wrapper {
     position: -webkit-sticky;
     position: sticky;
     top: var(--fab-gap-top);
@@ -21,8 +21,8 @@
     justify-content: flex-end;
     pointer-events: none;
   }
-  /* hidden until scrolled past the first post; fade in/out */
-  .thread-scroll-top-halo {
+  /* hidden until the threshold element has scrolled past the top; fade in/out */
+  .scroll-top-halo {
     border-radius: 9px;
     margin: 5px 15px 15px 5px;
     background-color: var(--compose-button-halo);
@@ -30,11 +30,11 @@
     opacity: 0;
     transition: opacity 0.2s linear;
   }
-  .thread-scroll-top-wrapper.visible .thread-scroll-top-halo {
+  .scroll-top-wrapper.visible .scroll-top-halo {
     opacity: 1;
     pointer-events: auto;
   }
-  .thread-scroll-top-button {
+  .scroll-top-button {
     position: relative;
     margin: 5px;
     display: flex;
@@ -42,14 +42,14 @@
     justify-content: center;
     pointer-events: auto;
   }
-  :global(.thread-scroll-top-svg) {
+  :global(.scroll-top-svg) {
     width: 24px;
     height: 24px;
     fill: var(--button-primary-text);
   }
 
   @media (max-width: 767px) {
-    .thread-scroll-top-halo {
+    .scroll-top-halo {
       margin: 5px;
     }
   }
@@ -64,8 +64,8 @@
     oncreate () {
       this._onScroll = this._onScroll.bind(this)
       addScrollListener(this._onScroll)
-      // initial check: threads open scrolled to the focused post, so we may already be
-      // past the first post
+      // initial check: a page may already be scrolled past the threshold (e.g. threads open at the
+      // focused post), so we evaluate visibility right away rather than waiting for a scroll event
       this._update()
     },
     ondestroy () {
@@ -76,7 +76,11 @@
     },
     store: () => store,
     data: () => ({
-      visible: false
+      visible: false,
+      // CSS selector of the element whose disappearance above the viewport top reveals the button.
+      // Threads: the first (root) post. Profiles: the posting-stats summary.
+      thresholdSelector: '.status-article',
+      label: ''
     }),
     methods: {
       _onScroll () {
@@ -89,10 +93,9 @@
         })
       },
       _update () {
-        // Show once the first (root) post's bottom divider has scrolled above the top of the
-        // viewport. In a thread all items are in the DOM, so the first .status-article is the root.
-        const firstPost = document.querySelector('.status-article')
-        const visible = !!firstPost && firstPost.getBoundingClientRect().bottom <= 0
+        // Show once the threshold element's bottom has scrolled above the top of the viewport.
+        const el = document.querySelector(this.get().thresholdSelector)
+        const visible = !!el && el.getBoundingClientRect().bottom <= 0
         if (this.get().visible !== visible) {
           this.set({ visible })
         }

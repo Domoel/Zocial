@@ -1,7 +1,9 @@
 <DynamicHeading className="sr-only" level={headingLevel}>{label}</DynamicHeading>
 <FocusRestoration realm={focusRealm}>
   {#if timelineType === 'status'}
-    <ThreadScrollTopButton />
+    <ScrollToTopButton thresholdSelector=".status-article" label="{'intl.scrollToTopOfConversation'}" />
+  {:elseif timelineType === 'account'}
+    <ScrollToTopButton thresholdSelector=".posting-stats" label="{'intl.scrollToTop'}" />
   {/if}
   <div class="timeline" role="feed">
     {#if components}
@@ -55,7 +57,7 @@
   import { createMakeProps } from '../../_actions/createMakeProps.js'
   import { showMoreAndScrollToTop } from '../../_actions/showMoreAndScrollToTop.js'
   import FocusRestoration from '../FocusRestoration.html'
-  import ThreadScrollTopButton from './ThreadScrollTopButton.html'
+  import ScrollToTopButton from './ScrollToTopButton.html'
   import { formatIntl } from '../../_utils/formatIntl.js'
 
   export default {
@@ -258,7 +260,7 @@
       Shortcut,
       FocusRestoration,
       DynamicHeading,
-      ThreadScrollTopButton
+      ScrollToTopButton
     }
   }
 </script>
