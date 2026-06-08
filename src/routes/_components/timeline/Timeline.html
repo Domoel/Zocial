@@ -3,7 +3,7 @@
   {#if timelineType === 'status'}
     <ScrollToTopButton thresholdSelector=".status-article" label="{'intl.scrollToTopOfConversation'}" />
   {:elseif timelineType === 'account'}
-    <ScrollToTopButton thresholdSelector=".posting-stats" label="{'intl.scrollToTop'}" />
+    <ScrollToTopButton thresholdSelector=".posting-stats" label="{'intl.scrollToTop'}" positionFixed={true} />
   {/if}
   <div class="timeline" role="feed">
     {#if components}

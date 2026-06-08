@@ -1,4 +1,4 @@
-<div class="scroll-top-wrapper {visible ? 'visible' : ''}">
+<div class="scroll-top-wrapper {visible ? 'visible' : ''} {positionFixed ? 'position-fixed' : ''}">
   <div class="scroll-top-halo">
     <button class="primary scroll-top-button"
             aria-label="{label}"
@@ -21,6 +21,14 @@
     justify-content: flex-end;
     pointer-events: none;
   }
+  /* profile variant: fixed so it always sticks to the viewport top regardless of pinned posts
+     above the timeline container. left/right: 0 keeps justify-content: flex-end working. */
+  .scroll-top-wrapper.position-fixed {
+    position: fixed;
+    left: 0;
+    right: 0;
+  }
+
   /* hidden until the threshold element has scrolled past the top; fade in/out */
   .scroll-top-halo {
     border-radius: 9px;
@@ -80,7 +88,10 @@
       // CSS selector of the element whose disappearance above the viewport top reveals the button.
       // Threads: the first (root) post. Profiles: the posting-stats summary.
       thresholdSelector: '.status-article',
-      label: ''
+      label: '',
+      // When true, uses position:fixed instead of sticky so the button always clamps to the
+      // viewport top even when pinned posts push the timeline container down the page.
+      positionFixed: false
     }),
     methods: {
       _onScroll () {
