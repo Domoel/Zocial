@@ -13,7 +13,6 @@
     <div style={backgroundStyle} class="account-profile-background"></div>
     <div class="account-profile-grid">
       <AccountProfileHeader {account} {relationship} {verifyCredentials} />
-      <AccountProfileFollow {account} {relationship} {verifyCredentials} />
       <AccountProfileNote {account} />
       <AccountProfileMeta {account} />
       <AccountProfileDetails {account} {relationship} {verifyCredentials} />
@@ -116,7 +115,6 @@
 </style>
 <script>
   import AccountProfileHeader from './AccountProfileHeader.html'
-  import AccountProfileFollow from './AccountProfileFollow.html'
   import AccountProfileNote from './AccountProfileNote.html'
   import AccountProfileMeta from './AccountProfileMeta.html'
   import AccountProfileDetails from './AccountProfileDetails.html'
@@ -152,7 +150,6 @@
     },
     components: {
       AccountProfileHeader,
-      AccountProfileFollow,
       AccountProfileNote,
       AccountProfileMeta,
       AccountProfileDetails,

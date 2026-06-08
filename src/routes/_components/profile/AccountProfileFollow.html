@@ -26,10 +26,10 @@
   {/if}
 </div>
 <style>
+  /* lives in the page banner's left slot (next to "Back"); compact to fit the banner bar */
   .account-profile-follow {
-    grid-area: follow;
-    align-self: flex-start;
     display: none;
+    align-items: center;
   }
   .account-profile-follow.shown {
     display: flex;
@@ -38,8 +38,8 @@
 
   :global(.account-profile-more-options-button),
   .account-profile-follow-button {
-    padding: 10px;
-    font-size: 1.1em;
+    padding: 5px 12px;
+    font-size: 1em;
   }
 
   :global(.icon-button.icon-button.account-profile-more-options-button) {
@@ -48,7 +48,6 @@
   }
 
   .account-profile-follow-button {
-    min-width: 10ch;
     width: max-content;
   }
 </style>
@@ -106,7 +105,7 @@
       overrideLabel: undefined
     }),
     computed: {
-      accountId: ({ account }) => account.id,
+      accountId: ({ account }) => account && account.id,
       following: ({ relationship, overrideLabel }) => {
         return relationship && relationship.following
       },

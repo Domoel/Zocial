@@ -1,6 +1,11 @@
 {#if $isUserLoggedIn}
 <TimelinePage {timeline} >
-  <DynamicPageBanner title="" {ariaTitle} />
+  <DynamicPageBanner title="" {ariaTitle} hasLeftSlot={true}>
+    <AccountProfileFollow slot="left"
+                          account={$currentAccountProfile}
+                          relationship={$currentAccountRelationship}
+                          verifyCredentials={$currentVerifyCredentials} />
+  </DynamicPageBanner>
   {#if $currentAccountProfile && $currentVerifyCredentials}
   <AccountProfile account={$currentAccountProfile}
                   relationship={$currentAccountRelationship}
@@ -29,6 +34,7 @@
   import DynamicPageBanner from '../DynamicPageBanner.html'
   import { updateProfileAndRelationship, clearProfileAndRelationship } from '../../_actions/accounts.js'
   import AccountProfile from './AccountProfile.html'
+  import AccountProfileFollow from './AccountProfileFollow.html'
   import PinnedStatuses from '../timeline/PinnedStatuses.html'
   import { formatIntl } from '../../_utils/formatIntl.js'
 
@@ -62,6 +68,7 @@
       HiddenFromSSR,
       DynamicPageBanner,
       AccountProfile,
+      AccountProfileFollow,
       PinnedStatuses
     }
   }
