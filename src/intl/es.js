@@ -9,7 +9,7 @@ export default {
   logIn: 'Iniciar sesión',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy · Zocial v{version}</a>
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
     </p>
   `,
   // Manifest
