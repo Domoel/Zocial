@@ -195,9 +195,9 @@ export default {
     },
     async onManageListsClicked () {
       const { account } = this.get()
-      this.close()
       const showListMembershipDialog = await importShowListMembershipDialog()
-      await showListMembershipDialog(account)
+      this.close()
+      showListMembershipDialog(account)
     },
     async onBackfillClicked () {
       const { account } = this.get()
