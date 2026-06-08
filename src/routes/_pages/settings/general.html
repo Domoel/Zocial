@@ -96,6 +96,11 @@
              bind:checked="$defaultUnlistedReplies" on:change="onChange(event)">
       {'intl.defaultUnlistedReplies'}
     </label>
+    <label class="setting-group">
+      <input type="checkbox" id="choice-default-local-only"
+             bind:checked="$defaultLocalOnly" on:change="onChange(event)">
+      {'intl.defaultLocalOnly'}
+    </label>
   </form>
 
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>

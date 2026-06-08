@@ -194,7 +194,7 @@
   import { POST_PRIVACY_OPTIONS } from '../../_static/statuses.js'
   import { store } from '../../_store/store.js'
   import { slide } from '../../_transitions/slide.js'
-  import { postStatus, insertHandleForReply, setReplySpoiler, setReplyVisibility } from '../../_actions/compose.js'
+  import { postStatus, insertHandleForReply, setReplySpoiler, setReplyVisibility, applyDefaultLocalOnly } from '../../_actions/compose.js'
   import { classname } from '../../_utils/classname.js'
   import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
   import IconButton from '../IconButton.html'
@@ -216,6 +216,9 @@
         // make sure the visibility is consistent with the replied-to status
         setReplyVisibility(realm, replyVisibility)
       }
+
+      // default to local-only if the user enabled it (and the instance supports it)
+      applyDefaultLocalOnly(realm)
     },
     components: {
       ComposeAuthor,

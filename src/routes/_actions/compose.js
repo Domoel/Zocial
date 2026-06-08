@@ -123,3 +123,15 @@ export function setReplyVisibility (realm, replyVisibility) {
     : defaultVisibility
   store.setComposeData(realm, { postPrivacy: visibility })
 }
+
+export function applyDefaultLocalOnly (realm) {
+  // Default new posts to local-only when the user opted in AND the instance supports it.
+  // Don't override an explicit value (e.g. restored from edit/redraft, or already toggled).
+  if (typeof store.getComposeData(realm, 'localOnly') !== 'undefined') {
+    return
+  }
+  const { defaultLocalOnly, currentSupportedToggles } = store.get()
+  if (defaultLocalOnly && currentSupportedToggles && currentSupportedToggles.local_only) {
+    store.setComposeData(realm, { localOnly: true })
+  }
+}

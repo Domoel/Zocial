@@ -465,6 +465,7 @@ export default {
   hideReblogCount: 'Hide boost counts',
   enableThreadPolling: 'Show auto-refresh button in threads',
   defaultUnlistedReplies: 'Default replies to unlisted visibility',
+  defaultLocalOnly: 'Post to the local timeline only by default (where supported)',
   threadPollingStart: 'Auto-refresh replies (every 30s)',
   threadPollingStop: 'Stop auto-refresh',
   enableDesktopNotifications: 'Enable desktop notifications',
