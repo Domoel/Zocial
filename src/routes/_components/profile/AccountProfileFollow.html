@@ -6,17 +6,23 @@
      - If a follow is requested, then the button is pressed but shows as "follow requested" with
        a different icon.
   -->
-  <button class="account-profile-follow-button" on:click="onFollowButtonClick(event)">
-    {label}
-  </button>
-  {#if account && verifyCredentials && account.id !== verifyCredentials.id}
-    <IconButton
-      className="account-profile-more-options-button"
-      label="{'intl.moreOptions'}"
-      href="#fa-ellipsis-v"
-      muted="true"
-      on:click="onMoreOptionsClick()"
-    />
+  {#if isOwnProfile}
+    <button class="account-profile-follow-button" on:click="onEditProfileClick()">
+      {'intl.editProfile'}
+    </button>
+  {:else}
+    <button class="account-profile-follow-button" on:click="onFollowButtonClick(event)">
+      {label}
+    </button>
+    {#if account && verifyCredentials && account.id !== verifyCredentials.id}
+      <IconButton
+        className="account-profile-more-options-button"
+        label="{'intl.moreOptions'}"
+        href="#fa-ellipsis-v"
+        muted="true"
+        on:click="onMoreOptionsClick()"
+      />
+    {/if}
   {/if}
 </div>
 <style>
@@ -50,11 +56,16 @@
   import { store } from '../../_store/store.js'
   import IconButton from '../IconButton.html'
   import { importShowAccountProfileOptionsDialog } from '../dialog/asyncDialogs/importShowAccountProfileOptionsDialog.js'
+  import { importShowEditProfileDialog } from '../dialog/asyncDialogs/importShowEditProfileDialog.js'
   import { setAccountFollowed } from '../../_actions/follow.js'
   import { setAccountBlocked } from '../../_actions/block.js'
 
   export default {
     methods: {
+      async onEditProfileClick () {
+        const showEditProfileDialog = await importShowEditProfileDialog()
+        showEditProfileDialog()
+      },
       async onMoreOptionsClick () {
         const { account, relationship, verifyCredentials } = this.get()
         const showAccountProfileOptionsDialog = await importShowAccountProfileOptionsDialog()
@@ -117,8 +128,9 @@
           return 'intl.followLabel'
         }
       },
-      shown: ({ verifyCredentials, relationship }) => (
-        verifyCredentials && relationship && verifyCredentials.id !== relationship.id
+      isOwnProfile: ({ account, verifyCredentials }) => !!(account && verifyCredentials && account.id === verifyCredentials.id),
+      shown: ({ verifyCredentials, relationship, isOwnProfile }) => !!(
+        isOwnProfile || (verifyCredentials && relationship && verifyCredentials.id !== relationship.id)
       ),
       pressable: ({ blocking }) => !blocking
     },
