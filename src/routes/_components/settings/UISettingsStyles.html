@@ -33,6 +33,13 @@
     pointer-events: none;
   }
 
+  /* like setting-group-disabled, but keeps pointer events so the title tooltip
+     (explaining why it's unavailable) still shows on hover */
+  :global(.setting-group-unavailable) {
+    opacity: 0.5;
+    cursor: help;
+  }
+
   :global(.free-text .ui-settings h3) {
     margin: 16px 0 4px;
     font-size: 1.4em;

@@ -22,6 +22,9 @@ const persistedState = {
   // When true, replies default to "unlisted" visibility (never more public than the
   // post being replied to). See setReplyVisibility() in _actions/compose.js.
   defaultUnlistedReplies: false,
+  // When true, new posts default to local-only (on instances that support it). See
+  // applyDefaultLocalOnly() in _actions/compose.js.
+  defaultLocalOnly: false,
   disableFollowRequestCount: false,
   hideLongPosts: true,
   longPostLength: 1024,

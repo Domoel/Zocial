@@ -1,0 +1,236 @@
+<ModalDialog {id} {label} {title} background="var(--main-bg)">
+  <form class="edit-profile-form" ref:form on:submit="onSubmit(event)">
+    <div class="edit-profile-header" style="background-image: url('{headerPreview}')">
+      <label class="edit-profile-image-button">
+        {'intl.editProfileChangeHeader'}
+        <input type="file" accept="image/*" on:change="onHeaderChange(event)">
+      </label>
+    </div>
+
+    <div class="edit-profile-avatar-row">
+      <img class="edit-profile-avatar" src={avatarPreview} alt="">
+      <label class="edit-profile-image-button">
+        {'intl.editProfileChangeAvatar'}
+        <input type="file" accept="image/*" on:change="onAvatarChange(event)">
+      </label>
+    </div>
+
+    <label class="edit-profile-field">
+      <span class="edit-profile-field-label">{'intl.editProfileDisplayName'}</span>
+      <input type="text" ref:displayName value={initialDisplayName}>
+    </label>
+
+    <label class="edit-profile-field">
+      <span class="edit-profile-field-label">{'intl.editProfileBio'}</span>
+      <textarea ref:note rows="5">{initialNote}</textarea>
+    </label>
+
+    <fieldset class="edit-profile-fieldset">
+      <legend class="edit-profile-field-label">{'intl.editProfileFields'}</legend>
+      {#each fieldRows as row}
+        <div class="edit-profile-field-pair">
+          <input type="text" class="edit-profile-field-name" placeholder="{'intl.editProfileFieldName'}" value={row.name}>
+          <input type="text" class="edit-profile-field-value" placeholder="{'intl.editProfileFieldValue'}" value={row.value}>
+        </div>
+      {/each}
+    </fieldset>
+
+    <div class="edit-profile-actions">
+      <button type="submit" class="primary" disabled={saving}>
+        {saving ? 'intl.editProfileSaving' : 'intl.editProfileSave'}
+      </button>
+    </div>
+  </form>
+</ModalDialog>
+<style>
+  .edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 20px 20px;
+    max-width: 500px;
+  }
+  .edit-profile-header {
+    height: 120px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--main-border);
+    display: flex;
+    /* keep the button at the TOP of the header — the avatar row overlaps the bottom (margin-top
+       -44px) and would otherwise cover it, making it unclickable */
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 8px;
+  }
+  .edit-profile-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: -44px;
+    padding-inline-start: 8px;
+  }
+  .edit-profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
+    border: 3px solid var(--main-bg);
+    object-fit: cover;
+    background: var(--main-border);
+  }
+  .edit-profile-image-button {
+    display: inline-block;
+    font-size: 0.85em;
+    padding: 5px 10px;
+    border: 1px solid var(--main-border);
+    border-radius: 4px;
+    background: var(--main-bg);
+    color: var(--anchor-text);
+    cursor: pointer;
+  }
+  .edit-profile-image-button input[type="file"] {
+    display: none;
+  }
+  .edit-profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .edit-profile-field-label {
+    font-size: 0.9em;
+    color: var(--deemphasized-text-color);
+  }
+  .edit-profile-form input[type="text"],
+  .edit-profile-form textarea {
+    font-size: 1em;
+    padding: 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--body-text-color);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .edit-profile-form textarea {
+    resize: vertical;
+  }
+  .edit-profile-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .edit-profile-field-pair {
+    display: flex;
+    gap: 8px;
+  }
+  .edit-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .edit-profile-actions .primary {
+    padding: 8px 20px;
+  }
+</style>
+<script>
+  import ModalDialog from './ModalDialog.html'
+  import { store } from '../../../_store/store.js'
+  import { toast } from '../../toast/toast.js'
+  import { show } from '../helpers/showDialog.js'
+  import { close } from '../helpers/closeDialog.js'
+  import { updateProfile } from '../../../_actions/updateProfile.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
+
+  const FIELD_SLOTS = 4
+
+  function padFields (fields) {
+    const rows = (fields || []).slice(0, FIELD_SLOTS).map(f => ({ name: f.name || '', value: f.value || '' }))
+    while (rows.length < FIELD_SLOTS) {
+      rows.push({ name: '', value: '' })
+    }
+    return rows
+  }
+
+  export default {
+    oncreate () {
+      const vc = store.get().currentVerifyCredentials || {}
+      const source = vc.source || {}
+      this.set({
+        initialDisplayName: vc.display_name || '',
+        initialNote: source.note || '',
+        fieldRows: padFields(source.fields),
+        avatarPreview: vc.avatar,
+        headerPreview: vc.header
+      })
+    },
+    ondestroy () {
+      // free any object URLs created for image previews
+      const { avatarObjectUrl, headerObjectUrl } = this.get()
+      if (avatarObjectUrl) URL.revokeObjectURL(avatarObjectUrl)
+      if (headerObjectUrl) URL.revokeObjectURL(headerObjectUrl)
+    },
+    store: () => store,
+    data: () => ({
+      initialDisplayName: '',
+      initialNote: '',
+      fieldRows: padFields([]),
+      avatarPreview: '',
+      headerPreview: '',
+      avatarFile: null,
+      headerFile: null,
+      avatarObjectUrl: null,
+      headerObjectUrl: null,
+      saving: false
+    }),
+    methods: {
+      show,
+      close,
+      onAvatarChange (e) {
+        const file = e.target.files && e.target.files[0]
+        if (!file) return
+        const { avatarObjectUrl } = this.get()
+        if (avatarObjectUrl) URL.revokeObjectURL(avatarObjectUrl)
+        const url = URL.createObjectURL(file)
+        this.set({ avatarFile: file, avatarPreview: url, avatarObjectUrl: url })
+      },
+      onHeaderChange (e) {
+        const file = e.target.files && e.target.files[0]
+        if (!file) return
+        const { headerObjectUrl } = this.get()
+        if (headerObjectUrl) URL.revokeObjectURL(headerObjectUrl)
+        const url = URL.createObjectURL(file)
+        this.set({ headerFile: file, headerPreview: url, headerObjectUrl: url })
+      },
+      async onSubmit (e) {
+        e.preventDefault()
+        if (this.get().saving) return
+        this.set({ saving: true })
+        try {
+          const form = this.refs.form
+          const nameInputs = Array.from(form.querySelectorAll('.edit-profile-field-name'))
+          const valueInputs = Array.from(form.querySelectorAll('.edit-profile-field-value'))
+          const fields = nameInputs.map((el, i) => ({ name: el.value, value: valueInputs[i].value }))
+          const { avatarFile, headerFile } = this.get()
+          await updateProfile({
+            displayName: this.refs.displayName.value,
+            note: this.refs.note.value,
+            fields,
+            avatarFile,
+            headerFile
+          })
+          /* no await */ toast.say('intl.profileUpdated')
+          this.close()
+        } catch (err) {
+          console.error(err)
+          /* no await */ toast.say(formatIntl('intl.profileUpdateFailed', { error: err.message || '' }))
+          this.set({ saving: false })
+        }
+      }
+    },
+    components: {
+      ModalDialog
+    }
+  }
+</script>

@@ -34,11 +34,16 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       store.save()
     }
   } catch (e) {
-    // TODO: Better way to detect 404
-    if (e.message.startsWith('404:')) {
+    // ajax.js throws `Error('Request failed: <status>')` with `err.status` set, so detect by status.
+    if (e.status === 404) {
+      // the backend no longer has this subscription → clean up locally
       await subscription.unsubscribe()
       store.setInstanceData(instanceName, 'pushSubscriptions', null)
       store.save()
+    } else {
+      // 401 (invalid token), network errors, etc. — best-effort background sync; log instead of
+      // silently swallowing (and don't rethrow, so it can't become an uncaught rejection)
+      console.error('failed to sync push subscription', e)
     }
   }
 }
