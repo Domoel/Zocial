@@ -13,6 +13,10 @@ import { setupFiltersForInstance } from '../../_actions/filters.js'
 // stream to watch for home timeline updates and notifications
 let currentInstanceStream
 
+// Background instance refreshes are best-effort. A failure (e.g. a 429 rate-limit from the
+// instance, or a network blip) must not surface as an uncaught promise rejection — log it quietly.
+const ignoreRefreshError = e => console.warn('instance refresh failed', e)
+
 async function refreshInstanceDataAndStream (store, instanceName) {
   mark(`refreshInstanceDataAndStream-${instanceName}`)
   await doRefreshInstanceDataAndStream(store, instanceName)
@@ -44,19 +48,19 @@ async function doRefreshInstanceDataAndStream (store, instanceName) {
 
 async function refreshInstanceData (instanceName) {
   // these are all low-priority
-  scheduleIdleTask(() => setupCustomEmojiForInstance(instanceName))
-  scheduleIdleTask(() => setupListsForInstance(instanceName))
-  scheduleIdleTask(() => setupFollowedHashtagsForInstance(instanceName))
-  scheduleIdleTask(() => setupFiltersForInstance(instanceName))
-  scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName).catch(e => console.error('failed to update push subscription', e)))
-  scheduleIdleTask(() => updateNodeInfoForInstance(instanceName))
+  scheduleIdleTask(() => setupCustomEmojiForInstance(instanceName).catch(ignoreRefreshError))
+  scheduleIdleTask(() => setupListsForInstance(instanceName).catch(ignoreRefreshError))
+  scheduleIdleTask(() => setupFollowedHashtagsForInstance(instanceName).catch(ignoreRefreshError))
+  scheduleIdleTask(() => setupFiltersForInstance(instanceName).catch(ignoreRefreshError))
+  scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName).catch(ignoreRefreshError))
+  scheduleIdleTask(() => updateNodeInfoForInstance(instanceName).catch(ignoreRefreshError))
 
   // these are the only critical ones
   const ready = Promise.all([
     updateInstanceInfo(instanceName),
     updateVerifyCredentialsForInstance(instanceName).then(() => {
       // Once we have the verifyCredentials (so we know if the account is locked), lazily update the follow requests
-      scheduleIdleTask(() => updateFollowRequestCountIfLockedAccount(instanceName))
+      scheduleIdleTask(() => updateFollowRequestCountIfLockedAccount(instanceName).catch(ignoreRefreshError))
     })
   ])
   store.setInstanceData(instanceName, 'instanceDataReady', ready)
@@ -98,6 +102,8 @@ export function instanceObservers () {
       return
     }
 
-    refreshInstanceDataAndStream(store, currentInstance)
+    // floating on purpose, but guard it so a failed critical refresh (instanceInfo /
+    // verifyCredentials, e.g. on a 429 rate-limit) can't become an uncaught rejection
+    refreshInstanceDataAndStream(store, currentInstance).catch(ignoreRefreshError)
   })
 }
