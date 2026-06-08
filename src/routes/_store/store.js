@@ -111,6 +111,13 @@ export class PinaforeStore extends LocalStorageStore {
   constructor (state) {
     super(state, keysToStoreInLocalStorage)
   }
+
+  runIfLoggedIn (instanceName, callback) {
+    const state = this.get()
+    if (instanceName && state.loggedInInstances[instanceName]) {
+      return callback(state)
+    }
+  }
 }
 
 PinaforeStore.prototype.observe = observe

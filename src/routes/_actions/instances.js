@@ -114,20 +114,22 @@ export async function logOutOfInstance (instanceName, message) {
 }
 
 function setStoreVerifyCredentials (instanceName, thisVerifyCredentials) {
-  const { verifyCredentials } = store.get()
-  verifyCredentials[instanceName] = thisVerifyCredentials
-  store.set({ verifyCredentials })
+  store.runIfLoggedIn(instanceName, ({ verifyCredentials }) => {
+    verifyCredentials[instanceName] = thisVerifyCredentials
+    store.set({ verifyCredentials })
+  })
 }
 
 export async function updateVerifyCredentialsForInstance (instanceName) {
-  const { loggedInInstances } = store.get()
-  const accessToken = loggedInInstances[instanceName].access_token
-  await cacheFirstUpdateAfter(
-    () => getVerifyCredentials(instanceName, accessToken).catch(logOutOnUnauthorized(instanceName)),
-    () => database.getInstanceVerifyCredentials(instanceName),
-    verifyCredentials => database.setInstanceVerifyCredentials(instanceName, verifyCredentials),
-    verifyCredentials => setStoreVerifyCredentials(instanceName, verifyCredentials)
-  )
+  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
+    const accessToken = loggedInInstances[instanceName].access_token
+    await cacheFirstUpdateAfter(
+      () => getVerifyCredentials(instanceName, accessToken).catch(logOutOnUnauthorized(instanceName)),
+      () => database.getInstanceVerifyCredentials(instanceName),
+      verifyCredentials => database.setInstanceVerifyCredentials(instanceName, verifyCredentials),
+      verifyCredentials => setStoreVerifyCredentials(instanceName, verifyCredentials)
+    )
+  })
 }
 
 export async function updateVerifyCredentialsForCurrentInstance () {
@@ -137,11 +139,10 @@ export async function updateVerifyCredentialsForCurrentInstance () {
 
 export async function updateInstanceInfo (instanceName) {
   await cacheFirstUpdateAfter(
-    () => {
-      const { loggedInInstances } = store.get()
-      const accessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
+    () => store.runIfLoggedIn(instanceName, ({ loggedInInstances }) => {
+      const accessToken = loggedInInstances[instanceName].access_token
       return getInstanceInfo(instanceName, accessToken)
-    },
+    }) || Promise.reject(new Error('Instance no longer logged in')),
     () => database.getInstanceInfo(instanceName),
     info => {
       // preserve nodeInfo fetched separately by updateNodeInfoForInstance
@@ -151,9 +152,10 @@ export async function updateInstanceInfo (instanceName) {
       return database.setInstanceInfo(instanceName, info)
     },
     info => {
-      const { instanceInfos } = store.get()
-      instanceInfos[instanceName] = info
-      store.set({ instanceInfos })
+      store.runIfLoggedIn(instanceName, ({ instanceInfos }) => {
+        instanceInfos[instanceName] = info
+        store.set({ instanceInfos })
+      })
     }
   )
 }
@@ -166,6 +168,7 @@ export function logOutOnUnauthorized (instanceName) {
     // through and re-throwing as an uncaught promise rejection on every credentials refresh.
     if (error.status === 401 || (error.message && error.message.startsWith('401:'))) {
       await logOutOfInstance(instanceName, formatIntl('intl.accessTokenRevoked', { instance: instanceName }))
+      return // Exit early to avoid re-throwing if we handled the 401
     }
 
     throw error
@@ -173,26 +176,26 @@ export function logOutOnUnauthorized (instanceName) {
 }
 
 export async function updateNodeInfoForInstance (instanceName) {
-  const { loggedInInstances } = store.get()
-  const accessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
-  const headers = accessToken ? auth(accessToken) : null
-  let nodeInfo
-  try {
-    nodeInfo = await fetchNodeInfo(instanceName, headers)
-  } catch (e) {
-    const cachedInfo = await database.getInstanceInfo(instanceName)
-    if (cachedInfo && cachedInfo.pleroma) {
-      console.warn('failed to get nodeInfo', e)
+  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
+    const accessToken = loggedInInstances[instanceName].access_token
+    const headers = accessToken ? auth(accessToken) : null
+    let nodeInfo
+    try {
+      nodeInfo = await fetchNodeInfo(instanceName, headers)
+    } catch (e) {
+      const cachedInfo = await database.getInstanceInfo(instanceName)
+      if (cachedInfo && cachedInfo.pleroma) {
+        console.warn('failed to get nodeInfo', e)
+      }
+      return
     }
-    return
-  }
-  const cachedInfo = await database.getInstanceInfo(instanceName)
-  if (!cachedInfo) return
-  cachedInfo.nodeInfo = nodeInfo
-  await database.setInstanceInfo(instanceName, cachedInfo)
-  const { instanceInfos } = store.get()
-  if (instanceInfos[instanceName]) {
-    instanceInfos[instanceName] = Object.assign({}, instanceInfos[instanceName], { nodeInfo })
-    store.set({ instanceInfos })
-  }
+    const cachedInfo = await database.getInstanceInfo(instanceName)
+    if (!cachedInfo) return
+    cachedInfo.nodeInfo = nodeInfo
+    await database.setInstanceInfo(instanceName, cachedInfo)
+    store.runIfLoggedIn(instanceName, ({ instanceInfos }) => {
+      instanceInfos[instanceName] = Object.assign({}, instanceInfos[instanceName], { nodeInfo })
+      store.set({ instanceInfos })
+    })
+  })
 }

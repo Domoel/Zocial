@@ -5,22 +5,23 @@ import { getFollowRequests } from '../_api/followRequests.js'
 import { get } from '../_utils/lodash-lite.js'
 
 export async function updateFollowRequestCountIfLockedAccount (instanceName) {
-  const { verifyCredentials, loggedInInstances } = store.get()
-
-  if (!get(verifyCredentials, [instanceName, 'locked'])) {
-    return
-  }
-
-  const accessToken = loggedInInstances[instanceName].access_token
-
-  await cacheFirstUpdateAfter(
-    async () => (await getFollowRequests(instanceName, accessToken)).length,
-    () => database.getFollowRequestCount(instanceName),
-    followReqsCount => database.setFollowRequestCount(instanceName, followReqsCount),
-    followReqsCount => {
-      const { followRequestCounts } = store.get()
-      followRequestCounts[instanceName] = followReqsCount
-      store.set({ followRequestCounts })
+  return store.runIfLoggedIn(instanceName, async ({ verifyCredentials, loggedInInstances }) => {
+    if (!get(verifyCredentials, [instanceName, 'locked'])) {
+      return
     }
-  )
+
+    const accessToken = loggedInInstances[instanceName].access_token
+
+    await cacheFirstUpdateAfter(
+      async () => (await getFollowRequests(instanceName, accessToken)).length,
+      () => database.getFollowRequestCount(instanceName),
+      followReqsCount => database.setFollowRequestCount(instanceName, followReqsCount),
+      followReqsCount => {
+        store.runIfLoggedIn(instanceName, ({ followRequestCounts }) => {
+          followRequestCounts[instanceName] = followReqsCount
+          store.set({ followRequestCounts })
+        })
+      }
+    )
+  })
 }

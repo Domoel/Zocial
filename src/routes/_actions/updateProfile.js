@@ -26,10 +26,11 @@ export async function updateProfile ({ displayName, note, fields, avatarFile, he
   const updated = await updateCredentials(currentInstance, accessToken, formData)
 
   // Live update: refresh both the cached credentials and the currently displayed profile.
-  const { verifyCredentials } = store.get()
-  store.set({
-    verifyCredentials: Object.assign({}, verifyCredentials, { [currentInstance]: updated }),
-    currentAccountProfile: updated
+  store.runIfLoggedIn(currentInstance, ({ verifyCredentials }) => {
+    store.set({
+      verifyCredentials: Object.assign({}, verifyCredentials, { [currentInstance]: updated }),
+      currentAccountProfile: updated
+    })
   })
 
   return updated
