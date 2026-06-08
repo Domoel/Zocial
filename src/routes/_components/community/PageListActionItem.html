@@ -1,0 +1,46 @@
+<li class="page-list-item">
+  <button type="button" class="page-list-action-button focus-fix" on:click="fire('click')">
+    <SvgIcon className="page-list-item-svg" href={icon} />
+    <span>{label}</span>
+  </button>
+</li>
+<style>
+  .page-list-action-button {
+    width: 100%;
+    padding: 20px 40px;
+    background: var(--settings-list-item-bg);
+    border: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    align-items: center;
+    color: var(--body-text-color);
+    text-align: start;
+    cursor: pointer;
+  }
+  .page-list-action-button:hover {
+    background: var(--settings-list-item-bg-hover);
+  }
+  .page-list-action-button:active {
+    background: var(--settings-list-item-bg-active);
+  }
+  .page-list-action-button span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (max-width: 767px) {
+    .page-list-action-button {
+      padding: 20px 10px;
+    }
+  }
+</style>
+<script>
+  import SvgIcon from '../SvgIcon.html'
+
+  export default {
+    components: {
+      SvgIcon
+    }
+  }
+</script>

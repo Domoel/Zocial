@@ -1,5 +1,5 @@
 import { store } from '../_store/store.js'
-import { getLists } from '../_api/lists.js'
+import { getLists, createList } from '../_api/lists.js'
 import { cacheFirstUpdateAfter, cacheFirstUpdateOnlyIfNotInCache } from '../_utils/sync.js'
 import { database } from '../_database/database.js'
 
@@ -26,4 +26,10 @@ export async function updateListsForInstance (instanceName) {
 
 export async function setupListsForInstance (instanceName) {
   await syncLists(instanceName, cacheFirstUpdateOnlyIfNotInCache)
+}
+
+export async function createNewList (title) {
+  const { currentInstance, accessToken } = store.get()
+  await createList(currentInstance, accessToken, title)
+  await updateListsForInstance(currentInstance)
 }

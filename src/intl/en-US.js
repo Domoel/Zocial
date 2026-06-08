@@ -269,6 +269,8 @@ export default {
   mentionAccount: 'Mention {account}',
   copyLinkToAccount: 'Copy link to account',
   copiedToClipboard: 'Copied to clipboard',
+  createList: 'Create list',
+  listTitle: 'List title',
   manageInLists: 'Manage list memberships',
   listMembership: 'List memberships for {account}',
   noListsYet: 'No lists yet',
