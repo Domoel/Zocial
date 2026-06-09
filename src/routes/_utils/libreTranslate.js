@@ -160,6 +160,21 @@ export const targetLanguageNames = {
   jv: 'Javanese',
   zh: 'Chinese (Simplified)'
 }
+export async function detectLanguage (text) {
+  try {
+    const resp = await fetch('/api/detect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text })
+    })
+    if (!resp.ok) return null
+    const data = await resp.json()
+    return (data && data[0] && data[0].language) || null
+  } catch {
+    return null
+  }
+}
+
 export const translate = getLibreTranslateHTML(async function translate (text, to, from) {
   const resp = await fetch('/api/translate', {
     method: 'POST',

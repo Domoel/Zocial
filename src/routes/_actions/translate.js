@@ -3,7 +3,13 @@ import { store } from '../_store/store.js'
 import escapeHtml from 'escape-html'
 import { renderPostHTML } from '../_utils/renderPostHTML.ts'
 async function translate (html, to, from) {
-  const { sourceLanguageNames, translate } = await importLibreTranslate()
+  const { sourceLanguageNames, translate, detectLanguage } = await importLibreTranslate()
+  if (from === 'auto') {
+    const detected = await detectLanguage(html)
+    if (detected && detected === to) {
+      return { content: null, sourceLanguageNames, sameLanguage: true }
+    }
+  }
   return { content: await translate(html, to, from), sourceLanguageNames }
 }
 // Prefer the user's browser language over the build-time locale so that
@@ -60,9 +66,14 @@ export function translateStatus (
       to,
       from
     )
-      .then(({ content, sourceLanguageNames }) => {
+      .then(({ content, sourceLanguageNames, sameLanguage }) => {
         const { statusTranslations, statusTranslationContents } = store.get()
         statusTranslations[id].loading = false
+        if (sameLanguage) {
+          statusTranslations[id].show = false
+          store.set({ statusTranslations })
+          return
+        }
         statusTranslations[id].sourceLanguageNames = sourceLanguageNames
         statusTranslationContents[id] = content
         store.set({ statusTranslations, statusTranslationContents })
