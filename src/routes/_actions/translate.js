@@ -14,7 +14,11 @@ async function translate (html, to, from) {
       detectLanguage(html)
     ])
     if (transResult.status === 'fulfilled') {
-      return { content: transResult.value, sourceLanguageNames }
+      const result = transResult.value
+      if (result.detected && result.detected === to) {
+        return { content: null, sourceLanguageNames, sameLanguage: true }
+      }
+      return { content: result, sourceLanguageNames }
     }
     const detected = detectResult.status === 'fulfilled' ? detectResult.value : null
     if (detected && detected === to) {
