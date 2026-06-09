@@ -2,6 +2,19 @@ import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/impo
 import { store } from '../_store/store.js'
 import { insertHandleForReply } from './compose.js'
 
+// Opens the composer with the post URL pre-filled at the end of the text.
+// Works with every backend; the user types their comment above the URL.
+export async function quoteByUrl (status) {
+  const showComposeDialog = await importShowComposeDialog()
+  store.clearComposeData('dialog')
+  // status.url can be null on some servers (e.g. GoToSocial on certain posts)
+  const url = status.url || status.uri || ''
+  store.setComposeData('dialog', {
+    text: url ? '\n\n' + url : ''
+  })
+  showComposeDialog()
+}
+
 export async function quote (status) {
   const dialogPromise = importShowComposeDialog()
   store.clearComposeData('dialog')
