@@ -1,0 +1,145 @@
+<a class="quote-card" href={url} on:click="handleClick(event)" tabindex="-1" aria-label={ariaLabel}>
+  <div class="quote-card-author">
+    <Avatar account={quote.account} size="extra-small" className="quote-card-avatar" />
+    <span class="quote-card-name">{displayName}</span>
+    <span class="quote-card-handle">@{handle}</span>
+  </div>
+  <div class="quote-card-body {firstPreviewUrl ? 'has-thumb' : ''}">
+    {#if spoilerText}
+      <span class="quote-card-text quote-card-cw">{'intl.contentWarning'}: {spoilerText}</span>
+    {:elseif text}
+      <span class="quote-card-text">{text}</span>
+    {:else}
+      <span class="quote-card-text quote-card-empty">{'intl.noContent'}</span>
+    {/if}
+    {#if firstPreviewUrl}
+      <div class="quote-card-thumb">
+        <LazyImage src={firstPreviewUrl} ariaHidden="true" on:load="fire('recalculateHeight')" />
+      </div>
+    {/if}
+  </div>
+</a>
+<style>
+  .quote-card {
+    grid-area: quote;
+    display: block;
+    padding: 10px 12px;
+    margin: 4px 10px 4px 5px;
+    border: 1px solid var(--main-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    background: var(--settings-list-item-bg-hover);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .quote-card:hover {
+    background: var(--settings-list-item-bg);
+  }
+  .quote-card-author {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    min-width: 0;
+  }
+  :global(.quote-card-avatar) {
+    flex-shrink: 0;
+    border-radius: 4px;
+  }
+  .quote-card-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 50%;
+  }
+  .quote-card-handle {
+    color: var(--deemphasized-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85em;
+    flex: 1;
+  }
+  .quote-card-body {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    min-width: 0;
+  }
+  .quote-card-text {
+    flex: 1;
+    font-size: 0.9em;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+  }
+  .quote-card-cw {
+    opacity: 0.8;
+    font-style: italic;
+  }
+  .quote-card-empty {
+    opacity: 0.5;
+  }
+  .quote-card-thumb {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--loading-bg);
+  }
+  :global(.quote-card-thumb img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+<script>
+  import Avatar from '../Avatar.html'
+  import LazyImage from '../LazyImage.html'
+  import { store } from '../../_store/store.js'
+  import { goto } from '../../../../__sapper__/client.js'
+  import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
+
+  export default {
+    store: () => store,
+    computed: {
+      url: ({ quote }) => canonicalStatusUrl(quote),
+      displayName: ({ quote }) => (quote.account && (quote.account.display_name || quote.account.username)) || '',
+      handle: ({ quote }) => (quote.account && quote.account.acct) || '',
+      spoilerText: ({ quote }) => quote.spoiler_text || '',
+      text: ({ quote }) => {
+        if (quote.plainTextContent) return quote.plainTextContent
+        if (!quote.content || typeof document === 'undefined') return ''
+        const div = document.createElement('div')
+        div.innerHTML = quote.content
+        return (div.textContent || div.innerText || '').trim()
+      },
+      firstPreviewUrl: ({ quote, $autoplayGifs }) => {
+        if (!quote.media_attachments || !quote.media_attachments.length) return null
+        if (quote.sensitive) return null
+        const first = quote.media_attachments[0]
+        // only images and gifv have usable preview thumbnails
+        if (first.type !== 'image' && first.type !== 'gifv') return null
+        return $autoplayGifs ? first.url : first.preview_url
+      },
+      ariaLabel: ({ displayName, handle, text, spoilerText }) => {
+        const body = spoilerText ? `[CW: ${spoilerText}]` : (text || '')
+        return `${displayName} @${handle}: ${body}`.trim()
+      }
+    },
+    methods: {
+      handleClick (e) {
+        e.preventDefault()
+        e.stopPropagation()
+        goto(this.get().url)
+      }
+    },
+    components: { Avatar, LazyImage }
+  }
+</script>
