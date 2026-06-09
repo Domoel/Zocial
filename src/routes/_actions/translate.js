@@ -1,9 +1,9 @@
-import { importGoogleTranslate } from '../_utils/asyncModules/importGoogleTranslate.js'
+import { importLibreTranslate } from '../_utils/asyncModules/importLibreTranslate.js'
 import { store } from '../_store/store.js'
 import escapeHtml from 'escape-html'
 import { renderPostHTML } from '../_utils/renderPostHTML.ts'
 async function translate (html, to, from) {
-  const { sourceLanguageNames, translate } = await importGoogleTranslate()
+  const { sourceLanguageNames, translate } = await importLibreTranslate()
   return { content: await translate(html, to, from), sourceLanguageNames }
 }
 const defaultLanguage = (process.env.LOCALE || 'en-US').split('-')[0]

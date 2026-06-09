@@ -1,4 +1,4 @@
-import getGoogleTranslateHTML from './googleTranslateHTML.js'
+import getGoogleTranslateHTML from './libreTranslateHTML.js'
 /*
 
 to regenerate, run this on https://simplytranslate.org/?engine=google

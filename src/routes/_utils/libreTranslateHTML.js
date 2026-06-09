@@ -3,7 +3,7 @@ import escapeHtml from 'escape-html'
 const ELEMENT_NODE = 1
 const TEXT_NODE = 3
 export default (translate) =>
-  async function googleTranslateHTML (html, to, from = 'auto') {
+  async function libreTranslateHTML (html, to, from = 'auto') {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
     const nodes = doc.body.childNodes
