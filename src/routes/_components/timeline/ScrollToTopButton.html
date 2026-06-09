@@ -1,17 +1,17 @@
-<div class="scroll-top-wrapper {visible ? 'visible' : ''}">
-  <div class="scroll-top-halo">
-    <button class="primary scroll-top-button"
+<div class="timeline-fab-wrapper {visible ? 'visible' : ''}">
+  <div class="timeline-fab-halo">
+    <button class="primary timeline-fab-btn"
             aria-label="{label}"
             title="{label}"
             on:click="scrollToTop()">
-      <SvgIcon className="scroll-top-svg" href="#fa-angle-up" />
+      <SvgIcon className="timeline-fab-icon" href="#fa-angle-up" />
     </button>
   </div>
 </div>
 <style>
   /* Sticks to the top of the viewport (within the content column, like the compose FAB) but
      takes no layout space so it floats over the content. */
-  .scroll-top-wrapper {
+  .timeline-fab-wrapper {
     position: -webkit-sticky;
     position: sticky;
     top: var(--fab-gap-top);
@@ -22,7 +22,7 @@
     pointer-events: none;
   }
   /* hidden until the threshold element has scrolled past the top; fade in/out */
-  .scroll-top-halo {
+  .timeline-fab-halo {
     border-radius: 9px;
     margin: 5px 15px 15px 5px;
     background-color: var(--compose-button-halo);
@@ -30,18 +30,18 @@
     opacity: 0;
     transition: opacity 0.2s linear;
   }
-  .scroll-top-wrapper.visible .scroll-top-halo {
+  .timeline-fab-wrapper.visible .timeline-fab-halo {
     opacity: 1;
     pointer-events: auto;
   }
-  .scroll-top-button {
+  .timeline-fab-btn {
     position: relative;
     margin: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  :global(.scroll-top-svg) {
+  :global(.timeline-fab-icon) {
     width: 24px;
     height: 24px;
     fill: var(--button-primary-text);
