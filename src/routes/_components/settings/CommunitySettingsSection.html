@@ -23,6 +23,7 @@
         {/each}
       </PageList>
 
+      {#if $listsSupported !== false}
       <h2 class="community-header">
         {'intl.lists'}
       </h2>
@@ -43,6 +44,7 @@
           on:click="onCreateListClicked()"
         />
       </PageList>
+      {/if}
 
     </RadioGroup>
 

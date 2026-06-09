@@ -82,6 +82,7 @@ const nonPersistedState = {
   followRequestCounts: {},
   instanceInfos: {},
   instanceLists: {},
+  instanceListsSupported: {},
   instanceFilters: {},
   online: !ZOCIAL_IS_BROWSER || navigator.onLine,
   pinnedStatuses: {},

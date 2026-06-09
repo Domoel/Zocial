@@ -6,17 +6,29 @@ import { database } from '../_database/database.js'
 async function syncLists (instanceName, syncMethod) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
-    await syncMethod(
-      () => getLists(instanceName, accessToken),
-      () => database.getLists(instanceName),
-      lists => database.setLists(instanceName, lists),
-      lists => {
-        store.runIfLoggedIn(instanceName, ({ instanceLists }) => {
-          instanceLists[instanceName] = lists
-          store.set({ instanceLists })
-        })
+    try {
+      await syncMethod(
+        () => getLists(instanceName, accessToken),
+        () => database.getLists(instanceName),
+        lists => database.setLists(instanceName, lists),
+        lists => {
+          store.runIfLoggedIn(instanceName, ({ instanceLists }) => {
+            instanceLists[instanceName] = lists
+            store.set({ instanceLists })
+          })
+        }
+      )
+      const { instanceListsSupported } = store.get()
+      if (!instanceListsSupported[instanceName]) {
+        instanceListsSupported[instanceName] = true
+        store.set({ instanceListsSupported })
       }
-    )
+    } catch (e) {
+      const { instanceListsSupported } = store.get()
+      instanceListsSupported[instanceName] = false
+      store.set({ instanceListsSupported })
+      throw e
+    }
   })
 }
 
