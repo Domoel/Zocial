@@ -192,13 +192,15 @@ npm run dev          # dev server at http://localhost:4002
 | `SINGLE_INSTANCE` | *(unset)* | Lock the client to a specific instance hostname |
 | `PORT` | `80` | Host port exposed by the Docker container |
 | `LOCALE` | `en-US` | UI locale baked in at build time (`de`, `es`, `fr`, `ru-RU`) |
-| `TRANSLATE_API` | `https://libretranslate.com` | Base URL of a [LibreTranslate](https://libretranslate.com)-compatible translation backend |
+| `TRANSLATE_API` | `https://translate.zocial.social` | Base URL of a [LibreTranslate](https://libretranslate.com)-compatible translation backend |
 
 ### Post translation
 
 Zocial routes translation requests through the nginx container so no credentials are ever exposed to the browser and no CORS headers are required on the backend. The translation feature uses the [LibreTranslate](https://libretranslate.com) API — open-source, no Google dependency.
 
-The default backend (`libretranslate.com`) works out of the box for casual use but is rate-limited (roughly 10 requests per minute without an API key). For a production deployment we recommend self-hosting your own LibreTranslate instance and setting `TRANSLATE_API` in your `.env` file — see `.env.example` for details.
+**Status (as of June 2026):** LibreTranslate has temporarily restricted public access to `libretranslate.com` due to ongoing abuse of the free tier. The default backend in the Docker image therefore points to a self-hosted LibreTranslate instance operated by Zocial for users of [zocial.social](https://zocial.social). Once the situation stabilises and public access is restored, the default will be updated accordingly.
+
+Admins running their own Zocial deployment can point to any LibreTranslate-compatible instance by setting `TRANSLATE_API` in their `.env` file. Self-hosting LibreTranslate alongside Zocial is the recommended approach for production deployments — see `.env.example` for details.
 
 ---
 

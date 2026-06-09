@@ -9,9 +9,9 @@ printf 'window.__ZOCIAL_SINGLE_INSTANCE__=%s;\n' "\"${INSTANCE}\"" \
   > /usr/share/nginx/html/config.js
 
 # Generate nginx config from template, substituting the translation API base URL.
-# TRANSLATE_API must be the base URL of a LibreTranslate-compatible instance
-# (e.g. https://libretranslate.com). Defaults to the public libretranslate.com instance.
-TRANSLATE_API="${TRANSLATE_API:-https://libretranslate.com}"
+# TRANSLATE_API must be the base URL of a LibreTranslate-compatible instance.
+# Defaults to the Zocial-operated instance; override in .env for self-hosted deployments.
+TRANSLATE_API="${TRANSLATE_API:-https://translate.zocial.social}"
 TRANSLATE_API="${TRANSLATE_API%/}"
 sed "s|__TRANSLATE_API__|${TRANSLATE_API}|g" \
   /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
