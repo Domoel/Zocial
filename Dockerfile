@@ -35,7 +35,7 @@ RUN pnpm run build \
 FROM nginx:1.27-alpine
 
 # Copy nginx config and entrypoint
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf.template
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

@@ -160,15 +160,23 @@ export const targetLanguageNames = {
   'zh-TW': 'Chinese (Traditional)'
 }
 export const translate = getGoogleTranslateHTML(async function translate (text, to, from) {
-  const data = await (await fetch('/api/translate?' + new URLSearchParams({
-    text,
-    from,
-    to,
-    engine: 'google'
-  }))).json()
+  const body = JSON.stringify({ q: text, source: from, target: to })
+  const headers = { 'Content-Type': 'application/json' }
+  const [translateResp, detectResp] = await Promise.all([
+    fetch('/api/translate', { method: 'POST', headers, body }),
+    from === 'auto'
+      ? fetch('/api/detect', { method: 'POST', headers, body: JSON.stringify({ q: text }) })
+      : null
+  ])
+  const data = await translateResp.json()
+  let detected = null
+  if (detectResp && detectResp.ok) {
+    const detections = await detectResp.json()
+    detected = detections && detections[0] && detections[0].language
+  }
   return {
-    detected: data.source_language,
-    text: data.translated_text,
+    detected,
+    text: data.translatedText,
     to,
     from
   }
