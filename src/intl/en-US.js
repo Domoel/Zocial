@@ -474,7 +474,7 @@ export default {
   enableThreadPolling: 'Show auto-refresh button in threads',
   defaultUnlistedReplies: 'Default replies to unlisted visibility',
   defaultLocalOnly: 'Post to the local timeline only by default',
-  enableQuotePost: 'Enable additional quote post option for boost reaction',
+  enableQuotePost: 'Show Boost/Quote choice when boosting',
   boostOrQuote: 'Boost or quote',
   localOnlyUnsupported: "Your instance doesn't support local-only posts",
   editProfile: 'Edit profile',
