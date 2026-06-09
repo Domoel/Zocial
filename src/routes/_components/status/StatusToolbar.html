@@ -296,7 +296,7 @@
       optionsKey: ({ uuid }) => `options-${uuid}`,
       bookmarkKey: ({ uuid }) => `bookmark-${uuid}`,
       hasReactions: ({ originalStatus }) => Boolean(originalStatus.reactions || originalStatus.emoji_reactions),
-      hasQuote: () => true,
+      hasQuote: ({ originalStatus }) => !!originalStatus,
       showCounts: ({ isStatusInOwnThread }) => !isStatusInOwnThread,
       repliesCount: ({ $disableReplyCounts, originalStatus }) => $disableReplyCounts ? 0 : (originalStatus.replies_count || 0),
       reblogsCount: ({ $disableReblogCounts, originalStatus }) => $disableReblogCounts ? 0 : (originalStatus.reblogs_count || 0),
