@@ -103,6 +103,11 @@
              disabled={!localOnlySupported}>
       {'intl.defaultLocalOnly'}
     </label>
+    <label class="setting-group">
+      <input type="checkbox" id="choice-enable-quote-post"
+             bind:checked="$enableQuotePost" on:change="onChange(event)">
+      {'intl.enableQuotePost'}
+    </label>
   </form>
 
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>

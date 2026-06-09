@@ -97,6 +97,7 @@
   import { setFavorited } from '../../_actions/favorite.js'
   import { setReblogged } from '../../_actions/reblog.js'
   import { importShowStatusOptionsDialog } from '../dialog/asyncDialogs/importShowStatusOptionsDialog.js'
+  import { importShowReblogChoiceDialog } from '../dialog/asyncDialogs/importShowReblogChoiceDialog.js'
   import { updateProfileAndRelationship } from '../../_actions/accounts.js'
   import { CHECKMARK_ANIMATION, FAVORITE_ANIMATION, REBLOG_ANIMATION } from '../../_static/animations.js'
   import { on } from '../../_utils/eventBus.ts'
@@ -121,7 +122,7 @@
           return true
         },
         [reblogKey]: () => {
-          this.reblog()
+          this.onReblogClick()
           return true
         },
         [replyKey]: () => {
@@ -165,6 +166,18 @@
         }
         if (announce) {
           announceAriaLivePolite(newRebloggedValue ? 'intl.reblogged' : 'intl.unreblogged')
+        }
+      },
+      async onReblogClick () {
+        const { originalStatus, reblogged, reblogDisabled } = this.get()
+        const { enableQuotePost } = this.store.get()
+        // Show the choice dialog only when the setting is on and the post isn't
+        // already boosted (unboost always acts directly without a choice).
+        if (enableQuotePost && !reblogged && !reblogDisabled) {
+          const showReblogChoiceDialog = await importShowReblogChoiceDialog()
+          showReblogChoiceDialog(originalStatus)
+        } else {
+          this.reblog()
         }
       },
       reply () {
