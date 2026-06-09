@@ -142,10 +142,21 @@ Zocial is distributed as a Docker image and can be deployed in minutes.
 
 ### Docker Compose
 
+```
+# docker-compose.yaml
+services:
+  zocial:
+    image: domoel/zocial:latest
+    container_name: Zocial
+    env_file: .env
+    ports:
+        - "6666:80"
+```
+
 ```bash
 cp .env.example .env
 # edit .env — set SINGLE_INSTANCE=your.server.com to lock to one instance,
-# or leave it empty to let users log in to any server
+# or leave it empty to let users log in to any server.
 docker compose up -d
 ```
 
@@ -187,19 +198,7 @@ npm run dev          # dev server at http://localhost:4002
 
 Zocial routes translation requests through the nginx container so no credentials are ever exposed to the browser and no CORS headers are required on the backend. The translation feature uses the [LibreTranslate](https://libretranslate.com) API — open-source, no Google dependency.
 
-The default backend (`libretranslate.com`) works out of the box for casual use but is rate-limited (roughly 10 requests per minute without an API key). For a production deployment we recommend self-hosting your own LibreTranslate instance:
-
-```yaml
-# docker-compose.yaml
-services:
-  zocial:
-    image: domoel/enafore:latest
-    env_file: .env
-    environment:
-      - TRANSLATE_API=https://libretranslate.your-domain.com
-```
-
-Any LibreTranslate-compatible instance works — the client uses the standard `POST /translate` and `POST /detect` endpoints. LibreTranslate instances with `--req-limit 0` (no rate limit) or a configured API key are suitable; add `LIBRETRANSLATE_API_KEY` handling if your instance requires it.
+The default backend (`libretranslate.com`) works out of the box for casual use but is rate-limited (roughly 10 requests per minute without an API key). For a production deployment we recommend self-hosting your own LibreTranslate instance and setting `TRANSLATE_API` in your `.env` file — see `.env.example` for details.
 
 ---
 
