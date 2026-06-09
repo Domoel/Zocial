@@ -16,6 +16,12 @@ export async function quoteByUrl (status) {
   showComposeDialog()
 }
 
+// Chooses the best available quoting method:
+// FEP-e232 native quote for servers that support it, URL-in-text fallback for everyone else.
+export function quoteStatus (status) {
+  return ('quote' in status) ? quote(status) : quoteByUrl(status)
+}
+
 export async function quote (status) {
   const dialogPromise = importShowComposeDialog()
   store.clearComposeData('dialog')

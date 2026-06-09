@@ -28,7 +28,7 @@ import { formatIntl } from '../../../_utils/formatIntl.js'
 import { setAccountNotified } from '../../../_actions/setAccountNotified.js'
 import { translateStatus } from '../../../_actions/translate.js'
 import { pickEmojiReaction } from '../../../_actions/react.js'
-import { quote } from '../../../_actions/quote.js'
+import { quoteStatus } from '../../../_actions/quote.js'
 
 export default {
   data: () => ({
@@ -96,7 +96,7 @@ export default {
     muteConversationIcon: ({ mutingConversation }) => mutingConversation ? '#fa-volume-up' : '#fa-volume-off',
     isPublicOrUnlisted: ({ visibility }) => visibility === 'public' || visibility === 'unlisted',
     hasReactions: ({ status }) => ('reactions' in status) || ('emoji_reactions' in status),
-    hasQuote: ({ status }) => 'quote' in status,
+    hasQuote: () => true,
     items: ({
       blockLabel, blocking, blockIcon, muteLabel, muteIcon, followLabel, followIcon,
       following, followRequested, pinLabel, isUser, visibility, mentionsUser, mutingConversation,
@@ -316,7 +316,7 @@ export default {
     async onQuoteClicked () {
       const { status } = this.get()
       this.close()
-      quote(status)
+      quoteStatus(status)
     }
   }
 }

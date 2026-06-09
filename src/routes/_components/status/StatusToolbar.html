@@ -104,7 +104,7 @@
   import { announceAriaLivePolite } from '../../_utils/announceAriaLivePolite.js'
   import { setStatusBookmarkedOrUnbookmarked } from '../../_actions/bookmark.js'
   import { pickEmojiReaction } from '../../_actions/react.js'
-  import { quote } from '../../_actions/quote.js'
+  import { quoteStatus } from '../../_actions/quote.js'
   import { edit } from '../../_actions/edit.js'
 
   export default {
@@ -232,7 +232,7 @@
       },
       openQuoteDialog () {
         const { originalStatus } = this.get()
-        quote(originalStatus)
+        quoteStatus(originalStatus)
       },
       openEditDialog () {
         const { originalStatus } = this.get()
@@ -296,7 +296,7 @@
       optionsKey: ({ uuid }) => `options-${uuid}`,
       bookmarkKey: ({ uuid }) => `bookmark-${uuid}`,
       hasReactions: ({ originalStatus }) => Boolean(originalStatus.reactions || originalStatus.emoji_reactions),
-      hasQuote: ({ originalStatus }) => 'quote' in originalStatus,
+      hasQuote: () => true,
       showCounts: ({ isStatusInOwnThread }) => !isStatusInOwnThread,
       repliesCount: ({ $disableReplyCounts, originalStatus }) => $disableReplyCounts ? 0 : (originalStatus.replies_count || 0),
       reblogsCount: ({ $disableReblogCounts, originalStatus }) => $disableReblogCounts ? 0 : (originalStatus.reblogs_count || 0),

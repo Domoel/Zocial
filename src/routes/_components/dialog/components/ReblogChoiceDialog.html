@@ -13,7 +13,7 @@
   import { show } from '../helpers/showDialog.js'
   import { close } from '../helpers/closeDialog.js'
   import { setReblogged } from '../../../_actions/reblog.js'
-  import { quoteByUrl } from '../../../_actions/quote.js'
+  import { quoteStatus } from '../../../_actions/quote.js'
 
   export default {
     data: () => ({
@@ -41,7 +41,7 @@
             const fallback = setTimeout(done, 300)
             window.addEventListener('popstate', done, { once: true })
           })
-          quoteByUrl(status)
+          quoteStatus(status)
         }
       }
     },
