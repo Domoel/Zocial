@@ -32,6 +32,7 @@
 {#if hasQuote}
 <Shortcut scope={shortcutScope} key="q" on:pressed="openQuoteDialog()" />
 {/if}
+<Shortcut scope={shortcutScope} key="t" on:pressed="translate()" />
 {#if isUser}
 <Shortcut scope={shortcutScope} key="e" on:pressed="openEditDialog()" />
 {/if}
@@ -105,6 +106,7 @@
   import { setStatusBookmarkedOrUnbookmarked } from '../../_actions/bookmark.js'
   import { pickEmojiReaction } from '../../_actions/react.js'
   import { quoteStatus } from '../../_actions/quote.js'
+  import { translateStatus } from '../../_actions/translate.js'
   import { edit } from '../../_actions/edit.js'
 
   export default {
@@ -237,6 +239,11 @@
       openEditDialog () {
         const { originalStatus } = this.get()
         edit(originalStatus)
+      },
+      translate () {
+        const { originalStatus } = this.get()
+        const { currentInstance } = this.store.get()
+        translateStatus(originalStatus, currentInstance)
       }
     },
     data: () => ({
