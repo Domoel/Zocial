@@ -5,8 +5,10 @@
     {:else}
       {#if translateError}
         {'intl.translateError'}
+      {:else if sameLanguage}
+        {'intl.alreadyInTargetLanguage'}
       {:else}
-      {translatedFrom}
+        {translatedFrom}
       {/if}
     {/if}
   </div>
@@ -47,6 +49,7 @@
     computed: {
       translating: ({ translateState }) => !!(translateState && translateState.loading),
       translateError: ({ translateState }) => !!(translateState && translateState.error),
+      sameLanguage: ({ translateState }) => !!(translateState && translateState.sameLanguage),
       translatedFrom: ({ translateContent, translateState }) => {
         if (!(translateState && translateContent)) return
         const detected = translateState.from === 'auto' && translateContent.detected

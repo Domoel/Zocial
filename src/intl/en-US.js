@@ -324,6 +324,7 @@ export default {
     other {}
   }`,
   translateError: 'There was an error translating this post',
+  alreadyInTargetLanguage: 'Post is already in your language',
   translating: 'Translating...',
   hideTranslation: 'Hide translation',
   reactToStatus: 'React to post',

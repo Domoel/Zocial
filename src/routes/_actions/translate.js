@@ -82,7 +82,7 @@ export function translateStatus (
         const { statusTranslations, statusTranslationContents } = store.get()
         statusTranslations[id].loading = false
         if (sameLanguage) {
-          statusTranslations[id].show = false
+          statusTranslations[id].sameLanguage = true
           store.set({ statusTranslations })
           return
         }
