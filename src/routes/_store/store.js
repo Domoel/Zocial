@@ -34,6 +34,7 @@ const persistedState = {
   disableHotkeys: false,
   disableInfiniteScroll: false,
   disableLongAriaLabels: false,
+  announceCardDescriptions: false,
   disableNotificationBadge: false,
   enableDesktopNotifications: false,
   enableThreadPolling: true,

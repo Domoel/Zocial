@@ -449,6 +449,7 @@ export default {
   disableTappable: 'Disable tappable area on entire post',
   removeEmoji: 'Remove emoji from user display names',
   shortAria: 'Use short article ARIA labels',
+  announceCardDescriptions: 'Announce link preview descriptions',
   theme: 'Theme',
   themeForInstance: 'Theme for {instance}',
   disableCustomScrollbars: 'Disable custom scrollbars',

@@ -143,6 +143,11 @@
       {'intl.shortAria'}
     </label>
     <label class="setting-group">
+      <input type="checkbox" id="choice-announce-card-descriptions"
+             bind:checked="$announceCardDescriptions" on:change="onChange(event)">
+      {'intl.announceCardDescriptions'}
+    </label>
+    <label class="setting-group">
       <input type="checkbox" id="choice-grayscale"
              bind:checked="$enableGrayscale" on:change="onChange(event)">
       {'intl.grayscaleMode'}
