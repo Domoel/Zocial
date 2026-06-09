@@ -1,7 +1,7 @@
 <DynamicHeading className="sr-only" level={headingLevel}>{label}</DynamicHeading>
 <FocusRestoration realm={focusRealm}>
-  {#if timelineType === 'status'}
-    <ScrollToTopButton thresholdSelector=".status-article" label="{'intl.scrollToTopOfConversation'}" />
+  {#if showScrollToTop}
+    <ScrollToTopButton thresholdSelector=".status-article" label={scrollToTopLabel} />
   {/if}
   <div class="timeline" role="feed">
     {#if components}
@@ -151,7 +151,19 @@
         }
       },
       focusRealm: ({ $currentInstance, timeline }) => `${$currentInstance}-${timeline}`,
-      headingLevel: ({ timeline, timelineType }) => timeline === 'home' || timelineType === 'status' ? 2 : 1
+      headingLevel: ({ timeline, timelineType }) => timeline === 'home' || timelineType === 'status' ? 2 : 1,
+      showScrollToTop: ({ timelineType, timeline, $pinnedPagesForInstance }) => {
+        if (timelineType === 'status') return true
+        if (timeline === 'home' || timelineType === 'notifications' || timelineType === 'account') return false
+        if (timelineType === 'tag') return true
+        const pageUrl = timeline.startsWith('list/')
+          ? `/lists/${timeline.slice(5)}`
+          : `/${timeline}`
+        return !Array.isArray($pinnedPagesForInstance) || !$pinnedPagesForInstance.includes(pageUrl)
+      },
+      scrollToTopLabel: ({ timelineType }) => (
+        timelineType === 'status' ? 'intl.scrollToTopOfConversation' : 'intl.scrollToTop'
+      )
     },
     store: () => store,
     methods: {

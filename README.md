@@ -28,9 +28,15 @@ A beautifully refined fediverse client — built for the edges of the Mastodon e
 
 ## ✨ Introduction
 
-Zocial is a fork of [Enafore](https://github.com/enafore/enafore), itself born from the legendary Pinafore. Where Enafore focuses on broad compatibility, Zocial goes a step further — polishing the rough edges, adding quality-of-life features, and tuning the experience for servers running **Akkoma**, **glitch-soc**, and **Iceshrimp**. It's fast, keyboard-friendly, and works beautifully on both desktop and mobile.
+Zocial is a fork of [Enafore](https://github.com/enafore/enafore), itself born from the legendary Pinafore. Where Enafore focuses on broad compatibility, Zocial goes a step further — polishing the rough edges, adding quality-of-life features, and tuning the experience for servers running **Akkoma**, **glitch-soc**, **Iceshrimp**, and more. It's fast, fully keyboard-navigable, and designed to work well for everyone.
 
 ## 🚀 What makes Zocial different
+
+### Accessibility, by design
+
+Zocial continues Enafore's tradition of treating keyboard and screen reader users as first-class citizens — not an afterthought. Every interactive element is reachable by keyboard. Posts in a timeline carry rich, human-readable aria labels that include the author, content, privacy level, timestamp, media descriptions, and now link preview card titles — so navigating with `j`/`k` gives screen readers the full picture.
+
+An optional **Announce link preview descriptions** setting (*Settings → Accessibility*) lets users who want maximum verbosity hear the full card description as well. A comprehensive set of keyboard shortcuts covers every common action — reply, boost, favourite, bookmark, quote, translate, open media, reveal content warnings, and more — with a built-in reference accessible at any time via `h` or `?`.
 
 ### A fresh look
 
@@ -45,6 +51,10 @@ Post headers work harder too. When a post is a reply, the header tells you exact
 ### Thread bundles
 
 Self-reply threads are automatically collapsed into a single bundle. The oldest post is shown at the top with a `1/N` position counter in the header, middle posts are hidden, and the newest post closes the bundle — keeping your timeline clean without losing context. Only same-author chains are bundled, so no other person's posts are ever hidden.
+
+### Scroll to top, always within reach
+
+A floating scroll-to-top button appears whenever you've scrolled down in any timeline — not just thread views. It sits quietly out of the way until you need it, and takes you back to the top in one tap or click.
 
 ### Jump to the top of a conversation
 
@@ -61,6 +71,12 @@ Followed hashtags get their own header in the timeline — a subtle tag indicato
 ### Links that stay in the app
 
 Clicking a link to another Mastodon post or profile no longer kicks you out to a browser tab. Zocial recognises fediverse URLs and opens them inside the app wherever possible, with rich preview cards for links that don't resolve to known profiles or threads.
+
+### Quote posts, everywhere
+
+Quote a post from any server with a single action — no special backend support required. Zocial uses a universal URL-in-text approach: the quoted post's URL is appended to your new post, and link preview cards display it inline. The result looks good in every client and works against every server in the Fediverse.
+
+Quote posts are reachable from the context menu (always), from the boost button (optional via *Settings → Composer*), or via the `q` keyboard shortcut. The composer opens with your cursor placed at the very beginning so you can write your take first, with the quoted URL ready at the end.
 
 ### Bookmarks, with personality
 
@@ -108,7 +124,7 @@ Fine-grained control over which interactions trigger a desktop or browser notifi
 
 ### Profiles at a glance
 
-Every profile shows when the account joined, plus a compact **posting-activity** bar that breaks down their most recent posts into originals, replies, and boosts — a quick read on how someone actually uses the fediverse before you decide to follow. Hover the bar for the full breakdown with percentages.
+Every profile shows when the account joined, plus a compact **posting-activity** bar that breaks down their most recent posts into originals, replies, and boosts — a quick read on how someone actually uses the fediverse before you decide to follow. Hover the bar for the full breakdown with percentages. Credits to [phanpy](https://github.com/cheeaun/phanpy) for this awesome idea!
 
 ### Edit your profile, in-app
 

@@ -429,7 +429,7 @@
       account: ({ notification, status }) => (
         (notification && notification.account) || status.account
       ),
-      accountId: ({ account }) => account.id,
+      accountId: ({ account }) => account && account.id,
       originalAccount: ({ originalStatus }) => originalStatus.account,
       originalAccountId: ({ originalAccount }) => originalAccount.id,
       accountForShortcut: ({ originalAccount, notification }) => notification ? notification.account : originalAccount,
@@ -521,18 +521,23 @@
       ariaLabel: ({
         originalAccount, account, plainTextContent, shortInlineFormattedDate, computedSpoilerText,
         showContent, reblog, notification, visibility, $omitEmojiInDisplayNames, $disableLongAriaLabels,
-        showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll, nextGrouped, notificationInfo
-      }) => nextGrouped
-        ? notificationInfo
-          ? notificationInfo.ariaLabel
-          : undefined
-        : (
-            getAccessibleLabelForStatus(originalAccount, account, plainTextContent,
-              shortInlineFormattedDate, computedSpoilerText, showContent,
-              reblog, notificationInfo, visibility, $omitEmojiInDisplayNames, $disableLongAriaLabels,
-              showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll
-            )
-          ),
+        showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll, nextGrouped, notificationInfo,
+        clientSideCard, originalStatus, $hideCards, $announceCardDescriptions
+      }) => {
+        if (nextGrouped) {
+          return notificationInfo ? notificationInfo.ariaLabel : undefined
+        }
+        const effectiveCard = !$hideCards && (originalStatus.card || clientSideCard)
+        const cardTitle = effectiveCard ? effectiveCard.title : undefined
+        const cardDescription = ($announceCardDescriptions && effectiveCard) ? effectiveCard.description : undefined
+        return getAccessibleLabelForStatus(
+          originalAccount, account, plainTextContent,
+          shortInlineFormattedDate, computedSpoilerText, showContent,
+          reblog, notificationInfo, visibility, $omitEmojiInDisplayNames, $disableLongAriaLabels,
+          showMedia, sensitive, sensitiveShown, mediaAttachments, showPoll,
+          cardTitle, cardDescription
+        )
+      },
       matchingHashtag: ({ originalStatus, $followedHashtagsForInstance, timelineType }) => {
         if (timelineType !== 'home' || !originalStatus.tags || !originalStatus.tags.length) {
           return null

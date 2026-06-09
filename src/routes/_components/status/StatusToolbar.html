@@ -32,6 +32,7 @@
 {#if hasQuote}
 <Shortcut scope={shortcutScope} key="q" on:pressed="openQuoteDialog()" />
 {/if}
+<Shortcut scope={shortcutScope} key="t" on:pressed="translate()" />
 {#if isUser}
 <Shortcut scope={shortcutScope} key="e" on:pressed="openEditDialog()" />
 {/if}
@@ -97,13 +98,15 @@
   import { setFavorited } from '../../_actions/favorite.js'
   import { setReblogged } from '../../_actions/reblog.js'
   import { importShowStatusOptionsDialog } from '../dialog/asyncDialogs/importShowStatusOptionsDialog.js'
+  import { importShowReblogChoiceDialog } from '../dialog/asyncDialogs/importShowReblogChoiceDialog.js'
   import { updateProfileAndRelationship } from '../../_actions/accounts.js'
   import { CHECKMARK_ANIMATION, FAVORITE_ANIMATION, REBLOG_ANIMATION } from '../../_static/animations.js'
   import { on } from '../../_utils/eventBus.ts'
   import { announceAriaLivePolite } from '../../_utils/announceAriaLivePolite.js'
   import { setStatusBookmarkedOrUnbookmarked } from '../../_actions/bookmark.js'
   import { pickEmojiReaction } from '../../_actions/react.js'
-  import { quote } from '../../_actions/quote.js'
+  import { quoteStatus } from '../../_actions/quote.js'
+  import { translateStatus } from '../../_actions/translate.js'
   import { edit } from '../../_actions/edit.js'
 
   export default {
@@ -121,7 +124,7 @@
           return true
         },
         [reblogKey]: () => {
-          this.reblog()
+          this.onReblogClick()
           return true
         },
         [replyKey]: () => {
@@ -165,6 +168,18 @@
         }
         if (announce) {
           announceAriaLivePolite(newRebloggedValue ? 'intl.reblogged' : 'intl.unreblogged')
+        }
+      },
+      async onReblogClick () {
+        const { originalStatus, reblogged, reblogDisabled } = this.get()
+        const { enableQuotePost } = this.store.get()
+        // Show the choice dialog only when the setting is on and the post isn't
+        // already boosted (unboost always acts directly without a choice).
+        if (enableQuotePost && !reblogged && !reblogDisabled) {
+          const showReblogChoiceDialog = await importShowReblogChoiceDialog()
+          showReblogChoiceDialog(originalStatus)
+        } else {
+          this.reblog()
         }
       },
       reply () {
@@ -219,11 +234,16 @@
       },
       openQuoteDialog () {
         const { originalStatus } = this.get()
-        quote(originalStatus)
+        quoteStatus(originalStatus)
       },
       openEditDialog () {
         const { originalStatus } = this.get()
         edit(originalStatus)
+      },
+      translate () {
+        const { originalStatus } = this.get()
+        const { currentInstance } = this.store.get()
+        translateStatus(originalStatus, currentInstance)
       }
     },
     data: () => ({
@@ -283,7 +303,7 @@
       optionsKey: ({ uuid }) => `options-${uuid}`,
       bookmarkKey: ({ uuid }) => `bookmark-${uuid}`,
       hasReactions: ({ originalStatus }) => Boolean(originalStatus.reactions || originalStatus.emoji_reactions),
-      hasQuote: ({ originalStatus }) => 'quote' in originalStatus,
+      hasQuote: ({ originalStatus }) => !!originalStatus,
       showCounts: ({ isStatusInOwnThread }) => !isStatusInOwnThread,
       repliesCount: ({ $disableReplyCounts, originalStatus }) => $disableReplyCounts ? 0 : (originalStatus.replies_count || 0),
       reblogsCount: ({ $disableReblogCounts, originalStatus }) => $disableReblogCounts ? 0 : (originalStatus.reblogs_count || 0),

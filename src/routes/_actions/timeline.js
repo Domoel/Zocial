@@ -150,7 +150,8 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
     try {
       console.log('fetchTimelineItemsFromNetwork')
       items = await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
-      await storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
+      // DB write is for offline caching only — render immediately without waiting for it.
+      /* no await */ storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
     } catch (e) {
       console.error(e)
       if (e.status && timelineName.startsWith('list/')) {

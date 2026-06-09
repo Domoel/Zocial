@@ -1,19 +1,13 @@
 import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/importShowComposeDialog.js'
 import { store } from '../_store/store.js'
-import { insertHandleForReply } from './compose.js'
 
-export async function quote (status) {
-  const dialogPromise = importShowComposeDialog()
+export async function quoteStatus (status) {
+  const showComposeDialog = await importShowComposeDialog()
   store.clearComposeData('dialog')
+  const url = status.url || status.uri || ''
   store.setComposeData('dialog', {
-    contentWarningShown: !!status.spoiler_text,
-    contentWarning: status.spoiler_text || '',
-    postPrivacy: status.visibility,
-    sensitive: !!status.sensitive,
-    quoteId: status.id,
-    quoteHandle: '@' + status.account.acct
+    text: url ? '\n\n' + url : '',
+    initialSelectionStart: 0
   })
-
-  const [showComposeDialog] = await Promise.all([dialogPromise, insertHandleForReply('dialog', status.id)])
   showComposeDialog()
 }

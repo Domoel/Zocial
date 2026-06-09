@@ -165,6 +165,7 @@ export default {
     <li><kbd>l</kbd> to open the card's link in a new tab</li>
     <li><kbd>x</kbd> to show or hide text behind content warning</li>
     <li><kbd>z</kbd> to show or hide all content warnings in a thread</li>
+    <li><kbd>t</kbd> to translate a post</li>
   `,
   mediaHotkeys: `
     <li><kbd>←</kbd> / <kbd>→</kbd> to go to next or previous</li>
@@ -449,6 +450,11 @@ export default {
   disableTappable: 'Disable tappable area on entire post',
   removeEmoji: 'Remove emoji from user display names',
   shortAria: 'Use short article ARIA labels',
+  announceCardDescriptionsPre: 'Announce link preview',
+  announceCardDescriptionsText: 'descriptions',
+  announceCardDescriptionsDescription: `The title of a link preview card is always included in screen reader announcements. \
+Enable this to also include the description text below the title.`,
+  announceCardDescriptionsPost: '',
   theme: 'Theme',
   themeForInstance: 'Theme for {instance}',
   disableCustomScrollbars: 'Disable custom scrollbars',
@@ -474,6 +480,8 @@ export default {
   enableThreadPolling: 'Show auto-refresh button in threads',
   defaultUnlistedReplies: 'Default replies to unlisted visibility',
   defaultLocalOnly: 'Post to the local timeline only by default',
+  enableQuotePost: 'Show Boost/Quote choice when boosting',
+  boostOrQuote: 'Boost or quote',
   localOnlyUnsupported: "Your instance doesn't support local-only posts",
   editProfile: 'Edit profile',
   editProfileDisplayName: 'Display name',

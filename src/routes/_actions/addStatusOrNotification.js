@@ -97,7 +97,9 @@ async function processFreshUpdates (instanceName, timelineName) {
 
 function lazilyProcessFreshUpdates (instanceName, timelineName) {
   scheduleIdleTask(() => {
-    /* no await */ processFreshUpdates(instanceName, timelineName)
+    processFreshUpdates(instanceName, timelineName).catch(err => {
+      console.error('processFreshUpdates failed', instanceName, timelineName, err)
+    })
   })
 }
 

@@ -25,6 +25,7 @@ const persistedState = {
   // When true, new posts default to local-only (on instances that support it). See
   // applyDefaultLocalOnly() in _actions/compose.js.
   defaultLocalOnly: false,
+  enableQuotePost: false,
   disableFollowRequestCount: false,
   hideLongPosts: true,
   longPostLength: 1024,
@@ -33,6 +34,7 @@ const persistedState = {
   disableHotkeys: false,
   disableInfiniteScroll: false,
   disableLongAriaLabels: false,
+  announceCardDescriptions: false,
   disableNotificationBadge: false,
   enableDesktopNotifications: false,
   enableThreadPolling: true,
@@ -80,6 +82,7 @@ const nonPersistedState = {
   followRequestCounts: {},
   instanceInfos: {},
   instanceLists: {},
+  instanceListsSupported: {},
   instanceFilters: {},
   online: !ZOCIAL_IS_BROWSER || navigator.onLine,
   pinnedStatuses: {},

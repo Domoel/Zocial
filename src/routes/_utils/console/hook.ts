@@ -122,12 +122,20 @@ if (ZOCIAL_IS_BROWSER) {
     // the message so the source is visible live, in "Copy logs", and after a reload
     const reason: any = event.reason
     const detail = (reason && reason.stack) || (reason && reason.message) || String(reason)
+    // Network/HTTP errors (Failed to fetch, timeouts, non-2xx responses) are infrastructure
+    // noise, not code bugs — log as warn so real errors stay visually distinct.
+    const isNetworkNoise = reason instanceof TypeError
+      ? /failed to fetch/i.test(reason.message)
+      : /failed to fetch|timed out after|request failed:\s*\d{3}/i.test(String(reason?.message))
     add({
-      type: 'error',
+      type: isNetworkNoise ? 'warn' : 'error',
       args: ['Uncaught (in promise): ' + detail],
       time: Date.now(),
       stack: reason && reason.stack,
     })
+    // Prevent duplicate "Uncaught (in promise)" noise in the browser devtools — our
+    // in-app log viewer already captures it above.
+    event.preventDefault()
   })
   globalThis.addEventListener('error', (event) => {
     const err: any = event.error

@@ -103,6 +103,11 @@
              disabled={!localOnlySupported}>
       {'intl.defaultLocalOnly'}
     </label>
+    <label class="setting-group">
+      <input type="checkbox" id="choice-enable-quote-post"
+             bind:checked="$enableQuotePost" on:change="onChange(event)">
+      {'intl.enableQuotePost'}
+    </label>
   </form>
 
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>
@@ -136,6 +141,16 @@
       <input type="checkbox" id="choice-disable-long-aria-labels"
              bind:checked="$disableLongAriaLabels" on:change="onChange(event)">
       {'intl.shortAria'}
+    </label>
+    <label class="setting-group">
+      <input type="checkbox" id="choice-announce-card-descriptions"
+             bind:checked="$announceCardDescriptions" on:change="onChange(event)">
+      {'intl.announceCardDescriptionsPre'}
+      <Tooltip
+        text="{'intl.announceCardDescriptionsText'}"
+        tooltipText="{'intl.announceCardDescriptionsDescription'}"
+      />
+      {'intl.announceCardDescriptionsPost'}
     </label>
     <label class="setting-group">
       <input type="checkbox" id="choice-grayscale"

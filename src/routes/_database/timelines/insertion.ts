@@ -91,12 +91,14 @@ async function insertTimelineNotifications(
 ) {
   for (const notification of notifications) {
     setInCache(notificationsCache, instanceName, notification.id, notification)
-    setInCache(
-      accountsCache,
-      instanceName,
-      notification.account.id,
-      notification.account,
-    )
+    if (notification.account) {
+      setInCache(
+        accountsCache,
+        instanceName,
+        notification.account.id,
+        notification.account,
+      )
+    }
     if (notification.status) {
       setInCache(
         statusesCache,

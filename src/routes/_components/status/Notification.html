@@ -60,7 +60,7 @@
     store: () => store,
     computed: {
       account: ({ notification }) => notification.account,
-      accountId: ({ account }) => account.id,
+      accountId: ({ account }) => account && account.id,
       notificationId: ({ notification }) => notification.id,
       notificationType: ({ notification }) => notification.type,
       status: ({ notification }) => notification.status,
