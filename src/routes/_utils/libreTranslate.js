@@ -161,24 +161,18 @@ export const targetLanguageNames = {
   zh: 'Chinese (Simplified)'
 }
 export const translate = getLibreTranslateHTML(async function translate (text, to, from) {
-  const body = JSON.stringify({ q: text, source: from, target: to })
-  const headers = { 'Content-Type': 'application/json' }
-  const [translateResp, detectResp] = await Promise.all([
-    fetch('/api/translate', { method: 'POST', headers, body }),
-    from === 'auto'
-      ? fetch('/api/detect', { method: 'POST', headers, body: JSON.stringify({ q: text }) })
-      : null
-  ])
-  if (!translateResp.ok) {
-    const err = await translateResp.json().catch(() => ({}))
-    throw new Error(err.error || `Translation failed: ${translateResp.status}`)
+  const resp = await fetch('/api/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ q: text, source: from, target: to })
+  })
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}))
+    throw new Error(err.error || `Translation failed: ${resp.status}`)
   }
-  const data = await translateResp.json()
-  let detected = null
-  if (detectResp && detectResp.ok) {
-    const detections = await detectResp.json()
-    detected = detections && detections[0] && detections[0].language
-  }
+  const data = await resp.json()
+  // LibreTranslate includes detectedLanguage in the translate response when source is 'auto'
+  const detected = (from === 'auto' && data.detectedLanguage && data.detectedLanguage.language) || null
   return {
     detected,
     text: data.translatedText,
