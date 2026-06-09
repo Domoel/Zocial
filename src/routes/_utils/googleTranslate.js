@@ -160,7 +160,7 @@ export const targetLanguageNames = {
   'zh-TW': 'Chinese (Traditional)'
 }
 export const translate = getGoogleTranslateHTML(async function translate (text, to, from) {
-  const data = await (await fetch('https://simplytranslate.org/api/translate?' + new URLSearchParams({
+  const data = await (await fetch('/api/translate?' + new URLSearchParams({
     text,
     from,
     to,
