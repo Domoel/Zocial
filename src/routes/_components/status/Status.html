@@ -50,7 +50,7 @@
     <StatusPoll {...params} shown={showContent} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle' && showQuote && showContent}
-  <StatusQuoteCard quote={quoteToShow} on:recalculateHeight />
+  <svelte:self status={originalQuote} quotedBy={uuid} {enableShortcuts} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle' && showHashtagsInBar}
     <StatusTags {hashtagsInBar} {isStatusInNotification} />
@@ -231,7 +231,6 @@
   import StatusTags from './StatusTags.html'
   import StatusPoll from './StatusPoll.html'
   import StatusTranslateToolbar from './StatusTranslateToolbar.html'
-  import StatusQuoteCard from './StatusQuoteCard.html'
   import Shortcut from '../shortcut/Shortcut.html'
   import { store } from '../../_store/store.js'
   import { goto } from '../../../../__sapper__/client.js'
@@ -252,7 +251,7 @@
   import { tryToFocusElement } from '../../_utils/tryToFocusElement.js'
   import { on } from '../../_utils/eventBus.ts'
   import { database } from '../../_database/database.js'
-  import { extractFirstExternalLink, extractLastExternalLink, resolveCardForUrl } from '../../_utils/resolveCardForUrl.js'
+  import { extractFirstExternalLink, resolveCardForUrl } from '../../_utils/resolveCardForUrl.js'
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
@@ -302,32 +301,18 @@
         }).catch(() => {})
       }
 
-      // Client-side card / linked-quote detection: delayed so fast-scrolled items don't trigger API calls.
-      // Checks the last external URL first (quote intent, like Phanpy/Elk); if that resolves to a
-      // fediverse status, shows a StatusQuoteCard instead of a generic link preview card.
+      // Client-side card: delay resolution so fast-scrolled items don't trigger API calls
       const { $hideCards } = this.store.get()
-      const { quotedBy: _quotedBy } = this.get()
-      if (!$hideCards && !_quotedBy && !_origStatus.card && !_origStatus.quote && _origStatus.content) {
-        const lastUrl = extractLastExternalLink(_origStatus.content)
+      if (!$hideCards && !_origStatus.card && _origStatus.content) {
         const firstUrl = extractFirstExternalLink(_origStatus.content)
-        if (lastUrl || firstUrl) {
+        if (firstUrl) {
           this._cardTimer = setTimeout(() => {
             const { currentInstance, accessToken } = this.store.get()
-            if (!currentInstance || !accessToken) return
-            ;(async () => {
-              try {
-                if (lastUrl) {
-                  const card = await resolveCardForUrl(lastUrl, currentInstance, accessToken)
-                  if (card && card._status) {
-                    try { this.set({ linkedQuote: card._status }) } catch (e) {}
-                    return
-                  }
-                }
-                const cardUrl = firstUrl || lastUrl
-                const card = await resolveCardForUrl(cardUrl, currentInstance, accessToken)
+            if (currentInstance && accessToken) {
+              resolveCardForUrl(firstUrl, currentInstance, accessToken).then(card => {
                 try { this.set({ clientSideCard: card }) } catch (e) {}
-              } catch (e) {}
-            })()
+              }).catch(() => {})
+            }
           }, 400)
         }
       }
@@ -336,9 +321,9 @@
       clearTimeout(this._cardTimer)
     },
     onupdate ({ changed, previous, current }) {
-      if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped || changed.clientSideCard || changed.linkedQuote)) {
+      if (previous && (changed.translateState || changed.nextGrouped || changed.prevGrouped || changed.clientSideCard)) {
         // this sucks but otherwise svelte fucks up the list 🙃
-        if (changed.clientSideCard || changed.linkedQuote) {
+        if (changed.clientSideCard) {
           // double-RAF: waits for the browser to fully paint the card before measuring height
           requestAnimationFrame(() => requestAnimationFrame(() => this.fire('recalculateHeight')))
         } else {
@@ -366,7 +351,6 @@
       StatusReactions,
       StatusTags,
       StatusTranslateToolbar,
-      StatusQuoteCard,
       Shortcut
     },
     data: () => ({
@@ -378,7 +362,6 @@
       overrideOriginalStatus: null,
       inReplyToAccount: null,
       clientSideCard: null,
-      linkedQuote: null,
       timelineType: null,
       timelineValue: null,
       index: null,
@@ -509,8 +492,7 @@
         originalStatus.media_attachments.length
       ),
       originalQuote: ({ originalStatus }) => originalStatus.quote,
-      quoteToShow: ({ quotedBy, originalQuote, linkedQuote }) => quotedBy ? null : (originalQuote || linkedQuote || null),
-      showQuote: ({ quoteToShow }) => !!quoteToShow,
+      showQuote: ({ quotedBy, originalQuote }) => quotedBy ? false : originalQuote,
       mediaAttachments: ({ originalStatus }) => (
         originalStatus.media_attachments
       ),

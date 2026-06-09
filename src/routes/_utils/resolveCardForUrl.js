@@ -16,22 +16,6 @@ function extractFirstExternalLink (html) {
   return null
 }
 
-function extractLastExternalLink (html) {
-  if (typeof document === 'undefined' || !html) return null
-  const div = document.createElement('div')
-  div.innerHTML = html
-  const links = Array.from(div.querySelectorAll('a[href]')).reverse()
-  for (const link of links) {
-    try {
-      const url = new URL(link.href)
-      if (url.protocol.startsWith('http') && url.origin !== window.location.origin) {
-        return link.href
-      }
-    } catch (e) { /* skip invalid hrefs */ }
-  }
-  return null
-}
-
 function stripHTML (html) {
   if (!html) return ''
   const div = document.createElement('div')
@@ -39,7 +23,7 @@ function stripHTML (html) {
   return (div.textContent || div.innerText || '').trim()
 }
 
-export { extractFirstExternalLink, extractLastExternalLink }
+export { extractFirstExternalLink }
 
 // Cache: url → resolved card (or null)
 const cardCache = new Map()
@@ -92,8 +76,7 @@ export async function resolveCardForUrl (url, instanceName, accessToken) {
           title: account.display_name || account.username,
           description: stripHTML(status.content).slice(0, 200) || null,
           image,
-          provider_name: hostname,
-          _status: status
+          provider_name: hostname
         }
       }
 
