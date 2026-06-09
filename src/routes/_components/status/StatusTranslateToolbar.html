@@ -5,10 +5,12 @@
     {:else}
       {#if translateError}
         {'intl.translateError'}
-      {:else if sameLanguage}
-        {'intl.alreadyInTargetLanguage'}
       {:else}
-        {translatedFrom}
+        {#if sameLanguage}
+          {'intl.alreadyInTargetLanguage'}
+        {:else}
+          {translatedFrom}
+        {/if}
       {/if}
     {/if}
   </div>
