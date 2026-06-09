@@ -161,11 +161,13 @@ export const targetLanguageNames = {
   zh: 'Chinese (Simplified)'
 }
 export async function detectLanguage (text) {
+  // Strip HTML tags before sending to detect — CLD3 works better on plain text
+  const plainText = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
   try {
     const resp = await fetch('/api/detect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: text })
+      body: JSON.stringify({ q: plainText })
     })
     if (!resp.ok) return null
     const data = await resp.json()
@@ -179,7 +181,7 @@ export const translate = getLibreTranslateHTML(async function translate (text, t
   const resp = await fetch('/api/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: text, source: from, target: to })
+    body: JSON.stringify({ q: text, source: from, target: to, format: 'html' })
   })
   const raw = await resp.text()
   let data

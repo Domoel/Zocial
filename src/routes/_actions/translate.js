@@ -5,10 +5,22 @@ import { renderPostHTML } from '../_utils/renderPostHTML.ts'
 async function translate (html, to, from) {
   const { sourceLanguageNames, translate, detectLanguage } = await importLibreTranslate()
   if (from === 'auto') {
-    const detected = await detectLanguage(html)
+    // Run detect and translate in parallel to save a round trip for the
+    // common case (different language). If translate succeeds, use its result
+    // directly. If it fails, use the detect result to distinguish "same
+    // language" (silent close) from a real error.
+    const [transResult, detectResult] = await Promise.allSettled([
+      translate(html, to, from),
+      detectLanguage(html)
+    ])
+    if (transResult.status === 'fulfilled') {
+      return { content: transResult.value, sourceLanguageNames }
+    }
+    const detected = detectResult.status === 'fulfilled' ? detectResult.value : null
     if (detected && detected === to) {
       return { content: null, sourceLanguageNames, sameLanguage: true }
     }
+    throw transResult.reason
   }
   return { content: await translate(html, to, from), sourceLanguageNames }
 }
