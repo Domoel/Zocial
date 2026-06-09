@@ -1,0 +1,53 @@
+<ModalDialog
+  {id}
+  {label}
+  title="{'intl.boostOrQuote'}"
+  shrinkWidthToFit={true}
+  background="var(--main-bg)"
+>
+  <GenericDialogList selectable={false} {items} on:click="onClick(event)" />
+</ModalDialog>
+<script>
+  import ModalDialog from './ModalDialog.html'
+  import GenericDialogList from './GenericDialogList.html'
+  import { show } from '../helpers/showDialog.js'
+  import { close } from '../helpers/closeDialog.js'
+  import { setReblogged } from '../../../_actions/reblog.js'
+  import { quoteByUrl } from '../../../_actions/quote.js'
+
+  export default {
+    data: () => ({
+      items: [
+        { key: 'boost', label: 'intl.reblog', icon: '#fa-retweet' },
+        { key: 'quote', label: 'intl.quoteStatus', icon: '#fa-quote-right' }
+      ]
+    }),
+    methods: {
+      show,
+      close,
+      async onClick (item) {
+        const { status } = this.get()
+        if (item.key === 'boost') {
+          this.close()
+          /* no await */ setReblogged(status.id, true)
+        } else if (item.key === 'quote') {
+          this.close()
+          await new Promise(resolve => {
+            const done = () => {
+              window.removeEventListener('popstate', done)
+              clearTimeout(fallback)
+              resolve()
+            }
+            const fallback = setTimeout(done, 300)
+            window.addEventListener('popstate', done, { once: true })
+          })
+          quoteByUrl(status)
+        }
+      }
+    },
+    components: {
+      ModalDialog,
+      GenericDialogList
+    }
+  }
+</script>
