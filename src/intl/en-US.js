@@ -449,7 +449,11 @@ export default {
   disableTappable: 'Disable tappable area on entire post',
   removeEmoji: 'Remove emoji from user display names',
   shortAria: 'Use short article ARIA labels',
-  announceCardDescriptions: 'Announce link preview descriptions',
+  announceCardDescriptionsPre: 'Announce link preview',
+  announceCardDescriptionsText: 'descriptions',
+  announceCardDescriptionsDescription: `The title of a link preview card is always included in screen reader announcements. \
+Enable this to also include the description text below the title.`,
+  announceCardDescriptionsPost: '',
   theme: 'Theme',
   themeForInstance: 'Theme for {instance}',
   disableCustomScrollbars: 'Disable custom scrollbars',

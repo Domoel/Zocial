@@ -145,7 +145,12 @@
     <label class="setting-group">
       <input type="checkbox" id="choice-announce-card-descriptions"
              bind:checked="$announceCardDescriptions" on:change="onChange(event)">
-      {'intl.announceCardDescriptions'}
+      {'intl.announceCardDescriptionsPre'}
+      <Tooltip
+        text="{'intl.announceCardDescriptionsText'}"
+        tooltipText="{'intl.announceCardDescriptionsDescription'}"
+      />
+      {'intl.announceCardDescriptionsPost'}
     </label>
     <label class="setting-group">
       <input type="checkbox" id="choice-grayscale"
