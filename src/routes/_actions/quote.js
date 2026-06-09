@@ -10,7 +10,8 @@ export async function quoteByUrl (status) {
   // status.url can be null on some servers (e.g. GoToSocial on certain posts)
   const url = status.url || status.uri || ''
   store.setComposeData('dialog', {
-    text: url ? '\n\n' + url : ''
+    text: url ? '\n\n' + url : '',
+    initialSelectionStart: 0
   })
   showComposeDialog()
 }

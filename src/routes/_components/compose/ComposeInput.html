@@ -261,13 +261,27 @@
       },
       setCursorIfNecessary () {
         const { realm } = this.get()
-        if (isWebKit() && realm !== 'dialog' && realm !== 'home') {
+        const initialSelectionStart = this.store.getComposeData(realm, 'initialSelectionStart')
+        if (typeof initialSelectionStart === 'number') {
+          const textarea = this.refs.textarea
+          if (realm === 'dialog') {
+            // Dialog textarea gets focused later via autofocus when the dialog opens —
+            // listen for first focus, then set position.
+            textarea.addEventListener('focus', () => {
+              requestAnimationFrame(() => {
+                textarea.selectionStart = textarea.selectionEnd = initialSelectionStart
+              })
+            }, { once: true })
+          } else {
+            requestAnimationFrame(() => {
+              textarea.selectionStart = textarea.selectionEnd = initialSelectionStart
+            })
+          }
+        } else if (isWebKit() && realm !== 'dialog' && realm !== 'home') {
           // Place the cursor at the end of the textarea in replies if this is WebKit.
-          // Works around a Safari/WebKit bug
+          // Works around a Safari/WebKit bug.
           // We only do this for replies (not dialog/home) because for dialog/home we don't want to
           // also focus the textarea, which is a side effect of setting selectionStart.
-          // Potentially we could run this logic for all browsers, but I don't want to deal with the potential
-          // perf hit or bugs of running more code for browsers that don't need it.
           requestAnimationFrame(() => {
             this.refs.textarea.selectionStart = this.refs.textarea.value.length
           })
