@@ -166,11 +166,16 @@ export const translate = getLibreTranslateHTML(async function translate (text, t
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ q: text, source: from, target: to })
   })
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}))
-    throw new Error(err.error || `Translation failed: ${resp.status}`)
+  const raw = await resp.text()
+  let data
+  try {
+    data = JSON.parse(raw)
+  } catch {
+    throw new Error(`Translation backend returned non-JSON (HTTP ${resp.status}): ${raw.slice(0, 200)}`)
   }
-  const data = await resp.json()
+  if (!resp.ok) {
+    throw new Error(data.error || `Translation failed: ${resp.status}`)
+  }
   // LibreTranslate includes detectedLanguage in the translate response when source is 'auto'
   const detected = (from === 'auto' && data.detectedLanguage && data.detectedLanguage.language) || null
   return {
