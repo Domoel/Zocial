@@ -6,7 +6,7 @@ async function translate (html, to, from) {
   const { sourceLanguageNames, translate } = await importGoogleTranslate()
   return { content: await translate(html, to, from), sourceLanguageNames }
 }
-const defaultLanguage = process.env.LOCALE.split('-')[0]
+const defaultLanguage = (process.env.LOCALE || 'en-US').split('-')[0]
 export function translateStatus (
   status,
   currentInstance,
