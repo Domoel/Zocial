@@ -1,18 +1,12 @@
-import getGoogleTranslateHTML from './libreTranslateHTML.js'
+import getLibreTranslateHTML from './libreTranslateHTML.js'
 /*
 
-to regenerate, run this on https://simplytranslate.org/?engine=google
+to regenerate, fetch https://libretranslate.com/languages and map the resulting JSON:
 
 ```js
-const source = [...document.querySelector('[name=from]').options].map(e=>[e.value, e.textContent])
-const target = [...document.querySelector('[name=to]').options].map(e=>[e.value, e.textContent])
-console.log(`const sharedLanguageNames = ${JSON.stringify(Object.fromEntries(source.filter(e=>target.find(a=>a.join()===e.join()))), null, 2)};
-export const sourceLanguageNames = {
-  ...sharedLanguageNames,
-${JSON.stringify(Object.fromEntries(source.filter(e=>!target.find(a=>a.join()===e.join()))), null, 2).slice(2)}
-export const targetLanguageNames = {
-  ...sharedLanguageNames,
-${JSON.stringify(Object.fromEntries(target.filter(e=>!source.find(a=>a.join()===e.join()))), null, 2).slice(2)}`)
+const langs = await (await fetch('https://libretranslate.com/languages')).json()
+const names = Object.fromEntries(langs.map(l => [l.code, l.name]))
+console.log(JSON.stringify(names, null, 2))
 ```
 
 */
@@ -152,14 +146,21 @@ const sharedLanguageNames = {
 export const sourceLanguageNames = {
   ...sharedLanguageNames,
   auto: 'Detect language',
-  'zh-CN': 'Chinese'
+  'zh-CN': 'Chinese',
+  // LibreTranslate uses different codes for a few languages than Google Translate did
+  he: 'Hebrew',
+  jv: 'Javanese',
+  zh: 'Chinese'
 }
 export const targetLanguageNames = {
   ...sharedLanguageNames,
   'zh-CN': 'Chinese (Simplified)',
-  'zh-TW': 'Chinese (Traditional)'
+  'zh-TW': 'Chinese (Traditional)',
+  he: 'Hebrew',
+  jv: 'Javanese',
+  zh: 'Chinese (Simplified)'
 }
-export const translate = getGoogleTranslateHTML(async function translate (text, to, from) {
+export const translate = getLibreTranslateHTML(async function translate (text, to, from) {
   const body = JSON.stringify({ q: text, source: from, target: to })
   const headers = { 'Content-Type': 'application/json' }
   const [translateResp, detectResp] = await Promise.all([
@@ -168,6 +169,10 @@ export const translate = getGoogleTranslateHTML(async function translate (text, 
       ? fetch('/api/detect', { method: 'POST', headers, body: JSON.stringify({ q: text }) })
       : null
   ])
+  if (!translateResp.ok) {
+    const err = await translateResp.json().catch(() => ({}))
+    throw new Error(err.error || `Translation failed: ${translateResp.status}`)
+  }
   const data = await translateResp.json()
   let detected = null
   if (detectResp && detectResp.ok) {
