@@ -32,7 +32,7 @@ export function timelineItemToSummary(
   return {
     id: item.id,
     statusId: (item.status && item.status.id) || undefined,
-    accountId: item.account.id,
+    accountId: item.account ? item.account.id : '',
     replyId: item.in_reply_to_id || undefined,
     reblogId: (item.reblog && item.reblog.id) || undefined,
     quoteId: item.quote_id || undefined,
