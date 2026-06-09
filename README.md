@@ -78,6 +78,14 @@ Quote a post from any server with a single action — no special backend support
 
 Quote posts are reachable from the context menu (always), from the boost button (optional via *Settings → Composer*), or via the `q` keyboard shortcut. The composer opens with your cursor placed at the very beginning so you can write your take first, with the quoted URL ready at the end.
 
+### Post translation, privacy-first
+
+Translate any post with a single tap, via the context menu, or with the `t` keyboard shortcut. Zocial uses [LibreTranslate](https://libretranslate.com) — an open-source translation engine with no Google dependency. Requests are routed server-side through the nginx container, so no translation API is ever called directly from the browser: no CORS workarounds, no credentials in the client, no third-party requests from your device.
+
+The target language is taken from your browser's language setting, so a German browser automatically translates posts into German. If a post is already in your language, Zocial detects this and skips the request entirely.
+
+Admins can point Zocial at their own LibreTranslate instance by setting `TRANSLATE_API` in `.env` — ideal for deployments that need full control over which services are contacted.
+
 ### Bookmarks, with personality
 
 The bookmark action lives directly in the reaction bar with a satisfying animation and a persistent indicator — so you always know which posts you've saved, without hunting through the overflow menu.
