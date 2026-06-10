@@ -353,6 +353,7 @@ export default {
   settings: 'Einstellungen',
   general: 'Allgemein',
   generalSettings: 'Allgemeine Einstellungen',
+  generalSettingsLoginRequired: 'Allgemeine Einstellungen sind nur verfügbar, wenn du angemeldet bist.',
   showSensitive: 'Sensible Inhalte standardmäßig anzeigen',
   showPlain: 'Eine graue Fläche für sensible Inhalte anzeigen',
   allSensitive: 'Alle Medien als sensibel behandeln',

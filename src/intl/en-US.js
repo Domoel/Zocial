@@ -447,6 +447,7 @@ export default {
   settings: 'Settings',
   general: 'General',
   generalSettings: 'General settings',
+  generalSettingsLoginRequired: 'General settings are only available when logged in.',
   showSensitive: 'Show sensitive media by default',
   showAllSpoilers: 'Expand content warnings by default',
   showPlain: 'Show a plain gray color for sensitive media',

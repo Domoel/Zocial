@@ -363,6 +363,7 @@ export default {
   settings: 'Opciones de configuración',
   general: 'General',
   generalSettings: 'Opciones generales',
+  generalSettingsLoginRequired: 'Las opciones generales solo están disponibles cuando has iniciado sesión.',
   showSensitive: 'Mostrar multimedia sensible por defecto',
   showPlain: 'Mostrar un color gris liso para multimedia sensible',
   allSensitive: 'Tratar todo multimedia como sensible',

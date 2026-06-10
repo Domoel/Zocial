@@ -352,6 +352,7 @@ export default {
   settings: 'Paramètres',
   general: 'Général',
   generalSettings: 'Paramètres générales',
+  generalSettingsLoginRequired: 'Les paramètres généraux ne sont disponibles que lorsque vous êtes connecté(e).',
   showSensitive: 'Afficher les medias sensible par défaut',
   showPlain: 'Afficher un simple gris pour les medias sensibles',
   allSensitive: 'Considérer tous medias comme sensible',

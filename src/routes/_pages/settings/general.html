@@ -1,6 +1,7 @@
 <SettingsLayout page='settings/general' label="{'intl.general'}">
   <h1>{'intl.generalSettings'}</h1>
 
+  {#if $isUserLoggedIn}
   <h2 id="section-media">{'intl.media'}</h2>
   <form class="ui-settings">
     <label class="setting-group">
@@ -258,6 +259,9 @@
   {#if $isUserLoggedIn }
     <h2>{themeTitle}</h2>
     <ThemeSettings instanceName={$currentInstance} />
+  {/if}
+  {:else}
+  <p>{'intl.generalSettingsLoginRequired'}</p>
   {/if}
 </SettingsLayout>
 <UISettingsStyles />

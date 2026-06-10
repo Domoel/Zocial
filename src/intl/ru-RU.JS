@@ -361,6 +361,7 @@ export default {
   settings: 'Настройки',
   general: 'Общие',
   generalSettings: 'Общие настройки',
+  generalSettingsLoginRequired: 'Общие настройки доступны только при входе в аккаунт.',
   showSensitive: 'Показывать деликатные медиа по умолчанию',
   showPlain: 'Показать простой серый цвет для деликатного медиа',
   allSensitive: 'Относиться ко всем медиа как к деликатным',
