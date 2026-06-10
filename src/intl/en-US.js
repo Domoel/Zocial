@@ -398,8 +398,10 @@ export default {
     Zocial is a static site which can be hosted anywhere (e.g. GitHub Pages). It is provided as a <a rel="noopener" target="_blank" href="https://hub.docker.com/r/domoel/zocial">Docker Image</a> and can be deployed using an nginx web  server. All data is stored locally in your browser and shared with the fediverse instance(s) you connect to.
   </p>
 
+  <h2>Translations</h2>
+
   <p>
-    Post translation is powered by Google Translate via <a href="https://simplytranslate.org">SimplyTranslate.org</a>.
+    Post translation is powered by <a rel="noopener" target="_blank" href="https://libretranslate.com">LibreTranslate</a> — an open-source translation engine with no Google dependency. Requests are routed through the server, so no translation service is ever contacted directly from your browser. Self-hosting is supported via the <code>TRANSLATE_API</code> environment variable.
   </p>
 
   <h2>Credits</h2>
