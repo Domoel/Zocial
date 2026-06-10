@@ -2,9 +2,33 @@ import { importLibreTranslate } from '../_utils/asyncModules/importLibreTranslat
 import { store } from '../_store/store.js'
 import escapeHtml from 'escape-html'
 import { renderPostHTML } from '../_utils/renderPostHTML.ts'
+function unsupportedLanguageError (language) {
+  const err = new Error('Unsupported source language: ' + (language || 'unknown'))
+  err.type = 'unsupportedLanguage'
+  return err
+}
+
+// Decide whether a /api/detect result ({ language, confidence } | null) means the source
+// language is not supported by the backend. Two independent signals:
+//   1. confidence === 0: the backend has no detection model for this language and fell back
+//      to its default with zero confidence. This is the primary, most reliable signal and
+//      works even when we don't know the instance's supported-language list.
+//   2. A confidently detected language (≥ 50) that is not in the known supported list — a
+//      backup for instances whose detector knows more languages than the translator supports.
+function isUnsupportedDetection (detection, trustedLanguage, supportedSourceCodes) {
+  if (detection && detection.confidence === 0) {
+    return true
+  }
+  if (trustedLanguage && supportedSourceCodes && supportedSourceCodes.length > 0 &&
+      !supportedSourceCodes.includes(trustedLanguage)) {
+    return true
+  }
+  return false
+}
+
 // supportedSourceCodes: array of language codes supported by the current instance (e.g. ['de','en']).
-// When provided, used to catch cases where LibreTranslate mis-detects an unsupported language
-// (e.g. Finnish) as a supported one (e.g. English) and silently produces a bogus translation.
+// Used as a secondary check; the primary unsupported-language signal is a zero-confidence
+// detection (the backend has no model for the language) — see isUnsupportedDetection.
 async function translate (html, to, from, supportedSourceCodes) {
   const { sourceLanguageNames, translate, detectLanguage } = await importLibreTranslate()
   if (from === 'auto') {
@@ -16,32 +40,28 @@ async function translate (html, to, from, supportedSourceCodes) {
       translate(html, to, from),
       detectLanguage(html)
     ])
+    // /api/detect runs on pre-cleaned plain text (HTML/URL/mention-stripped) and is
+    // more reliable than the translate endpoint's detection on raw HTML input.
+    // It returns { language, confidence } or null.
+    const detection = detectResult.status === 'fulfilled' ? detectResult.value : null
+    const trustedLanguage = detection && detection.confidence >= 50 ? detection.language : null
+
     if (transResult.status === 'fulfilled') {
       const result = transResult.value
-      // /api/detect runs on pre-cleaned plain text (HTML/URL/mention-stripped) and is
-      // more reliable than the translate endpoint's detection on raw HTML input.
-      const detectedFromDetect = detectResult.status === 'fulfilled' ? detectResult.value : null
 
-      if (detectedFromDetect) {
-        // We have a reliable detection. Use it exclusively for all checks.
-        // IMPORTANT: unsupported-language check MUST run before same-language check.
-        // If LibreTranslate mis-detects e.g. Finnish as English and the user's target IS
-        // English, result.detected === to would fire "already in your language" before
-        // we ever get a chance to surface the real problem (unsupported language).
-        if (supportedSourceCodes && supportedSourceCodes.length > 0 &&
-            !supportedSourceCodes.includes(detectedFromDetect)) {
-          const err = new Error('Unsupported source language: ' + detectedFromDetect)
-          err.type = 'unsupportedLanguage'
-          throw err
-        }
-        if (detectedFromDetect === to) {
+      // IMPORTANT: the unsupported-language check MUST run before the same-language /
+      // text-similarity checks. The backend returns the text unchanged for a language it
+      // can't translate, which would otherwise be mistaken for "already in your language".
+      if (isUnsupportedDetection(detection, trustedLanguage, supportedSourceCodes)) {
+        throw unsupportedLanguageError(trustedLanguage)
+      }
+      if (trustedLanguage) {
+        if (trustedLanguage === to) {
           return { content: null, sourceLanguageNames, sameLanguage: true }
         }
-      } else {
-        // No reliable independent detection — fall back to the translate endpoint's result.
-        if (result.detected && result.detected === to) {
-          return { content: null, sourceLanguageNames, sameLanguage: true }
-        }
+      } else if (result.detected && result.detected === to) {
+        // No trustworthy independent detection — fall back to the translate endpoint's result.
+        return { content: null, sourceLanguageNames, sameLanguage: true }
       }
 
       // Final fallback: if LibreTranslate returned the text completely unchanged it
@@ -55,22 +75,17 @@ async function translate (html, to, from, supportedSourceCodes) {
       }
 
       // Use the more reliable detect result for the "Translated from X" display label.
-      if (detectedFromDetect) {
-        result.detected = detectedFromDetect
+      if (trustedLanguage) {
+        result.detected = trustedLanguage
       }
       return { content: result, sourceLanguageNames }
     }
-    const detected = detectResult.status === 'fulfilled' ? detectResult.value : null
-    if (detected) {
-      if (supportedSourceCodes && supportedSourceCodes.length > 0 &&
-          !supportedSourceCodes.includes(detected)) {
-        const err = new Error('Unsupported source language: ' + detected)
-        err.type = 'unsupportedLanguage'
-        throw err
-      }
-      if (detected === to) {
-        return { content: null, sourceLanguageNames, sameLanguage: true }
-      }
+    // Translate failed but we may still have a useful detection.
+    if (isUnsupportedDetection(detection, trustedLanguage, supportedSourceCodes)) {
+      throw unsupportedLanguageError(trustedLanguage)
+    }
+    if (trustedLanguage && trustedLanguage === to) {
+      return { content: null, sourceLanguageNames, sameLanguage: true }
     }
     throw transResult.reason
   }

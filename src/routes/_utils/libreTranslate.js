@@ -183,9 +183,13 @@ export async function detectLanguage (text) {
     if (!resp.ok) return null
     const data = await resp.json()
     const top = data && data[0]
-    // Only trust the result when confidence is reasonable (≥ 50 %).
-    if (!top || top.confidence < 50) return null
-    return top.language || null
+    if (!top) return null
+    // Return the raw confidence so the caller can distinguish three cases:
+    //   confidence ≈ 0   → the backend has no model for this language (it falls back to
+    //                       its default with zero confidence) ⇒ language is unsupported
+    //   confidence ≥ 50  → trustworthy detection
+    //   0 < conf < 50    → ambiguous, don't trust for display or same-language checks
+    return { language: top.language || null, confidence: top.confidence }
   } catch {
     return null
   }
