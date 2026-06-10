@@ -758,13 +758,40 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
-### [v1.6.1] Same-language detection: three-layer approach
+### [v1.6.1 / v1.7.x] Same-language detection and unsupported-language handling
+
+**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`
+
+#### Three-layer same-language detection
 
 **Decision:** Use three independent layers to detect "post is already in my language": (1) `detectedLanguage` from the translate response, (2) a parallel `/api/detect` call on aggressively cleaned plain text, (3) text-similarity fallback (no-op translation = same language).
 
-**Rationale:** CLD3 (LibreTranslate's detector) is confused by ASCII noise in Fediverse posts — URLs, @mentions, #hashtags — causing frequent misdetection. A single detection layer was insufficient. The text-similarity fallback catches cases where both detectors misfire.
+**Rationale:** CLD3 (LibreTranslate's detector) is confused by ASCII noise in Fediverse posts — URLs, `@mentions`, `#hashtags` — causing frequent misdetection. A single detection layer was insufficient. The text-similarity fallback catches cases where both detectors misfire.
 
 **Confidence threshold:** Detections below 50% confidence are ignored.
+
+#### `/api/detect` input cleaning
+
+The cleaned text sent to `/api/detect` removes (in order):
+1. HTML tags
+2. URLs (`https?://…`)
+3. Mentions — both `@user@domain` and bare `@username` (local mentions without a domain part, e.g. `@rolle`, are NOT caught by the `@user@domain` regex and can pull CLD3 toward English)
+4. Hashtags (`#word`)
+5. HTML entities (`&amp;`, `&#123;`, …)
+
+The cleaned result is capped at 500 chars; if less than 10 chars remain, detection is skipped entirely.
+
+#### `/api/detect` result used for display
+
+`result.detected` from the `/api/translate` endpoint runs on raw HTML input and is less accurate than our parallel `/api/detect` call which receives the pre-cleaned plain text. When `/api/detect` returns a result, it overrides `result.detected` so the "Translated from X" label in the toolbar is as accurate as possible.
+
+#### Client-side unsupported-language check
+
+**Problem:** LibreTranslate can mis-detect an unsupported language (e.g. Finnish) as a supported one (e.g. English), silently produce a nonsense translation, and never return a 400 error. The user sees "Translated from English" on a Finnish post.
+
+**Decision:** After the parallel detect+translate calls, if `detectedFromDetect` names a language not present in `translationLanguages[currentInstance]` (the instance's supported language list from `/api/languages`), throw a client-side `{type: 'unsupportedLanguage'}` error. The existing `.catch` handler in `translateStatus` surfaces this as the "translateUnsupportedLanguage" UI message.
+
+**Dynamic behaviour:** `translationLanguages[currentInstance]` is refetched from `/api/languages` on every session start (`translationLanguagesFetched` is non-persisted, so it resets on every page load). Adding a language to the LibreTranslate instance takes effect automatically after the next page reload — no code change required.
 
 ---
 
