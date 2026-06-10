@@ -324,6 +324,8 @@ export default {
     other {}
   }`,
   translateError: 'There was an error translating this post',
+  translateRateLimit: 'You hit the rate limit for translations',
+  translateUnsupportedLanguage: 'This language is currently not supported',
   alreadyInTargetLanguage: 'Post is already in your language',
   translating: 'Translating...',
   hideTranslation: 'Hide translation',

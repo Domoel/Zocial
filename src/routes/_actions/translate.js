@@ -60,6 +60,8 @@ export function translateStatus (
   ) {
     statusTranslations[id].loading = true
     statusTranslations[id].error = false
+    statusTranslations[id].rateLimited = false
+    statusTranslations[id].unsupportedLanguage = false
     statusTranslations[id].to = to
     statusTranslations[id].from = from
     const emojis = new Map()
@@ -98,7 +100,13 @@ export function translateStatus (
         console.error('error translating status', err)
         const { statusTranslations, statusTranslationContents } = store.get()
         statusTranslations[id].loading = false
-        statusTranslations[id].error = true
+        if (err.type === 'rateLimit') {
+          statusTranslations[id].rateLimited = true
+        } else if (err.type === 'unsupportedLanguage') {
+          statusTranslations[id].unsupportedLanguage = true
+        } else {
+          statusTranslations[id].error = true
+        }
         delete statusTranslationContents[id]
         store.set({ statusTranslations, statusTranslationContents })
       })

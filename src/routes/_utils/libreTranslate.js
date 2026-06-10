@@ -191,7 +191,13 @@ export const translate = getLibreTranslateHTML(async function translate (text, t
     throw new Error(`Translation backend returned non-JSON (HTTP ${resp.status}): ${raw.slice(0, 200)}`)
   }
   if (!resp.ok) {
-    throw new Error(data.error || `Translation failed: ${resp.status}`)
+    const err = new Error(data.error || `Translation failed: ${resp.status}`)
+    if (resp.status === 429) {
+      err.type = 'rateLimit'
+    } else if (resp.status === 400) {
+      err.type = 'unsupportedLanguage'
+    }
+    throw err
   }
   // LibreTranslate includes detectedLanguage in the translate response when source is 'auto'
   const detected = (from === 'auto' && data.detectedLanguage && data.detectedLanguage.language) || null

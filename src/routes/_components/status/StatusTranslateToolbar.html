@@ -6,10 +6,18 @@
       {#if translateError}
         {'intl.translateError'}
       {:else}
-        {#if sameLanguage}
-          {'intl.alreadyInTargetLanguage'}
+        {#if rateLimited}
+          {'intl.translateRateLimit'}
         {:else}
-          {translatedFrom}
+          {#if unsupportedLanguage}
+            {'intl.translateUnsupportedLanguage'}
+          {:else}
+            {#if sameLanguage}
+              {'intl.alreadyInTargetLanguage'}
+            {:else}
+              {translatedFrom}
+            {/if}
+          {/if}
         {/if}
       {/if}
     {/if}
@@ -51,6 +59,8 @@
     computed: {
       translating: ({ translateState }) => !!(translateState && translateState.loading),
       translateError: ({ translateState }) => !!(translateState && translateState.error),
+      rateLimited: ({ translateState }) => !!(translateState && translateState.rateLimited),
+      unsupportedLanguage: ({ translateState }) => !!(translateState && translateState.unsupportedLanguage),
       sameLanguage: ({ translateState }) => !!(translateState && translateState.sameLanguage),
       translatedFrom: ({ translateContent, translateState }) => {
         if (!(translateState && translateContent)) return
