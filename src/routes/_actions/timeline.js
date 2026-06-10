@@ -231,17 +231,22 @@ export async function setupTimeline () {
   const {
     timelineItemSummaries,
     timelineItemSummariesAreStale,
-    currentTimeline
+    currentTimeline,
+    currentInstance
   } = store.get()
   console.log({ timelineItemSummaries, timelineItemSummariesAreStale, currentTimeline })
   // home and notifications maintain a continuous background stream and never
   // go stale between visits — skip the fetch if they have a warm cache.
-  // Every other timeline only streams while the page is open, so always
-  // fetch fresh data on navigate to avoid showing a stale snapshot.
+  // Every other timeline only streams while the page is open, so fetch on
+  // navigate, but throttle to once per 30 s to avoid redundant requests
+  // when the user switches between timelines rapidly.
   const hasFreshCache = timelineItemSummaries && !timelineItemSummariesAreStale
   const alwaysStreaming = currentTimeline === 'home' || currentTimeline.startsWith('notifications')
-  if (!hasFreshCache || !alwaysStreaming) {
+  const lastFetchedAt = store.getForTimeline(currentInstance, currentTimeline, 'lastFetchedAt')
+  const fetchedRecently = lastFetchedAt && (Date.now() - lastFetchedAt < 30_000)
+  if (!hasFreshCache || (!alwaysStreaming && !fetchedRecently)) {
     await fetchTimelineItemsAndPossiblyFallBack()
+    store.setForCurrentTimeline({ lastFetchedAt: Date.now() })
   }
   stop('setupTimeline')
 }
