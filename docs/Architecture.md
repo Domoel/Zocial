@@ -60,3 +60,168 @@ whatever store it uses. The main `store.js` is the primary one.
 ## There is a global event bus
 
 It's in `eventBus.ts`. This is useful for some stuff that is hard to do with standard Svelte or DOM events.
+
+---
+
+## Svelte 2 template syntax constraints
+
+Svelte 2's parser runs **before** Babel/webpack, so `.html` template files have stricter syntax than plain `.js` files.
+
+| Construct | Workaround |
+|---|---|
+| Optional chaining `?.` | `obj && obj.prop` |
+| `{:else if ...}` | nested `{#if}{:else}{#if}...{/if}{/if}` |
+| Numeric separators `60_000` | plain `60000` (only in `.html`; `.js`/`.ts` are fine) |
+
+### `svelte-intl-loader` and `formatIntl`
+
+The loader transforms `'intl.KEY'` strings at build time.
+
+- Keys **without** `{param}` → compiled to a plain string. Do **not** wrap in `formatIntl()` — it expects an AST object and crashes on a plain string, blanking the entire component.
+- Keys **with** `{param}` → compiled to an AST. Must be wrapped in `formatIntl({ param: value })`.
+
+```html
+<!-- Correct — no params -->
+<p>{'intl.generalSettings'}</p>
+
+<!-- Correct — with params -->
+<p>{formatIntl('intl.rebloggedByAccount', { account: name })}</p>
+
+<!-- WRONG — crashes the component -->
+<p>{formatIntl('intl.generalSettings')}</p>
+```
+
+---
+
+## Intl / Translation system
+
+### Adding a new string
+
+1. Add the key to `src/intl/en-US.js` as the source of truth.
+2. Add translations to `de.js`, `fr.js`, `es.js`, `ru-RU.js` (and any other active locale files).
+3. Use in templates as `{'intl.myNewKey'}` (no params) or `{formatIntl('intl.myNewKey', { x })}` (with params).
+
+### Translation feature (LibreTranslate)
+
+**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`
+
+Default backend: `translate.zocial.social` (self-hosted). Configurable in General Settings.
+
+#### Same-language detection — three layers
+
+When `source=auto`, translation and detection run in parallel to save a round-trip. Detecting "this post is already in my language" is non-trivial:
+
+1. **`/api/translate` response** includes `detectedLanguage`. Checked first.
+2. **Parallel `/api/detect` call** on plain text (HTML stripped + URLs/mentions/hashtags removed). More reliable than the translate endpoint's detection which sees HTML-wrapped input. Only trusted when confidence ≥ 50% and ≥ 10 chars of real text remain.
+3. **Text-similarity fallback**: if the translated output is identical to the input (after stripping HTML), LibreTranslate performed a no-op — treat as same language.
+
+Any of the three layers returning "same language" short-circuits and shows no translation.
+
+---
+
+## Timeline system
+
+### Timeline types and streaming behaviour
+
+| Timeline | WebSocket stream | Background activity | `alwaysStreaming` flag |
+|---|---|---|---|
+| `home` | Permanent, background | Always active | `true` |
+| `notifications` / `notifications/mentions` | Permanent, background | Always active | `true` |
+| `local`, `federated`, `direct` | While page is active | 60 s poll fallback | `false` |
+| `list/*` | While page is active | 60 s poll fallback | `false` |
+| `tag/*` | While page is active | 60 s poll fallback | `false` |
+| `status/*` (thread) | None | Navigate only | `false` |
+| `favorites`, `bookmarks` | None | Paged fetch only | `false` |
+
+The `alwaysStreaming` flag is **not** about WebSocket support — it only controls whether `setupTimeline` may skip a network fetch when the cache is warm. Home/notifications skip because their background stream keeps the cache permanently fresh. Other timelines cannot skip because their stream is stopped when you navigate away.
+
+### Home and notifications: permanent background streaming
+
+**File:** `src/routes/_store/observers/instanceObservers.js`
+
+A single WebSocket is opened for both `home` and `notifications` on instance login. It runs in the background regardless of which page the user is on, and reconnects automatically. It is only torn down on instance switch.
+
+Because the stream continuously delivers new posts, `hasFreshCache` stays `true` for home/notifications and `setupTimeline` almost never issues a network fetch:
+
+```
+!hasFreshCache || (!alwaysStreaming && !fetchedRecently)
+= false         || (false           && ...)
+= false  → no fetch
+```
+
+### Active-only timelines: stream + 60 s poll
+
+**File:** `src/routes/_store/observers/timelineObservers.js`
+
+`shouldObserveTimeline` returns `true` for `local`, `federated`, `direct`, `list/*`, `tag/*`. Returns `false` for `home`, `notifications`, `status/*`, `account/*`.
+
+On every `currentTimeline` change the previous stream is closed and a new one is opened if `shouldObserveTimeline` returns true. The stream therefore only runs while that timeline is visible.
+
+The 60 s poll fires when `mountedTimelines > 0 && currentTimeline`. `mountedTimelines` is incremented in Timeline.html `oncreate` and decremented in `ondestroy`, so the poll is silenced on non-timeline pages.
+
+### `setupTimeline`: when does a fetch happen?
+
+**File:** `src/routes/_actions/timeline.js`
+
+```javascript
+const hasFreshCache   = timelineItemSummaries && !timelineItemSummariesAreStale
+const alwaysStreaming = currentTimeline === 'home' || currentTimeline.startsWith('notifications')
+const fetchedRecently = lastFetchedAt && (Date.now() - lastFetchedAt < 30_000)
+
+if (!hasFreshCache || (!alwaysStreaming && !fetchedRecently)) {
+  // fetch
+}
+```
+
+The **30 s throttle** prevents redundant requests when the user navigates rapidly between timelines or when the 60 s poll fires shortly after a navigate.
+
+### Fresh fetch vs. pagination (`max_id`)
+
+- `fresh=true` → `maxId=null` → no `max_id` in request → API returns newest posts
+- `fresh=false/undefined` → `maxId=undefined` → falls back to `lastTimelineItemId` → older posts
+
+### Sort order and ID helpers
+
+`compareTimelineItemSummaries` is an **ascending** comparator (smaller/older ID first). `mergeArrays` calls it with arguments swapped, inverting the result. The stored `timelineItemSummaries` array is therefore **descending** (newest at index 0).
+
+```
+timelineItemSummaries[0]          → newest → firstTimelineItemId  (streaming anchor)
+timelineItemSummaries[length - 1] → oldest → lastTimelineItemId   (max_id for pagination)
+```
+
+`showMoreItemsForTimeline` does `.sort(compareTimelineItemSummaries).reverse()` before merging — the `.reverse()` converts ascending → descending to match what `mergeArrays` expects.
+
+### New-post buffer and scroll awareness
+
+New posts from streaming or a fresh-fetch re-navigate go into `timelineItemSummariesToAdd`. Timeline.html inserts them immediately if `scrollTop === 0`, otherwise shows a "Show X more" button. This prevents scroll-position jumps when new posts arrive while the user is scrolled down.
+
+The buffer path is used when `fresh && !stale && existingSummaries.length > 0`. Direct insert is used for initial loads, offline fallback, or empty timelines.
+
+### List timeline error handling
+
+List timelines re-fetch every ~60 s, producing more fetch attempts than home/notifications. To avoid noisy "offline" toasts from transient server-side failures:
+
+- HTTP error on `list/*` → empty timeline (e.g. GoToSocial 422 for empty lists)
+- Non-HTTP error on `list/*` → silent cache fallback, no toast
+- Any error on other timelines → "showing offline content" toast + cache fallback
+
+---
+
+## Quote posts
+
+**Design decision:** URL-in-text approach rather than FEP-e232.
+
+Quoted posts are embedded as plain URLs in the post text. The server generates a link preview (card) for the URL. This works universally across all Fediverse server implementations, unlike FEP-e232 which requires server-side support.
+
+Where the server returns a `quote` field (e.g. Akkoma), `Status.html` renders it inline via `<svelte:self status={originalQuote}>`. Some servers (Friendica, some Mastodon federations) return a `quote` field where `account` is `null` for remote posts not yet fully fetched — all computed properties that access `originalAccount` have null guards.
+
+---
+
+## Log system
+
+**File:** `src/routes/_utils/console/hook.ts`
+
+- All `console.*` calls, unhandled promise rejections, and global errors are captured into an in-memory ring buffer (max 100 entries).
+- Logs are persisted to `localStorage` on `pagehide` and survive browser reloads.
+- The eviction strategy preserves `error`/`warn` entries over `log`/`info` when the buffer is full.
+- Logs are viewable at **Settings → Logs**. Manual clear available via "Clear logs" button.
