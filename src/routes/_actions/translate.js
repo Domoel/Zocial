@@ -2,7 +2,10 @@ import { importLibreTranslate } from '../_utils/asyncModules/importLibreTranslat
 import { store } from '../_store/store.js'
 import escapeHtml from 'escape-html'
 import { renderPostHTML } from '../_utils/renderPostHTML.ts'
-async function translate (html, to, from) {
+// supportedSourceCodes: array of language codes supported by the current instance (e.g. ['de','en']).
+// When provided, used to catch cases where LibreTranslate mis-detects an unsupported language
+// (e.g. Finnish) as a supported one (e.g. English) and silently produces a bogus translation.
+async function translate (html, to, from, supportedSourceCodes) {
   const { sourceLanguageNames, translate, detectLanguage } = await importLibreTranslate()
   if (from === 'auto') {
     // Run detect and translate in parallel to save a round trip for the
@@ -23,6 +26,16 @@ async function translate (html, to, from) {
       if ((result.detected && result.detected === to) || (detectedFromDetect && detectedFromDetect === to)) {
         return { content: null, sourceLanguageNames, sameLanguage: true }
       }
+      // If our reliable detect result names a language the instance doesn't support,
+      // surface that error immediately. Without this check, LibreTranslate mis-detects
+      // the source as a supported language (e.g. Finnish → English), silently produces
+      // a bogus translation, and never returns a 400 unsupported-language error.
+      if (detectedFromDetect && supportedSourceCodes && supportedSourceCodes.length > 0 &&
+          !supportedSourceCodes.includes(detectedFromDetect)) {
+        const err = new Error('Unsupported source language: ' + detectedFromDetect)
+        err.type = 'unsupportedLanguage'
+        throw err
+      }
       // Final fallback: if LibreTranslate returned the text completely unchanged it
       // effectively performed a no-op — treat it as same language regardless of what
       // language detection said (handles cases where both detectors misfire).
@@ -31,6 +44,12 @@ async function translate (html, to, from) {
       const outputPlain = toPlain(result.html || '')
       if (inputPlain.length > 10 && inputPlain === outputPlain) {
         return { content: null, sourceLanguageNames, sameLanguage: true }
+      }
+      // The /api/detect call runs on pre-cleaned plain text (HTML/URL/mention-stripped)
+      // and is more reliable than the translate endpoint's own detection on raw HTML input.
+      // Use it to correct the displayed "from X" language when available.
+      if (detectedFromDetect) {
+        result.detected = detectedFromDetect
       }
       return { content: result, sourceLanguageNames }
     }
@@ -61,8 +80,11 @@ export function translateStatus (
   const {
     statusTranslations,
     statusTranslationContents,
-    autoplayGifs
+    autoplayGifs,
+    translationLanguages
   } = store.get()
+  const instanceLangs = translationLanguages && translationLanguages[currentInstance]
+  const supportedSourceCodes = instanceLangs ? instanceLangs.map(l => l.code) : null
   statusTranslations[id] = statusTranslations[id] || {}
   statusTranslations[id].show = true
   if (
@@ -97,7 +119,8 @@ export function translateStatus (
         })
         : '') + status.content,
       to,
-      from
+      from,
+      supportedSourceCodes
     )
       .then(({ content, sourceLanguageNames, sameLanguage }) => {
         const { statusTranslations, statusTranslationContents } = store.get()

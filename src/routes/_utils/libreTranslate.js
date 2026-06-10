@@ -161,12 +161,12 @@ export const targetLanguageNames = {
   zh: 'Chinese (Simplified)'
 }
 export async function detectLanguage (text) {
-  // Strip HTML tags, then also remove URLs, @user@domain mentions, #hashtags and HTML
+  // Strip HTML tags, then remove URLs, mentions (@user or @user@domain), #hashtags and HTML
   // entities — these ASCII tokens survive tag-stripping and pull CLD3 toward English.
   const plainText = text
     .replace(/<[^>]+>/g, ' ')
     .replace(/https?:\/\/\S+/g, ' ')
-    .replace(/@[\w.]+@[\w.-]+/g, ' ')
+    .replace(/@[\w.]+(?:@[\w.-]+)?/g, ' ')
     .replace(/#[A-Za-z0-9_]+/g, ' ')
     .replace(/&(?:[a-z]+|#\d+);/g, ' ')
     .replace(/\s+/g, ' ')
