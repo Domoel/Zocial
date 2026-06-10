@@ -18,24 +18,32 @@ async function translate (html, to, from, supportedSourceCodes) {
     ])
     if (transResult.status === 'fulfilled') {
       const result = transResult.value
-      // The parallel /api/detect call strips HTML, URLs, mentions and hashtags before
-      // sending and is more reliable than LibreTranslate's own detection on the
-      // HTML-wrapped input. Check both so a misdetection in the translate response
-      // doesn't silently show a "translation" of an already-matching-language post.
+      // /api/detect runs on pre-cleaned plain text (HTML/URL/mention-stripped) and is
+      // more reliable than the translate endpoint's detection on raw HTML input.
       const detectedFromDetect = detectResult.status === 'fulfilled' ? detectResult.value : null
-      if ((result.detected && result.detected === to) || (detectedFromDetect && detectedFromDetect === to)) {
-        return { content: null, sourceLanguageNames, sameLanguage: true }
+
+      if (detectedFromDetect) {
+        // We have a reliable detection. Use it exclusively for all checks.
+        // IMPORTANT: unsupported-language check MUST run before same-language check.
+        // If LibreTranslate mis-detects e.g. Finnish as English and the user's target IS
+        // English, result.detected === to would fire "already in your language" before
+        // we ever get a chance to surface the real problem (unsupported language).
+        if (supportedSourceCodes && supportedSourceCodes.length > 0 &&
+            !supportedSourceCodes.includes(detectedFromDetect)) {
+          const err = new Error('Unsupported source language: ' + detectedFromDetect)
+          err.type = 'unsupportedLanguage'
+          throw err
+        }
+        if (detectedFromDetect === to) {
+          return { content: null, sourceLanguageNames, sameLanguage: true }
+        }
+      } else {
+        // No reliable independent detection — fall back to the translate endpoint's result.
+        if (result.detected && result.detected === to) {
+          return { content: null, sourceLanguageNames, sameLanguage: true }
+        }
       }
-      // If our reliable detect result names a language the instance doesn't support,
-      // surface that error immediately. Without this check, LibreTranslate mis-detects
-      // the source as a supported language (e.g. Finnish → English), silently produces
-      // a bogus translation, and never returns a 400 unsupported-language error.
-      if (detectedFromDetect && supportedSourceCodes && supportedSourceCodes.length > 0 &&
-          !supportedSourceCodes.includes(detectedFromDetect)) {
-        const err = new Error('Unsupported source language: ' + detectedFromDetect)
-        err.type = 'unsupportedLanguage'
-        throw err
-      }
+
       // Final fallback: if LibreTranslate returned the text completely unchanged it
       // effectively performed a no-op — treat it as same language regardless of what
       // language detection said (handles cases where both detectors misfire).
@@ -45,9 +53,8 @@ async function translate (html, to, from, supportedSourceCodes) {
       if (inputPlain.length > 10 && inputPlain === outputPlain) {
         return { content: null, sourceLanguageNames, sameLanguage: true }
       }
-      // The /api/detect call runs on pre-cleaned plain text (HTML/URL/mention-stripped)
-      // and is more reliable than the translate endpoint's own detection on raw HTML input.
-      // Use it to correct the displayed "from X" language when available.
+
+      // Use the more reliable detect result for the "Translated from X" display label.
       if (detectedFromDetect) {
         result.detected = detectedFromDetect
       }
