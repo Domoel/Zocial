@@ -27,10 +27,9 @@
       const { params } = this.get()
       const { currentInstance, accessToken, currentInstanceInfo } = this.store.get()
       if (!currentInstance || !accessToken || !currentInstanceInfo) return
-      const streamingApi = (
-        currentInstanceInfo?.configuration?.urls?.streaming ||
-        currentInstanceInfo?.urls?.streaming_api
-      )
+      const cfg = currentInstanceInfo.configuration
+      const streamingApi = (cfg && cfg.urls && cfg.urls.streaming) ||
+        (currentInstanceInfo.urls && currentInstanceInfo.urls.streaming_api)
       if (!streamingApi) return
       const timelineName = `list/${params.listId}`
       const firstStatusId = store.getFirstTimelineItemId(currentInstance, timelineName)
