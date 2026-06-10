@@ -1,171 +1,507 @@
 # Architecture
 
-This document describes some things about the codebase that are worth knowing if you're trying to contribute.
-Basically think of it as a "lay of the land" as well as "weird unusual stuff that may surprise you."
-
-## Overview
-
-Zocial uses [SvelteJS](https://svelte.technology) v2 and [SapperJS](https://sapper.svelte.technology). Most of it is a fairly typical Svelte/Sapper project, but there
-are some quirks, which are described below. This list of quirks is non-exhaustive.
-
-## Why Svelte v2 / Sapper ?
-
-There is [no upgrade path from Svelte v2 to v3](https://github.com/sveltejs/svelte/issues/2462). Doing so would require manually migrating every component over. And in the end, it would probably not change the UX (user experience) of Zocial – only the DX (developer experience).
-
-Similarly, [Sapper would need to be migrated to SvelteKit](https://kit.svelte.dev/docs/migrating). Since Zocial generates static files, there is probably not much benefit in moving from Sapper to SvelteKit.
-
-For this reason, Zocial has been stuck on Svelte v2 and Sapper for a long time. Migrating it is not something I've considered. The [v2 Svelte docs](https://v2.svelte.dev/) are still online, and share many similarities with Svelte v3.
-
-## Prebuild process
-
-The `template.html` is itself templated. The "template template" has some inline scripts, CSS, and SVGs
-injected into it during the build process. SCSS is used for global CSS and themed CSS, but inside of the
-components themselves, it's just vanilla CSS because I couldn't figure out how to get Svelte to run a SCSS
-preprocessor.
-
-## Lots of small files
-
-Highly modular, highly functional, lots of single-function files. Tends to help with tree-shaking and
-code-splitting, as well as avoiding circular dependencies.
-
-## emoji-picker-element is loaded as a third-party bundle
-
-`emoji-picker-element` uses Svelte 3, whereas we use Svelte 2. So it's just imported
-as a bundled custom element, not as a Svelte component.
-
-## Some third-party code is bundled
-
-For various reasons, `autosize`, and `timeago` are forked and bundled into the source code.
-This was either because something needed to be tweaked or fixed, or I was trimming unused code and didn't
-see much value in contributing it back, because it was too Zocial-specific.
-
-## Every Sapper page is "duplicated"
-
-To get a nice animation on the nav bar when you switch columns, every page is lazy-loaded as `LazyPage.html`.
-This "lazy page" is merely delayed a few frames to let the animation run. Therefore there is a duplication
-between `src/routes` and `src/routes/_pages`. The "lazy page" is in the former, and the actual page is in the
-latter. One imports the other.
-
-## There are multiple stores
-
-Originally I conceived of separating out the virtual list into a separate npm package, so I gave it its
-own Svelte store (`virtualListStore.js`). This never happened, but it still has its own store. This is useful
-anyway, because each store has its state maintained in an LRU cache that allows us to keep the scroll position
-in the virtual list e.g. when the user hits the back button.
-
-Also, the main `store.js` store is explicitly
-loaded by every component that uses it. So there's no `store` inheritance; every component just declares
-whatever store it uses. The main `store.js` is the primary one.
-
-## There is a global event bus
-
-It's in `eventBus.ts`. This is useful for some stuff that is hard to do with standard Svelte or DOM events.
+Developer reference for the Zocial codebase. Covers the full "lay of the land" — structure, data flow, non-obvious behaviour, and the reasoning behind deliberate design decisions. Inline code comments cover single-line WHYs; this document covers everything that needs more than one sentence.
 
 ---
 
-## Svelte 2 template syntax constraints
+## Table of Contents
 
-Svelte 2's parser runs **before** Babel/webpack, so `.html` template files have stricter syntax than plain `.js` files.
+1. [Technology Stack](#1-technology-stack)
+2. [Why Svelte v2 / Sapper?](#2-why-svelte-v2--sapper)
+3. [Directory Structure](#3-directory-structure)
+4. [Build System](#4-build-system)
+5. [Routing & Page Architecture](#5-routing--page-architecture)
+6. [State Management](#6-state-management)
+   - [PinaforeStore](#pinaforestore)
+   - [Persisted vs. non-persisted state](#persisted-vs-non-persisted-state)
+   - [Computations](#computations)
+   - [Observers](#observers)
+   - [Mixins](#mixins)
+7. [Database Layer](#7-database-layer)
+8. [API Layer](#8-api-layer)
+   - [HTTP client (`ajax.js`)](#http-client-ajaxjs)
+   - [Error classification](#error-classification)
+   - [Endpoint modules](#endpoint-modules)
+9. [WebSocket Streaming](#9-websocket-streaming)
+   - [TimelineStream](#timelinestream)
+   - [Lifecycle integration](#lifecycle-integration)
+10. [Component Architecture](#10-component-architecture)
+    - [Virtual list](#virtual-list)
+    - [Timeline](#timeline)
+    - [Status](#status)
+    - [Compose](#compose)
+    - [Dialogs](#dialogs)
+11. [Actions Layer](#11-actions-layer)
+12. [Timeline System](#12-timeline-system)
+    - [Timeline types](#timeline-types)
+    - [Permanent background stream (home / notifications)](#permanent-background-stream-home--notifications)
+    - [Active-only timelines (stream + 60 s poll)](#active-only-timelines-stream--60-s-poll)
+    - [setupTimeline — when does a fetch happen?](#setuptimeline--when-does-a-fetch-happen)
+    - [Fresh fetch vs. pagination](#fresh-fetch-vs-pagination)
+    - [Sort order and ID helpers](#sort-order-and-id-helpers)
+    - [New-post buffer and scroll awareness](#new-post-buffer-and-scroll-awareness)
+    - [List timeline error handling](#list-timeline-error-handling)
+13. [Translation System](#13-translation-system)
+14. [Svelte 2 Template Syntax Constraints](#14-svelte-2-template-syntax-constraints)
+15. [Internationalization](#15-internationalization)
+16. [Service Worker & Offline](#16-service-worker--offline)
+17. [Quote Posts](#17-quote-posts)
+18. [Log System](#18-log-system)
+19. [Design Decisions Log](#19-design-decisions-log)
+20. [Version History](#20-version-history)
 
-| Construct | Workaround |
-|---|---|
-| Optional chaining `?.` | `obj && obj.prop` |
-| `{:else if ...}` | nested `{#if}{:else}{#if}...{/if}{/if}` |
-| Numeric separators `60_000` | plain `60000` (only in `.html`; `.js`/`.ts` are fine) |
+---
 
-### `svelte-intl-loader` and `formatIntl`
+## 1. Technology Stack
 
-The loader transforms `'intl.KEY'` strings at build time.
+| Layer | Technology | Notes |
+|---|---|---|
+| UI framework | Svelte v2.16.1 | No upgrade path to v3 — see §2 |
+| SSR / routing | Sapper (Anthropic fork) | Outputs a static site |
+| Bundler | Webpack 5 + esbuild-loader | esbuild for JS transpilation, CSS extraction via mini-css-extract |
+| Language | JavaScript + TypeScript | `.ts` only in utils/db layers; templates are `.html` |
+| Package manager | pnpm 9.4+ | |
+| Database | IndexedDB | Per-instance, one IDB per logged-in account |
+| Styling | SCSS (global) + vanilla CSS (components) | SCSS preprocessor not wired into Svelte component pipeline |
+| Streaming | WebSocket | Auto-reconnect, freeze-aware (Page Lifecycle API) |
+| Translation | LibreTranslate (self-hosted by default) | Backend configurable in settings |
+| Push notifications | Web Push API | Via service worker |
+| OCR | Tesseract.js | Lazy-loaded, for image alt-text extraction |
+| Math rendering | KaTeX | Lazy-loaded |
+| Emoji picker | emoji-picker-element (Svelte 3) | Loaded as a bundled custom element — see §10 |
 
-- Keys **without** `{param}` → compiled to a plain string. Do **not** wrap in `formatIntl()` — it expects an AST object and crashes on a plain string, blanking the entire component.
-- Keys **with** `{param}` → compiled to an AST. Must be wrapped in `formatIntl({ param: value })`.
+---
 
-```html
-<!-- Correct — no params -->
-<p>{'intl.generalSettings'}</p>
+## 2. Why Svelte v2 / Sapper?
 
-<!-- Correct — with params -->
-<p>{formatIntl('intl.rebloggedByAccount', { account: name })}</p>
+There is [no upgrade path from Svelte v2 to v3](https://github.com/sveltejs/svelte/issues/2462). Migrating every component manually would be enormous work for no user-visible improvement (only DX). Similarly, Sapper → SvelteKit would require substantial work while the static-export output is essentially the same.
 
-<!-- WRONG — crashes the component -->
-<p>{formatIntl('intl.generalSettings')}</p>
+Zocial therefore remains on Svelte 2 and Sapper indefinitely. The [v2 Svelte docs](https://v2.svelte.dev/) are still online and share many concepts with v3. See §14 for the resulting syntax constraints.
+
+---
+
+## 3. Directory Structure
+
+```
+/
+├── bin/                    Build scripts (template injection, asset pipeline, SVG sprites)
+├── docs/                   Documentation (this file, guides, screenshots)
+├── docker/                 Docker configuration
+├── src/
+│   ├── client.js           Client-side bootstrap (Sapper client, polyfills)
+│   ├── server.js           Express server for sapper export
+│   ├── service-worker.js   Offline caching, push notifications
+│   ├── global.d.ts         Global TypeScript declarations (e.g. ZOCIAL_IS_BROWSER)
+│   ├── build/              Build-time helpers
+│   ├── inline-script/      Scripts injected inline into template.html at build time
+│   ├── intl/               Locale files (en-US.js is source of truth)
+│   ├── scss/               Global styles and themes
+│   ├── thirdparty/         Vendored/forked libraries (websocket, lodash, timeago, autosize)
+│   └── routes/             All Sapper pages and shared code
+│       ├── _api/           Mastodon API endpoints + HTTP + WebSocket client
+│       ├── _actions/       Pure functions: state mutations, API orchestration, side-effects
+│       ├── _components/    Svelte UI components
+│       ├── _database/      IndexedDB layer (per-instance)
+│       ├── _pages/         Actual page components (see §5)
+│       ├── _static/        Constants, config, metadata
+│       ├── _store/         State management (store, computations, observers, mixins)
+│       └── _utils/         Utilities (DOM, async, text, formatting, etc.)
+├── static/                 Static assets served as-is (fonts, icons)
+├── webpack/                Webpack configuration files
+└── __sapper__/             Build output (not committed)
 ```
 
----
+### Lots of small files
 
-## Intl / Translation system
-
-### Adding a new string
-
-1. Add the key to `src/intl/en-US.js` as the source of truth.
-2. Add translations to `de.js`, `fr.js`, `es.js`, `ru-RU.js` (and any other active locale files).
-3. Use in templates as `{'intl.myNewKey'}` (no params) or `{formatIntl('intl.myNewKey', { x })}` (with params).
-
-### Translation feature (LibreTranslate)
-
-**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`
-
-Default backend: `translate.zocial.social` (self-hosted). Configurable in General Settings.
-
-#### Same-language detection — three layers
-
-When `source=auto`, translation and detection run in parallel to save a round-trip. Detecting "this post is already in my language" is non-trivial:
-
-1. **`/api/translate` response** includes `detectedLanguage`. Checked first.
-2. **Parallel `/api/detect` call** on plain text (HTML stripped + URLs/mentions/hashtags removed). More reliable than the translate endpoint's detection which sees HTML-wrapped input. Only trusted when confidence ≥ 50% and ≥ 10 chars of real text remain.
-3. **Text-similarity fallback**: if the translated output is identical to the input (after stripping HTML), LibreTranslate performed a no-op — treat as same language.
-
-Any of the three layers returning "same language" short-circuits and shows no translation.
+The codebase is highly modular — many single-function files. This aids tree-shaking, code-splitting, and avoids circular dependency issues. When in doubt, put new logic in its own file.
 
 ---
 
-## Timeline system
+## 4. Build System
 
-### Timeline types and streaming behaviour
+### Pipeline overview
 
-| Timeline | WebSocket stream | Background activity | `alwaysStreaming` flag |
+1. **`before-build`** (runs in parallel):
+   - `build-template-html` — Injects inline scripts, CSS, and SVGs into `template.html`.
+   - `build-assets` — Optimises static assets.
+   - `build-webpack-config` — Generates the final webpack config.
+
+2. **`sapper-export`** — Webpack bundles the app (client + server + service-worker), then Sapper crawls and pre-renders every route as static HTML.
+
+Output lands in `__sapper__/`.
+
+### Webpack configs
+
+- `webpack/client.config.js` — Client bundle with code-splitting, CSS extraction, and asset hashing.
+- `webpack/server.config.js` — Server-side bundle used only during SSR / Sapper export.
+- `webpack/service-worker.config.js` — Standalone SW bundle.
+- `webpack/shared.config.js` — Common resolve aliases, version injection, theme-color inlining.
+
+### `svelte-intl-loader`
+
+A custom webpack loader that transforms `'intl.KEY'` string literals at build time into efficient format-message AST objects. See §15 for usage rules.
+
+### Third-party code is vendored
+
+`autosize` and `timeago` are forked and bundled inside `src/thirdparty/`. This was either to tweak behaviour or trim unused code where contributing back wasn't practical.
+
+---
+
+## 5. Routing & Page Architecture
+
+### Sapper routing
+
+Routes live in `src/routes/`. Every `.html` file at the top level maps to a URL. Dynamic segments use `[param]` in filenames.
+
+### Lazy page duplication
+
+**Every page is duplicated.** The file in `src/routes/` is only a thin lazy-loader; the actual page component lives in `src/routes/_pages/`.
+
+```
+src/routes/home.html          ← lazy loader, delays a few frames
+src/routes/_pages/home.html   ← actual page component
+```
+
+The delay lets the nav-bar column animation finish before the page renders. Without it, the animation and the page load fight for resources and the transition looks janky.
+
+### Navigation & animation
+
+`_layout.html` is the app shell. It hosts the nav sidebar and manages swipe/slide animations between columns. Each column change triggers a CSS transition; the lazy-page delay is what makes the timing work.
+
+---
+
+## 6. State Management
+
+### PinaforeStore
+
+`src/routes/_store/store.js` defines `PinaforeStore`, which extends `LocalStorageStore` (a custom Svelte Store). The single `store` instance is the source of truth for all app state.
+
+Every component that needs store state imports `store` directly — there is no Svelte store inheritance. Components declare `{ store }` explicitly.
+
+```javascript
+// Svelte 2 component accessing store
+<script>
+  import { store } from '../_store/store.js'
+</script>
+```
+
+After construction, three things run against the store:
+
+```javascript
+mixins(PinaforeStore)   // add methods to the prototype
+computations(store)     // register derived reactive properties
+observers(store)        // register reactive side-effects
+```
+
+The store is exposed as `window.__store` in development for easy debugging in the browser console.
+
+### Persisted vs. non-persisted state
+
+State is split into two objects at startup:
+
+**Persisted** (`persistedState`) — Written to `localStorage` on every change and restored on startup. Includes all user preferences and session data:
+- `currentInstance`, `loggedInInstances`, `loggedInInstancesInOrder`
+- All UI toggles: `autoplayGifs`, `disableCustomScrollbars`, `hideCards`, `reduceMotion`, `underlineLinks`, …
+- Accessibility options: `disableLongAriaLabels`, `omitEmojiInDisplayNames`, `alwaysShowFocusRing`, …
+- Feature flags: `enableQuotePost`, `defaultUnlistedReplies`, `defaultLocalOnly`, …
+- `composeData` — Unsent compose content, persisted so refreshing doesn't lose a draft.
+- `translationTargetLanguage`, `translationLanguages`
+
+**Non-persisted** (`nonPersistedState`) — In-memory only, reset on every page load:
+- `instanceInfos`, `customEmoji`, `instanceFilters`, `instanceLists` — fetched fresh each login
+- `polls`, `verifyCredentials`, `repliesShown`, `sensitivesShown` — ephemeral UI state
+- `online` — live navigator.onLine status
+- `statusTranslations`, `statusTranslationContents` — translation results
+- `mountedTimelines` — count of mounted Timeline components (guards the 60 s poll)
+
+### Computations
+
+Files in `src/routes/_store/computations/`. Computed values are derived from store state reactively — when dependencies change, the computed value updates automatically.
+
+Key computation files:
+- `instanceComputations.js` — Instance-dependent derived state (current instance info, streaming API URL, capabilities)
+- `timelineComputations.js`, `timelineFilterComputations.js` — Timeline metadata and filtered views
+- `navComputations.js` — Navigation structure, pinned pages, badge counts
+- `loggedInComputations.js` — Login state, current user
+- `badgeComputations.js` — Notification and follow-request badge counts
+
+### Observers
+
+Files in `src/routes/_store/observers/`. Observers react to store state changes and trigger side-effects. They are the "reactive glue" between state and the outside world (WebSockets, browser APIs, etc.).
+
+Key observers:
+- `instanceObservers.js` — Opens the permanent home/notifications WebSocket when `currentInstance` changes.
+- `timelineObservers.js` — Opens/closes the active-timeline WebSocket when `currentTimeline` changes; runs the 60 s poll fallback.
+- `notificationObservers.js` — Desktop notification dispatch.
+- `wordFilterObservers.js` — Re-applies word filters when they change.
+- `pageVisibilityObservers.js`, `themeObservers.js`, `resizeObservers.js` — Browser API integrations.
+- `customEmojiObservers.js` — Refreshes custom emoji on instance switch.
+
+### Mixins
+
+Files in `src/routes/_store/mixins/`. Mixins add methods directly to `PinaforeStore.prototype`. These are the "verbs" of the store — things you actively do, not things that are derived.
+
+- `instanceMixins.js` — `setInstanceData`, `getForTimeline`, `setForTimeline`, etc.
+- `timelineMixins.js` — `setForCurrentTimeline`, `getFirstTimelineItemId`, `getLastTimelineItemId`
+- `statusMixins.js` — Status/notification state helpers
+- `composeMixins.js` — Compose dialog state
+- `autosuggestMixins.js` — Autocomplete state
+
+---
+
+## 7. Database Layer
+
+**Location:** `src/routes/_database/`
+
+### Design
+
+One IndexedDB database per logged-in instance (keyed by instance hostname). This isolates all cached data per account and allows switching accounts without data contamination.
+
+### Async proxy pattern
+
+`database.js` re-exports `asyncDatabase.js`, which is a lazy proxy. The actual database module is only imported the first time a method is called — typically the first time a timeline needs to read or write. This avoids loading IndexedDB code before the user is logged in.
+
+### Lifecycle
+
+`databaseLifecycle.ts` manages IDB connection creation and migration:
+- Opens a connection with `indexedDB.open(instanceName, version)`.
+- Applies incremental migrations via a versioned `migrations` array — each migration function receives `(db, tx, next)` and calls `next()` when done.
+- Caches open connections in `databaseCache` so repeated calls are fast.
+
+Connections are closed when the page is frozen (Page Lifecycle API) to prevent locks from blocking background tabs.
+
+### Storage layout
+
+The database stores:
+- **Statuses** — Full status objects (used by all timelines)
+- **Notifications** — Notification objects
+- **Timeline item lists** — Ordered references (IDs) for each named timeline, enabling pagination
+- **Accounts** — Cached account objects
+- **Relationships** — Follow/block/mute state
+
+### Pagination
+
+`timelines/pagination.js` implements cursor-based pagination. `getTimeline(instanceName, timelineName, maxId, limit)` returns the `limit` items starting after `maxId`, or from the beginning when `maxId` is null.
+
+---
+
+## 8. API Layer
+
+**Location:** `src/routes/_api/`
+
+### HTTP client (`ajax.js`)
+
+All API calls go through `ajax.js`. It wraps `fetch()` with:
+- **Timeout enforcement** — `DEFAULT_TIMEOUT = 20 s`, `WRITE_TIMEOUT = 45 s`, `MEDIA_WRITE_TIMEOUT = 90 s`. Timeouts throw a plain `Error` with no `.status`.
+- **JSON parsing** — Responses are parsed and returned as `{ json, headers }`.
+- **Convenience methods** — `get`, `post`, `put`, `patch`, `del`, `delWithBody`, `getWithHeaders`.
+- **Query string builder** — `paramsString()` handles arrays with Rails `[]` convention.
+- **Link header parser** — `parseNextMaxId()` extracts `max_id` from Mastodon-style `Link: <…>; rel="next"` headers for pagination.
+
+### Error classification
+
+This distinction matters for error handling throughout the app:
+
+| Error source | `err.status` | Example |
+|---|---|---|
+| HTTP ≥ 300 | Set (e.g. `422`, `429`) | Server rejected request |
+| Timeout | `undefined` | Fetch took > 20 s |
+| Network error | `undefined` | `TypeError: Failed to fetch` |
+
+Code that needs to distinguish "server said something" from "no connection" checks `e.status`.
+
+### Endpoint modules
+
+Endpoints are grouped into ~42 single-responsibility files:
+- `timelines.js` — Timeline fetching (home, local, federated, direct, list, tag)
+- `statuses.js` — Fetch, create, delete, edit
+- `instances.js` — Instance info (v2/v1 endpoints, nodeinfo)
+- `oauth.js` — Client credentials, authorization flow
+- `stream/TimelineStream.js` — WebSocket streaming (see §9)
+- Individual action files for: `favorite`, `reblog`, `bookmark`, `pin`, `mute`, `block`, `follow`, etc.
+
+---
+
+## 9. WebSocket Streaming
+
+### TimelineStream
+
+`src/routes/_api/stream/TimelineStream.js` wraps the vendored `WebSocketClient` with:
+- **Event emitter** (via `mitt`): emits `open`, `close`, `reconnect`, `message`.
+- **First-open vs. reconnect distinction** — `open` fires once; subsequent reconnects fire `reconnect` instead.
+- **Lifecycle integration** — Pauses the WebSocket when the page is frozen; resumes on unfreeze or `active` state.
+- **Online/offline handling** — Closes the socket on `offline`, reopens and resets backoff on `online`.
+- **Backoff reset** — When the connection drops and comes back, `ws.reset()` + `ws.reconnect()` resets the exponential backoff so new posts arrive quickly.
+
+### Lifecycle integration
+
+The Page Lifecycle API (`src/routes/_utils/lifecycle.ts`) maps browser lifecycle states to events. `TimelineStream` listens to `statechange`:
+- `frozen` → pause (close socket to avoid battery drain in background tabs)
+- `unfrozen` → unpause (recreate socket)
+- `active` → trigger reconnect check
+
+This means streams automatically recover after the device wakes from sleep or the browser unfreezes a background tab.
+
+### Stream URL
+
+`getStreamUrl.ts` builds the WebSocket URL from the instance's `streaming_api` URL (extracted from the instance info response) plus the access token and timeline name.
+
+---
+
+## 10. Component Architecture
+
+**Location:** `src/routes/_components/`
+
+### Virtual list
+
+The virtual list renders only items visible in the viewport plus a small buffer. This is what makes Zocial fast on timelines with thousands of items.
+
+- `VirtualList.html` — Outer scroller. Tracks `scrollTop`, manages visible window.
+- `VirtualListContainer.html` — Viewport with fixed height; positions items absolutely.
+- `VirtualListItem.html` / `VirtualListLazyItem.html` — Individual item slots. Lazy items defer rendering until they scroll near the viewport.
+- `virtualListStore.js` — Separate Svelte store (LRU cache per "realm") that tracks scroll position per timeline. This is why hitting the back button restores your scroll position — the position is stored per-timeline key.
+
+The virtual list was originally intended to become a standalone npm package (hence its own store). This never happened, but the separation remains and is useful.
+
+### Timeline
+
+`Timeline.html` (≈ 12 KB) is the main feed component. It:
+- Subscribes to `timelineItemSummaries` from the store.
+- Renders summaries as `StatusVirtualListItem` or `NotificationVirtualListItem` inside the virtual list.
+- Watches `timelineItemSummariesToAdd` (the buffer) and either inserts items immediately (when scrolled to top) or shows the "Show X more" button.
+- Calls `setupTimeline()` on mount and on tab re-activation.
+- Increments `mountedTimelines` in `oncreate`, decrements in `ondestroy` — this gates the 60 s poll.
+- Emits scroll events upward for `ScrollToTopButton` and scroll-restoration.
+
+Props flow down via `createMakeProps()` (`_actions/createMakeProps.js`) which builds the per-item prop objects from summaries.
+
+### Status
+
+`Status.html` (≈ 30 KB) is the largest component. It handles:
+- **Header** — boost/reply attribution, author avatar, display name, timestamp, thread position lines.
+- **Content** — HTML post content (sanitised by `renderPostHTML.ts`), spoiler toggle, long-post collapse.
+- **Media** — `StatusMediaAttachments.html` renders images, video, audio with blurhash placeholders.
+- **Card** — `StatusCard.html` for link previews.
+- **Poll** — `StatusPoll.html` with live vote submission.
+- **Reactions** — `StatusReactions.html` for emoji reactions (Mastodon 3.5+ / Pleroma).
+- **Toolbar** — Reply, boost, favorite, bookmark, more-menu.
+- **Quoted posts** — `<svelte:self status={originalQuote} quotedBy={uuid}>` renders a nested Status inline when the server provides a `quote` field.
+
+All computed properties that access `originalAccount` have null guards — some servers (Friendica, some Mastodon federations) return a `quote` object with `account: null` for remote posts not yet fetched.
+
+### Compose
+
+The compose system is split across ≈ 18 files:
+- `ComposeBox.html` — Outermost container. Manages submit, save-draft, keyboard shortcuts.
+- `ComposeInput.html` — Contenteditable text area with mention/hashtag/emoji autocomplete.
+- `ComposeAutosuggest.html` — Dropdown for autocomplete results.
+- `ComposeToolbar.html` — Visibility selector, content-warning toggle, attachment button, scheduling.
+- `ComposeMediaItem.html` — Per-attachment preview with alt-text editor and focal-point picker.
+- `ComposePoll.html` — Poll option editor.
+
+The compose state (`composeData`) is persisted to localStorage so an unsent draft survives a page reload.
+
+### Dialogs
+
+`src/routes/_components/dialog/` contains ≈ 28 modal components built on `ModalDialog.html` (keyboard-trapped, accessible, focus-managed via `a11y-dialog`). Key ones:
+- `StatusOptionsDialog.html` — The "…" more-menu for a status (delete, mute conversation, report, etc.).
+- `MediaDialog.html` — Full-screen media viewer.
+- `EmojiDialog.html` — Emoji picker (wraps `emoji-picker-element` custom element).
+
+`emoji-picker-element` uses Svelte 3, which is incompatible with Svelte 2. It is loaded as a **bundled custom element** (not a Svelte component) to work around this.
+
+---
+
+## 11. Actions Layer
+
+**Location:** `src/routes/_actions/`
+
+Actions are async functions (not Svelte components) that orchestrate API calls, store mutations, and database writes. They are the layer between user interactions and the raw API/store.
+
+Structure (≈ 64 files, grouped by domain):
+- **Timeline orchestration** — `timeline.js` (master), `addStatusOrNotification.js`, `rehydrateStatusOrNotification.js`
+- **Status CRUD** — `statuses.js`, `delete.js`, `edit.js`, `updateStatus.js`, `deleteAndRedraft.js`
+- **Status interactions** — `favorite.js`, `reblog.js`, `bookmark.js`, `pin.js`, `react.js`, `polls.js`
+- **Compose & publishing** — `compose.js`, `showComposeDialog.js`, `composePoll.js`, `quote.js`
+- **Account / social** — `follow.js`, `unfollow.js`, `block.js`, `mute.js`, `accounts.js`, `updateProfile.js`
+- **Instance & auth** — `instances.js`, `addInstance.js`, `pushSubscription.js`
+- **Search & filters** — `search.js`, `filters.js`, `blockedAndMuted.js`
+- **Translation** — `translate.js`, `fetchTranslationLanguages.js`
+- **Media** — `media.js`
+- **Streaming** — `stream/streaming.js` (creates `TimelineStream`, feeds items into the store)
+
+Heavy modules (database, compose box, virtual list, translate) are always imported via `_utils/asyncModules/` wrappers so they are code-split and only loaded on demand.
+
+---
+
+## 12. Timeline System
+
+This is the most complex part of the codebase. Read carefully.
+
+### Timeline types
+
+| Timeline key | WebSocket | Background when away | `alwaysStreaming` |
 |---|---|---|---|
-| `home` | Permanent, background | Always active | `true` |
-| `notifications` / `notifications/mentions` | Permanent, background | Always active | `true` |
-| `local`, `federated`, `direct` | While page is active | 60 s poll fallback | `false` |
-| `list/*` | While page is active | 60 s poll fallback | `false` |
-| `tag/*` | While page is active | 60 s poll fallback | `false` |
-| `status/*` (thread) | None | Navigate only | `false` |
-| `favorites`, `bookmarks` | None | Paged fetch only | `false` |
+| `home` | Permanent | Yes (instanceObservers) | `true` |
+| `notifications`, `notifications/mentions` | Permanent | Yes (instanceObservers) | `true` |
+| `local`, `federated`, `direct` | While active | No | `false` |
+| `list/<id>` | While active | No | `false` |
+| `tag/<name>` | While active | No | `false` |
+| `status/<id>` (thread) | None | No | `false` |
+| `favorites`, `bookmarks` | None | No | `false` |
 
-The `alwaysStreaming` flag is **not** about WebSocket support — it only controls whether `setupTimeline` may skip a network fetch when the cache is warm. Home/notifications skip because their background stream keeps the cache permanently fresh. Other timelines cannot skip because their stream is stopped when you navigate away.
+**`alwaysStreaming`** is not about whether WebSocket streaming is supported. It is a store-level flag that tells `setupTimeline` "this timeline's cache is kept fresh by a permanent background stream, so skip the network fetch when the cache is warm." Only home and notifications qualify.
 
-### Home and notifications: permanent background streaming
+### Permanent background stream (home / notifications)
 
-**File:** `src/routes/_store/observers/instanceObservers.js`
+**File:** `instanceObservers.js`
 
-A single WebSocket is opened for both `home` and `notifications` on instance login. It runs in the background regardless of which page the user is on, and reconnects automatically. It is only torn down on instance switch.
+When `currentInstance` changes (login or account switch), `refreshInstanceDataAndStream` runs:
+1. Fetches instance info, verify-credentials, custom emoji, lists, filters, follow requests (low-priority idle tasks), push subscription — all in parallel.
+2. Opens a `TimelineStream` for the `home` timeline. This single stream delivers both home posts and notifications (Mastodon's streaming API multiplexes them on the `user` channel).
+3. The stream persists regardless of which page the user navigates to. It is only torn down on instance switch.
 
-Because the stream continuously delivers new posts, `hasFreshCache` stays `true` for home/notifications and `setupTimeline` almost never issues a network fetch:
+Because the stream continuously inserts new items, `hasFreshCache` stays `true` for home/notifications. `setupTimeline` almost never issues a network fetch for these timelines:
 
 ```
 !hasFreshCache || (!alwaysStreaming && !fetchedRecently)
 = false         || (false           && ...)
-= false  → no fetch
+= false  → skip fetch
 ```
 
-### Active-only timelines: stream + 60 s poll
+### Active-only timelines (stream + 60 s poll)
 
-**File:** `src/routes/_store/observers/timelineObservers.js`
+**File:** `timelineObservers.js`
 
-`shouldObserveTimeline` returns `true` for `local`, `federated`, `direct`, `list/*`, `tag/*`. Returns `false` for `home`, `notifications`, `status/*`, `account/*`.
+`shouldObserveTimeline(timeline)` returns `true` for: `local`, `federated`, `direct`, `list/*`, `tag/*`. Returns `false` for everything else (home, notifications, thread, account pages, settings).
 
-On every `currentTimeline` change the previous stream is closed and a new one is opened if `shouldObserveTimeline` returns true. The stream therefore only runs while that timeline is visible.
+On every `currentTimeline` change:
+1. The previous stream is closed.
+2. If `shouldObserveTimeline` is true, a new `TimelineStream` is opened.
+3. The stream only runs while that specific timeline is active.
 
-The 60 s poll fires when `mountedTimelines > 0 && currentTimeline`. `mountedTimelines` is incremented in Timeline.html `oncreate` and decremented in `ondestroy`, so the poll is silenced on non-timeline pages.
+**60 s poll (streaming fallback):**
 
-### `setupTimeline`: when does a fetch happen?
+```javascript
+scheduleInterval(() => {
+  const { mountedTimelines, currentTimeline } = store.get()
+  if (mountedTimelines > 0 && currentTimeline) setupTimeline()
+}, 60000, false)
+```
+
+- `mountedTimelines` is incremented in `Timeline.html oncreate`, decremented in `ondestroy`. This ensures the poll is silenced on settings pages, profile pages, etc.
+- `runOnActive: false` because `Timeline.html` already calls `setupTimeline` when the tab becomes active.
+- `setupTimeline` has its own 30 s throttle, so if a stream already delivered fresh data this poll is a no-op.
+
+### `setupTimeline` — when does a fetch happen?
 
 **File:** `src/routes/_actions/timeline.js`
 
 ```javascript
 const hasFreshCache   = timelineItemSummaries && !timelineItemSummariesAreStale
-const alwaysStreaming = currentTimeline === 'home' || currentTimeline.startsWith('notifications')
+const alwaysStreaming = currentTimeline === 'home' ||
+                        currentTimeline.startsWith('notifications')
+const lastFetchedAt   = store.getForTimeline(currentInstance, currentTimeline, 'lastFetchedAt')
 const fetchedRecently = lastFetchedAt && (Date.now() - lastFetchedAt < 30_000)
 
 if (!hasFreshCache || (!alwaysStreaming && !fetchedRecently)) {
@@ -173,55 +509,349 @@ if (!hasFreshCache || (!alwaysStreaming && !fetchedRecently)) {
 }
 ```
 
-The **30 s throttle** prevents redundant requests when the user navigates rapidly between timelines or when the 60 s poll fires shortly after a navigate.
+A fetch only happens when **either**:
+- There is no warm cache (first load, stale, or after offline recovery), **or**
+- The timeline is not `alwaysStreaming` **and** it was last fetched more than 30 seconds ago.
 
-### Fresh fetch vs. pagination (`max_id`)
+The **30 s throttle** (`fetchedRecently`) prevents redundant requests during rapid navigation between timelines.
 
-- `fresh=true` → `maxId=null` → no `max_id` in request → API returns newest posts
-- `fresh=false/undefined` → `maxId=undefined` → falls back to `lastTimelineItemId` → older posts
+### Fresh fetch vs. pagination
+
+```
+fresh=true  → maxId=null      → no max_id param → API returns newest posts
+fresh=false → maxId=undefined → falls through to lastTimelineItemId → posts older than current bottom
+```
+
+| Call site | `fresh` | Result |
+|---|---|---|
+| `setupTimeline` (navigate, poll, stream reconnect) | `true` | Fetches newest posts |
+| `fetchMoreItemsAtBottomOfTimeline` (infinite scroll) | `false`/omitted | Paginates older posts |
+
+`favorites` and `bookmarks` bypass this entirely and always use `fetchPagedItems`, which follows the `Link: rel="next"` header because Mastodon uses internal pagination IDs for those endpoints.
 
 ### Sort order and ID helpers
 
-`compareTimelineItemSummaries` is an **ascending** comparator (smaller/older ID first). `mergeArrays` calls it with arguments swapped, inverting the result. The stored `timelineItemSummaries` array is therefore **descending** (newest at index 0).
+**Files:** `_utils/statusIdSorting.js`, `_utils/arrays.js`
+
+`compareTimelineItemSummaries` is an **ascending** comparator — it returns negative when the left ID is smaller (older). However, `mergeArrays` calls `comparator(right, left)` with arguments swapped, which inverts the result. The stored `timelineItemSummaries` array is therefore **descending** (newest at index 0, oldest at the end).
 
 ```
-timelineItemSummaries[0]          → newest → firstTimelineItemId  (streaming anchor)
-timelineItemSummaries[length - 1] → oldest → lastTimelineItemId   (max_id for pagination)
+timelineItemSummaries[0]            → newest → firstTimelineItemId (streaming anchor: since_id)
+timelineItemSummaries[length - 1]   → oldest → lastTimelineItemId  (pagination: max_id)
 ```
 
-`showMoreItemsForTimeline` does `.sort(compareTimelineItemSummaries).reverse()` before merging — the `.reverse()` converts ascending → descending to match what `mergeArrays` expects.
+Mastodon uses string IDs (Snowflake, decimal) and Pleroma uses base62. `statusIdSorting.js` zero-pads both to a common length so string comparison gives the correct chronological order.
+
+`showMoreItemsForTimeline` does `.sort(compareTimelineItemSummaries).reverse()` before calling `addTimelineItemSummaries`. The `.reverse()` converts the ascending sort result back to descending to match what `mergeArrays` expects. This is correct and intentional.
 
 ### New-post buffer and scroll awareness
 
-New posts from streaming or a fresh-fetch re-navigate go into `timelineItemSummariesToAdd`. Timeline.html inserts them immediately if `scrollTop === 0`, otherwise shows a "Show X more" button. This prevents scroll-position jumps when new posts arrive while the user is scrolled down.
+New items from streaming or a re-navigate poll go into `timelineItemSummariesToAdd` (the buffer) rather than directly into `timelineItemSummaries`. `Timeline.html` checks scroll position:
 
-The buffer path is used when `fresh && !stale && existingSummaries.length > 0`. Direct insert is used for initial loads, offline fallback, or empty timelines.
+```
+scrollTop === 0 AND no "show more" header visible
+  → insert items directly into timeline ("chat room mode")
+
+scrollTop > 0
+  → increment buffer count, show "Show X more" button at top
+```
+
+This prevents scroll-position jumps when new posts arrive while the user is reading further down.
+
+The buffer path is taken when: `fresh && !stale && existingSummaries.length > 0`.
+Direct insert is used for: initial loads, offline fallback, or empty timelines.
 
 ### List timeline error handling
 
-List timelines re-fetch every ~60 s, producing more fetch attempts than home/notifications. To avoid noisy "offline" toasts from transient server-side failures:
+List timelines have `alwaysStreaming=false`, so they re-fetch every ~60 s (poll fires, 30 s throttle expires). More fetches = more chances for transient failures = more "internet connection problems" toasts, even when the user's connection is actually fine.
 
-- HTTP error on `list/*` → empty timeline (e.g. GoToSocial 422 for empty lists)
-- Non-HTTP error on `list/*` → silent cache fallback, no toast
-- Any error on other timelines → "showing offline content" toast + cache fallback
+To avoid this noise, errors in list timeline fetches are handled differently:
+
+```
+HTTP error (e.status set) on list/*
+  → show empty timeline (e.g. GoToSocial returns 422 for empty lists — this is not a network error)
+
+Non-HTTP error (timeout, network blip) on list/*
+  → silent cache fallback, no toast
+
+Any error on other timelines
+  → "intl.showingOfflineContent" toast + cache fallback
+```
+
+After catching a non-HTTP error on a list timeline, the 60 s poll simply continues on the next tick. The user sees stale content quietly rather than repeated error toasts.
 
 ---
 
-## Quote posts
+## 13. Translation System
 
-**Design decision:** URL-in-text approach rather than FEP-e232.
+**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`
 
-Quoted posts are embedded as plain URLs in the post text. The server generates a link preview (card) for the URL. This works universally across all Fediverse server implementations, unlike FEP-e232 which requires server-side support.
+### Backend
 
-Where the server returns a `quote` field (e.g. Akkoma), `Status.html` renders it inline via `<svelte:self status={originalQuote}>`. Some servers (Friendica, some Mastodon federations) return a `quote` field where `account` is `null` for remote posts not yet fully fetched — all computed properties that access `originalAccount` have null guards.
+Default backend: `translate.zocial.social` (self-hosted LibreTranslate). Configurable in General Settings → Translation language. The proxy routes `/api/translate` and `/api/detect` to the configured backend, keeping the access key server-side.
+
+### Same-language detection — three layers
+
+When `source=auto`, translation and detection run in parallel (via `Promise.allSettled`) to save a round-trip for the common case (posts in a different language).
+
+Detecting "this post is already in my language" is surprisingly hard because:
+- LibreTranslate's own `detectedLanguage` in the translate response is unreliable when the input contains HTML.
+- CLD3 (the underlying language detector) gets confused by ASCII tokens — URLs, @mentions, #hashtags — that survive HTML tag-stripping.
+
+Three layers of defense:
+
+1. **`/api/translate` `detectedLanguage`** — The translate endpoint returns a detected language. Checked first.
+
+2. **Parallel `/api/detect` call** on cleaned plain text — HTML tags stripped, then URLs, `@user@domain` mentions, `#hashtags`, and HTML entities removed before sending. Only trusted when confidence ≥ 50% and ≥ 10 characters of real text remain after cleaning.
+
+3. **Text-similarity fallback** — If the translated HTML, after tag-stripping, is identical to the input, LibreTranslate performed a no-op. Treated as same language regardless of what the detectors said.
+
+Any layer returning "same language" short-circuits: no translation panel is shown, the button collapses silently.
 
 ---
 
-## Log system
+## 14. Svelte 2 Template Syntax Constraints
+
+Svelte 2's parser runs **before** Babel/webpack. This means `.html` template files cannot use JavaScript syntax that the Svelte parser doesn't understand, even though the same syntax works fine in `.js` or `.ts` files.
+
+### Forbidden in `.html` files
+
+| Syntax | Error | Workaround |
+|---|---|---|
+| `obj?.prop` | ParseError: unexpected token | `obj && obj.prop` |
+| `obj?.method?.()` | ParseError | `obj && obj.method && obj.method()` |
+| `{:else if condition}` | ParseError | `{:else}{#if condition}…{/if}{/if}` |
+| `60_000` (numeric separator) | ParseError | `60000` |
+
+These restrictions apply **only** to `.html` files. `.js` and `.ts` files go through Babel/esbuild and support full ES2021+.
+
+### Computed properties
+
+Svelte 2 computed properties are defined in the `<script>` block's `computed` object. They re-run whenever their dependencies change. A crash inside a computed (e.g. a `TypeError`) blanks the entire component without a visible error in production.
+
+---
+
+## 15. Internationalization
+
+**Source of truth:** `src/intl/en-US.js`
+
+### Adding a new string
+
+1. Add the key to `src/intl/en-US.js`.
+2. Add translations to `de.js`, `fr.js`, `es.js`, `ru-RU.js`, and any other active locale files. If no translation exists, the English fallback is used automatically.
+3. Use in templates:
+   - No parameters: `{'intl.myKey'}` — compiles to a plain string at build time.
+   - With parameters: `{formatIntl('intl.myKey', { param: value })}` — compiles to an AST at build time.
+
+### `svelte-intl-loader` + `formatIntl` rule
+
+The webpack loader transforms `'intl.KEY'` at build time:
+- **No `{param}`** → plain string. Do **not** wrap in `formatIntl()`. It expects an AST object; passing a plain string crashes the computed and blanks the entire component.
+- **With `{param}`** → AST object. Must be wrapped in `formatIntl({ param: value })`.
+
+```html
+<!-- Correct -->
+<p>{'intl.generalSettings'}</p>
+<p>{formatIntl('intl.rebloggedBy', { account: name })}</p>
+
+<!-- WRONG — blanks the component -->
+<p>{formatIntl('intl.generalSettings')}</p>
+```
+
+---
+
+## 16. Service Worker & Offline
+
+**File:** `src/service-worker.js`
+
+### Caching strategy
+
+- **Pre-cache at install** — All webpack-emitted assets (`WEBPACK_ASSETS`) and static files (`ASSETS`) are cached with a version timestamp. Old caches are deleted on activate.
+- **Cache-first for static assets** — `.woff2` fonts, Tesseract worker, KaTeX files.
+- **Network-first for everything else** — API calls, HTML pages.
+
+### Offline behaviour
+
+When the network is unavailable:
+- Static assets are served from cache.
+- API calls fail; the app detects `navigator.onLine === false` and shows cached timeline content (see §12).
+- The `online` store key tracks connectivity in real time via `window` online/offline events.
+
+### Push notifications
+
+The service worker handles Web Push messages. `pushSubscription.js` manages registration with the instance's push endpoint. Desktop notifications are dispatched from the SW's `push` event handler.
+
+---
+
+## 17. Quote Posts
+
+### Design decision: URL-in-text, not FEP-e232
+
+Quoted posts are shared as plain URLs embedded in the post text. The server generates a link preview (card) for the URL. This approach is universal — it works with every Fediverse server regardless of quote-post support.
+
+FEP-e232 (the ActivityPub quote extension) was considered but rejected because it requires server-side implementation. At the time of this decision, server support was fragmented and implementation would have only worked for a subset of users.
+
+**Tradeoff:** On servers that don't natively support the `quote` field, there is no inline rendering — the quote appears only as a link preview card.
+
+### Inline rendering (where supported)
+
+Where the server returns a `quote` field (e.g. Akkoma, some Mastodon forks), `Status.html` renders it inline using `<svelte:self status={originalQuote} quotedBy={uuid}>`. This is a recursive self-reference — a Status component renders another Status inside it.
+
+### Null-safety
+
+Some servers (Friendica, some Mastodon federations) return a `quote` object where `account` is `null` — the quoted post is from a remote server not yet fully fetched. All computed properties that access `originalAccount` have explicit null guards:
+
+- `showQuote` — requires `originalQuote && originalQuote.account` before rendering
+- `originalAccountId`, `originalAccountDisplayName`, `originalAccountEmojis` — all guard `originalAccount && …`
+
+Without these guards, accessing `originalAccount.id` throws a `TypeError` that crashes the entire timeline.
+
+---
+
+## 18. Log System
 
 **File:** `src/routes/_utils/console/hook.ts`
 
-- All `console.*` calls, unhandled promise rejections, and global errors are captured into an in-memory ring buffer (max 100 entries).
-- Logs are persisted to `localStorage` on `pagehide` and survive browser reloads.
-- The eviction strategy preserves `error`/`warn` entries over `log`/`info` when the buffer is full.
-- Logs are viewable at **Settings → Logs**. Manual clear available via "Clear logs" button.
+### What is captured
+
+All `console.*` calls, unhandled promise rejections, and global errors are intercepted and stored in an in-memory ring buffer (max 100 entries). The buffer evicts `log`/`info` entries first when full, preserving `error`/`warn` entries.
+
+### Persistence
+
+Logs are written to `localStorage` on `pagehide` and read back on startup, so they survive browser reloads. This is intentional: Ctrl+R is often the first response to seeing an error, and flushing logs on reload would destroy the very evidence needed to debug.
+
+### Viewing logs
+
+**Settings → Logs** shows the captured log entries. "Copy logs" exports them including the app version banner for support context. The `showAllLogs` preference (persisted) toggles between showing only `error`/`warn` (default) and all log levels.
+
+### Network error severity
+
+Network errors (`TypeError: Failed to fetch`, timeouts, non-2xx responses) are logged as `warn` rather than `error`. This keeps them visually distinct from real bugs in the log viewer.
+
+---
+
+## 19. Design Decisions Log
+
+This section captures significant design decisions, feature choices, and architectural tradeoffs as they are made. Add a new entry whenever a non-obvious or deliberate choice is made — during feature implementations, bug fixes, or API compatibility work. **Convention for future decisions: briefly discuss with the user whether the decision is worth documenting here before moving on.**
+
+---
+
+### [v1.5.0] Quote post implementation: URL-in-text over FEP-e232
+
+**Decision:** Embed quoted posts as plain URLs in the post body. The server provides a link-preview card.
+
+**Rationale:** FEP-e232 requires server-side support that was not broadly available at the time. A URL-in-text approach works on every Fediverse implementation immediately, with no server cooperation required.
+
+**Tradeoff:** No inline rendering on servers that don't expose a `quote` field. Accepted — broad compatibility outweighs rich rendering for a minority of users.
+
+**Files:** `_actions/quote.js`, `Status.html` (computed `showQuote`, `originalAccount*`)
+
+---
+
+### [v1.6.0] Translation backend: LibreTranslate over SimplyTranslate/Google
+
+**Decision:** Replaced SimplyTranslate (Google Translate proxy) with LibreTranslate — a fully open-source engine. Default backend is `translate.zocial.social` (self-hosted). Configurable via `TRANSLATE_API` environment variable. Requests route through nginx so no CORS configuration is needed on the backend.
+
+**Rationale:** SimplyTranslate/Google dependency was non-open-source and fragile. LibreTranslate is fully self-hostable, API-stable, and keeps user content off third-party servers by default.
+
+**Status:** Backend is live but only updated manually. Will reconsider if `libretranslate.com` reopens free public access.
+
+---
+
+### [v1.6.1] Same-language detection: three-layer approach
+
+**Decision:** Use three independent layers to detect "post is already in my language": (1) `detectedLanguage` from the translate response, (2) a parallel `/api/detect` call on aggressively cleaned plain text, (3) text-similarity fallback (no-op translation = same language).
+
+**Rationale:** CLD3 (LibreTranslate's detector) is confused by ASCII noise in Fediverse posts — URLs, @mentions, #hashtags — causing frequent misdetection. A single detection layer was insufficient. The text-similarity fallback catches cases where both detectors misfire.
+
+**Confidence threshold:** Detections below 50% confidence are ignored.
+
+---
+
+### [v1.7.0] List timeline errors: silent cache fallback instead of toast
+
+**Decision:** Non-HTTP errors (timeouts, network blips) on `list/*` timelines fall back to cached content silently — no "internet connection problems" toast.
+
+**Rationale:** List timelines re-fetch every ~60 s (no permanent background stream). This means far more fetch attempts than home/notifications, so transient server-side hiccups were generating repeated noisy toasts even when the user's connection was fine. HTTP errors (e.g. GoToSocial's 422 for empty lists) are still surfaced as empty-timeline state, not toasts.
+
+---
+
+### [v1.7.0] 60 s poll: gated on `mountedTimelines > 0`
+
+**Decision:** The 60 s fallback poll only fires when at least one `Timeline` component is mounted (`mountedTimelines > 0`).
+
+**Rationale:** Without this guard the poll would continue firing in the background when the user navigates to settings, a profile page, etc. — wasting requests and potentially surfacing stale errors. `mountedTimelines` is a counter (not a boolean) so it stays correct during route transitions where a new Timeline mounts before the old one destroys.
+
+---
+
+### [v1.7.0] Log persistence: survive reloads, manual clear only
+
+**Decision:** Captured logs persist across browser reloads. Only cleared explicitly via the "Clear logs" button (with a confirmation dialog added in v1.1.0).
+
+**Rationale:** Ctrl+R is a reflex action after seeing an error. Flushing on reload would destroy the evidence needed to diagnose the problem. The confirmation dialog prevents accidental loss.
+
+---
+
+### [v1.7.0] `alwaysStreaming` flag: store-layer optimisation only
+
+**Decision:** The `alwaysStreaming` flag (true only for `home` and `notifications`) controls whether `setupTimeline` may skip a network fetch when the cache is warm. It has no relation to whether a WebSocket stream is currently active.
+
+**Rationale:** Home and notifications have a permanent background stream (instanceObservers) that keeps the cache perpetually fresh. Skipping the fetch avoids redundant requests on every visit. Other timelines cannot use this because their stream stops when you navigate away — their cache goes stale.
+
+---
+
+### [v1.4.0] List management from within the app
+
+**Decision:** Add "Manage lists" to the profile "···" menu, and allow creating lists directly in the app.
+
+**Rationale:** GoToSocial users had no other way to manage list memberships — the official Mastodon web UI was unavailable to them. This was the primary driver. The feature was built generically so it works across all backends.
+
+---
+
+### [v1.3.0] In-app profile editing
+
+**Decision:** Implement profile editing (display name, bio, metadata fields, avatar/header upload) inside Zocial rather than directing users to the instance web UI.
+
+**Rationale:** Minimising the need to leave the client improves the self-contained app experience. The Mastodon `PATCH /api/v1/accounts/update_credentials` endpoint is standard across all supported backends.
+
+---
+
+### [v1.3.0] Local-only posting
+
+**Decision:** Add a "local-only" toggle in the compose toolbar. The button is greyed out (but visible) on instances that don't support it.
+
+**Rationale:** Local-only posts are a Mastodon/Pleroma extension widely used on community instances. Surfacing the feature in the UI makes Zocial usable for communities that rely on it. Showing it as disabled (rather than hidden) on unsupported instances makes the feature discoverable.
+
+---
+
+### [v1.5.0] IndexedDB writes moved to background for timeline rendering
+
+**Decision:** After fetching timeline items from the network, render them immediately and write to IndexedDB in the background (`/* no await */ storeFreshTimelineItemsInDatabase(...)`).
+
+**Rationale:** IndexedDB writes are only for offline caching. Waiting for them before rendering added latency users could feel. The worst case if a write fails is that the offline cache is slightly stale — acceptable.
+
+---
+
+### [v1.1.0] Profile posting stats bar
+
+**Decision:** Add a visual bar on profile pages showing the ratio of original posts, replies, and boosts for an account.
+
+**Rationale:** Gives readers a quick signal about posting style (broadcaster vs. conversationalist vs. curator) without needing to scroll through the full timeline. Stats are cached per `instance/accountId` in non-persisted store state so switching between account tabs doesn't refetch.
+
+---
+
+## 20. Version History
+
+Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
+
+| Version | Date | Highlights |
+|---|---|---|
+| **1.0.0** | 2026-06-06 | Initial release — Enafore fork renamed to Zocial |
+| **1.1.0** | 2026-06-06 | Profile posting-stats bar, account join date, confirmation dialog for clearing logs |
+| **1.2.0** | 2026-06-08 | Redesigned landing page, scroll-to-top button in threads |
+| **1.3.0** | 2026-06-08 | In-app profile editing, local-only posting, revoked-token cleanup, API error classification by status code |
+| **1.4.0** | 2026-06-09 | List membership management from profile menu, create-list-in-app (GoToSocial), false "offline" toast fix for empty lists, GoToSocial timeline crash fix (missing URLs) |
+| **1.5.0** | 2026-06-09 | Quote posts (URL-in-text), keyboard shortcut "t" for translation, accessibility for link-preview cards, IndexedDB writes moved to background for immediate timeline rendering |
+| **1.6.0** | 2026-06-09 | Migrated translation from SimplyTranslate/Google to LibreTranslate; `TRANSLATE_API` env var; nginx proxy (no CORS) |
+| **1.6.1** | 2026-06-10 | Same-language detection with parallel detect/translate; language code normalisation (Hebrew, Javanese, Chinese); backend-unreachable crash fix |
+| **1.7.0** | 2026-06-10 | Translation target language selector in settings, per-instance language caching, 60 s poll fallback, list error handling (silent fallback vs. toast) |
