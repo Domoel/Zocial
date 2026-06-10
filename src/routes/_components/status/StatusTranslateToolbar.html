@@ -65,9 +65,10 @@
       translatedFrom: ({ translateContent, translateState }) => {
         if (!(translateState && translateContent)) return
         const detected = translateState.from === 'auto' && translateContent.detected
+        const langKey = detected || translateState.from
         return formatIntl('intl.translated', {
           detected: !!detected,
-          from: translateState.sourceLanguageNames[detected || translateState.from]
+          from: (translateState.sourceLanguageNames && translateState.sourceLanguageNames[langKey]) || langKey
         })
       }
     },

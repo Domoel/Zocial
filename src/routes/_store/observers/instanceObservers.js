@@ -4,6 +4,7 @@ import { setupFollowedHashtagsForInstance } from '../../_actions/followedTags.js
 import { createStream } from '../../_actions/stream/streaming.js'
 import { updatePushSubscriptionForInstance } from '../../_actions/pushSubscription.js'
 import { setupCustomEmojiForInstance } from '../../_actions/emoji.js'
+import { fetchTranslationLanguages } from '../../_actions/fetchTranslationLanguages.js'
 import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
 import { mark, stop } from '../../_utils/marks.js'
 import { store } from '../store.js'
@@ -55,6 +56,7 @@ async function refreshInstanceData (instanceName) {
   scheduleIdleTask(() => setupFiltersForInstance(instanceName).catch(ignoreRefreshError))
   scheduleIdleTask(() => updatePushSubscriptionForInstance(instanceName).catch(ignoreRefreshError))
   scheduleIdleTask(() => updateNodeInfoForInstance(instanceName).catch(ignoreRefreshError))
+  scheduleIdleTask(() => fetchTranslationLanguages().catch(ignoreRefreshError))
 
   // these are the only critical ones
   const ready = Promise.all([

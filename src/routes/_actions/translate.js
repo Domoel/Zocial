@@ -61,8 +61,16 @@ async function translate (html, to, from, supportedSourceCodes) {
       return { content: result, sourceLanguageNames }
     }
     const detected = detectResult.status === 'fulfilled' ? detectResult.value : null
-    if (detected && detected === to) {
-      return { content: null, sourceLanguageNames, sameLanguage: true }
+    if (detected) {
+      if (supportedSourceCodes && supportedSourceCodes.length > 0 &&
+          !supportedSourceCodes.includes(detected)) {
+        const err = new Error('Unsupported source language: ' + detected)
+        err.type = 'unsupportedLanguage'
+        throw err
+      }
+      if (detected === to) {
+        return { content: null, sourceLanguageNames, sameLanguage: true }
+      }
     }
     throw transResult.reason
   }
@@ -106,6 +114,7 @@ export function translateStatus (
     statusTranslations[id].error = false
     statusTranslations[id].rateLimited = false
     statusTranslations[id].unsupportedLanguage = false
+    statusTranslations[id].sameLanguage = false
     statusTranslations[id].to = to
     statusTranslations[id].from = from
     const emojis = new Map()
