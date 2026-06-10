@@ -32,8 +32,13 @@ export function timelineObservers () {
 
   // Poll every 60s as a fallback for backends without streaming support.
   // setupTimeline has a 30s throttle, so if a fetch already happened recently this is a no-op.
+  // Guard against null currentTimeline (user on a non-timeline page like settings).
   // runOnActive:false because Timeline.html already calls setupTimeline on tab re-activation.
-  scheduleInterval(setupTimeline, 60000, false)
+  scheduleInterval(function () {
+    if (store.get().currentTimeline) {
+      setupTimeline()
+    }
+  }, 60000, false)
 
   store.observe('currentTimeline', async (currentTimeline) => {
     if (!ZOCIAL_IS_BROWSER) {
