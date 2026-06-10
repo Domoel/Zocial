@@ -42,7 +42,7 @@
       // Poll every 60s as a fallback for backends without list streaming support.
       // The 30s throttle in setupTimeline prevents redundant fetches when streaming
       // is already delivering updates.
-      this._pollInterval = setInterval(() => { setupTimeline() }, 60_000)
+      this._pollInterval = setInterval(() => { setupTimeline() }, 60000)
     },
     ondestroy () {
       if (this._listStream) {
