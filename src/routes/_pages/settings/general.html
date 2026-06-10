@@ -312,15 +312,6 @@
       UISettingsStyles,
       Select
     },
-    computed: {
-      translationLanguagesAvailable: ({ $translationLanguages }) =>
-        Array.isArray($translationLanguages) && $translationLanguages.length > 0,
-      translationLanguageOptions: ({ $translationLanguages }) => {
-        const base = [{ value: '', label: formatIntl('intl.translationBrowserDefault') }]
-        if (!Array.isArray($translationLanguages)) return base
-        return base.concat($translationLanguages.map(l => ({ value: l.code, name: l.name, label: l.name })))
-      }
-    },
     methods: {
 
       flushChangesToCheckAll () {
@@ -406,6 +397,13 @@
           ? formatIntl('intl.themeForInstance', { instance: $currentInstance })
           : 'intl.theme'
       ),
+      translationLanguagesAvailable: ({ $translationLanguages }) =>
+        Array.isArray($translationLanguages) && $translationLanguages.length > 0,
+      translationLanguageOptions: ({ $translationLanguages }) => {
+        const base = [{ value: '', label: formatIntl('intl.translationBrowserDefault') }]
+        if (!Array.isArray($translationLanguages)) return base
+        return base.concat($translationLanguages.map(l => ({ value: l.code, name: l.name, label: l.name })))
+      },
       // local-only posts are only available when the current instance advertises support
       localOnlySupported: ({ $currentSupportedToggles }) => !!($currentSupportedToggles && $currentSupportedToggles.local_only),
       localOnlyHint: ({ localOnlySupported }) => (localOnlySupported ? '' : 'intl.localOnlyUnsupported')
