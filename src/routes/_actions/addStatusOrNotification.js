@@ -17,7 +17,7 @@ function removeDuplicates (instanceName, timelineName, updates) {
   return updates.filter(update => !existingItemIds.has(update.id))
 }
 
-async function insertUpdatesIntoTimeline (instanceName, timelineName, updates) {
+export async function insertUpdatesIntoTimeline (instanceName, timelineName, updates) {
   updates = removeDuplicates(instanceName, timelineName, updates)
 
   if (!updates.length) {

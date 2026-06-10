@@ -10,7 +10,7 @@ import { getStatus, getStatusContext } from '../_api/statuses.js'
 import { emit } from '../_utils/eventBus.ts'
 import { TIMELINE_BATCH_SIZE } from '../_static/timelines.js'
 import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
-import { addStatusesOrNotifications } from './addStatusOrNotification.js'
+import { addStatusesOrNotifications, insertUpdatesIntoTimeline } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { sortItemSummariesForThread, sortItemSummariesForNotificationBatch } from '../_utils/sortItemSummaries.ts'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
@@ -221,7 +221,17 @@ async function fetchTimelineItemsAndPossiblyFallBack (fresh) {
     // the store → fetches posts older than the bottom of the current list.
     const maxId = fresh ? null : undefined
     const { items, stale } = await fetchTimelineItems(currentInstance, accessToken, currentTimeline, online, maxId)
-    await addTimelineItems(currentInstance, currentTimeline, items, stale)
+    // When refreshing a timeline that already has content and we got fresh (non-stale) data,
+    // route new items through the streaming buffer so Timeline.html can decide whether to
+    // insert immediately (user at top) or show a "Show X more" button (user scrolled down).
+    // This prevents scroll-position jumps when the 60s poll or a re-navigate brings in new posts.
+    // For initial loads (no existing items) or offline fallback, insert directly as before.
+    const existingSummaries = store.getForTimeline(currentInstance, currentTimeline, 'timelineItemSummaries')
+    if (fresh && !stale && existingSummaries && existingSummaries.length > 0) {
+      await insertUpdatesIntoTimeline(currentInstance, currentTimeline, items)
+    } else {
+      await addTimelineItems(currentInstance, currentTimeline, items, stale)
+    }
   }
   stop('fetchTimelineItemsAndPossiblyFallBack')
 }
