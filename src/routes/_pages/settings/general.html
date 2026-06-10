@@ -402,7 +402,9 @@
         return Array.isArray(langs) && langs.length > 0
       },
       translationLanguageOptions: ({ $translationLanguages, $currentInstance }) => {
-        const base = [{ value: '', label: formatIntl('intl.translationBrowserDefault') }]
+        // NB: a simple intl string (no placeholders) is inlined as a plain string by
+        // svelte-intl-loader, so it must NOT be wrapped in formatIntl (which expects an AST).
+        const base = [{ value: '', label: 'intl.translationBrowserDefault' }]
         const langs = $translationLanguages && $translationLanguages[$currentInstance]
         if (!Array.isArray(langs)) return base
         return base.concat(langs.map(l => ({ value: l.code, label: l.name })))
