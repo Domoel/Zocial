@@ -19,8 +19,33 @@
   import { store } from '../../_store/store.js'
   import HiddenFromSSR from '../../_components/HiddenFromSSR.html'
   import DynamicPageBanner from '../../_components/DynamicPageBanner.html'
+  import { createStream } from '../../_actions/stream/streaming.js'
 
   export default {
+    oncreate () {
+      const { params } = this.get()
+      const { currentInstance, accessToken, currentInstanceInfo } = this.store.get()
+      if (!currentInstance || !accessToken || !currentInstanceInfo) return
+      const streamingApi = (
+        currentInstanceInfo?.configuration?.urls?.streaming ||
+        currentInstanceInfo?.urls?.streaming_api
+      )
+      if (!streamingApi) return
+      const timelineName = `list/${params.listId}`
+      const firstStatusId = store.getFirstTimelineItemId(currentInstance, timelineName)
+      try {
+        this._listStream = createStream(streamingApi, currentInstance, accessToken, timelineName, firstStatusId, null)
+      } catch (e) {
+        // Backend doesn't support list streaming — fall back to navigate-triggered fetches
+        console.warn('list streaming not available', e)
+      }
+    },
+    ondestroy () {
+      if (this._listStream) {
+        this._listStream.close()
+        this._listStream = null
+      }
+    },
     computed: {
       list: ({ params, $lists }) => $lists && $lists.find(_ => _.id === params.listId),
       listTitle: ({ list }) => list ? list.title : ''

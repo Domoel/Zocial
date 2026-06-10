@@ -74,7 +74,6 @@ export async function getTimeline (instanceName, accessToken, timeline, maxId, s
 
   url += '?' + paramsString(params)
 
-  console.log('fetching url', url)
   let { json: items, headers } = await getWithHeaders(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })
 
   if (timeline === 'direct') {

@@ -24,9 +24,14 @@ async function syncLists (instanceName, syncMethod) {
         store.set({ instanceListsSupported })
       }
     } catch (e) {
-      const { instanceListsSupported } = store.get()
-      instanceListsSupported[instanceName] = false
-      store.set({ instanceListsSupported })
+      // Only mark lists as unsupported for HTTP responses that genuinely indicate the
+      // backend doesn't implement them. Transient errors (429, 5xx, network failures)
+      // must not hide the lists UI for the entire session.
+      if (e.status === 403 || e.status === 404 || e.status === 501) {
+        const { instanceListsSupported } = store.get()
+        instanceListsSupported[instanceName] = false
+        store.set({ instanceListsSupported })
+      }
       throw e
     }
   })
