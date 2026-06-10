@@ -804,7 +804,7 @@ The cleaned result is capped at 500 chars; if less than 10 chars remain, detecti
 2. *Lazy fire-and-forget in `translateStatus`* — fires only when translation is used, but the very first call races against the fetch, so the unsupported check may not apply on that first click.
 3. *Settings-only (original design)* — simplest; the correctness gap (misdetected unsupported language shows as a garbage translation) only affects new users who have never visited Settings AND whose post language is misdetected. In every other case the backend 400 correctly surfaces the error. The default target language is the browser language, and Settings is a natural early stop for anyone configuring the instance. Accepted.
 
-**Dynamic behaviour:** `translationLanguages[currentInstance]` is persisted across page loads. `fetchTranslationLanguages()` is guarded by `translationLanguagesFetched[currentInstance]` (non-persisted), so it fires at most once per session — on the first Settings visit after a page load. Adding a language to the LibreTranslate instance takes effect after the user reloads the page and visits Settings.
+**Dynamic behaviour:** `translationLanguages[currentInstance]` is persisted across page loads. `fetchTranslationLanguages()` is guarded by `translationLanguagesFetched[currentInstance]` (non-persisted), so it fires at most once per session — on the first visit to **Settings → General** after a page load. Adding a language to the LibreTranslate instance takes effect after the user reloads the page and opens Settings → General.
 
 ---
 
