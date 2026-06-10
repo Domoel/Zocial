@@ -791,7 +791,20 @@ The cleaned result is capped at 500 chars; if less than 10 chars remain, detecti
 
 **Decision:** After the parallel detect+translate calls, if `detectedFromDetect` names a language not present in `translationLanguages[currentInstance]` (the instance's supported language list from `/api/languages`), throw a client-side `{type: 'unsupportedLanguage'}` error. The existing `.catch` handler in `translateStatus` surfaces this as the "translateUnsupportedLanguage" UI message.
 
-**Dynamic behaviour:** `translationLanguages[currentInstance]` is refetched from `/api/languages` on every session start (`translationLanguagesFetched` is non-persisted, so it resets on every page load). Adding a language to the LibreTranslate instance takes effect automatically after the next page reload — no code change required.
+**Check ordering:** The unsupported-language check must run **before** the same-language check. If LibreTranslate misdetects Finnish as English and the user's target language is also English, the same-language check (`detectedFromDetect === to`) would fire first — showing "Post is already in your language" instead of "Language not supported".
+
+**Graceful degradation:** `supportedSourceCodes` is derived from `translationLanguages[currentInstance]`, which is only populated after the user visits Settings → General (where `fetchTranslationLanguages()` is called). Until then, `supportedSourceCodes` is `null` and the client-side check is skipped entirely. In that case, a genuinely unsupported language still surfaces a 400 error from the backend — the only gap is the misdetection scenario (backend returns 200 with a garbage translation). This tradeoff was accepted deliberately: see below.
+
+#### Settings-only fetch of supported languages
+
+**Decision:** `fetchTranslationLanguages()` is called only from Settings → General, not proactively on login or lazily on first translate use.
+
+**Rationale:** Three approaches were considered:
+1. *Proactive on login (idle task in `instanceObservers`)* — fires for all users, including those who never translate. Rejected as unnecessary overhead.
+2. *Lazy fire-and-forget in `translateStatus`* — fires only when translation is used, but the very first call races against the fetch, so the unsupported check may not apply on that first click.
+3. *Settings-only (original design)* — simplest; the correctness gap (misdetected unsupported language shows as a garbage translation) only affects new users who have never visited Settings AND whose post language is misdetected. In every other case the backend 400 correctly surfaces the error. The default target language is the browser language, and Settings is a natural early stop for anyone configuring the instance. Accepted.
+
+**Dynamic behaviour:** `translationLanguages[currentInstance]` is persisted across page loads. Adding a language to the LibreTranslate instance takes effect after the user next visits Settings (which triggers a fresh `/api/languages` fetch).
 
 ---
 
