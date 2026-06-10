@@ -7,7 +7,7 @@ import { store } from '../store.js'
 
 export function timelineObservers () {
   // stream to watch for local/federated/etc. updates. home and notification
-  // updates are handled in timelineObservers.js
+  // updates are handled in instanceObservers.js
   let currentTimelineStream
 
   function shutdownPreviousStream () {
