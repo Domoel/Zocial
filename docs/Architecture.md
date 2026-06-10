@@ -804,7 +804,31 @@ The cleaned result is capped at 500 chars; if less than 10 chars remain, detecti
 2. *Lazy fire-and-forget in `translateStatus`* — fires only when translation is used, but the very first call races against the fetch, so the unsupported check may not apply on that first click.
 3. *Settings-only (original design)* — simplest; the correctness gap (misdetected unsupported language shows as a garbage translation) only affects new users who have never visited Settings AND whose post language is misdetected. In every other case the backend 400 correctly surfaces the error. The default target language is the browser language, and Settings is a natural early stop for anyone configuring the instance. Accepted.
 
-**Dynamic behaviour:** `translationLanguages[currentInstance]` is persisted across page loads. `fetchTranslationLanguages()` is guarded by `translationLanguagesFetched[currentInstance]` (non-persisted), so it fires at most once per session — on the first visit to **Settings → General** after a page load. Adding a language to the LibreTranslate instance takes effect after the user reloads the page and opens Settings → General.
+#### Language preference persistence and fetch lifecycle
+
+Three store keys are involved, with different persistence behaviour:
+
+| Key | Persisted | Content |
+|---|---|---|
+| `translationTargetLanguage` | ✅ yes | user's chosen target language, e.g. `'de'` |
+| `translationLanguages[instance]` | ✅ yes | supported language list fetched from `/api/languages` |
+| `translationLanguagesFetched[instance]` | ❌ no | session-only guard: "already fetched this page load" |
+
+**Target language on page load:** `translationTargetLanguage` is loaded immediately from persisted storage. `getDefaultLanguage()` uses `(translationTargetLanguage || navigator.language).split('-')[0]` — so the user's preference is active from the very first translation, without any network request.
+
+**Fetch on Settings → General visit:** `fetchTranslationLanguages()` checks `translationLanguagesFetched[instance]` first. Because that key is non-persisted, it is always `false` on a fresh page load. The fetch therefore fires once per page load on the first Settings → General visit. It updates `translationLanguages[instance]` (persisted) with the current list from the backend.
+
+**Preference is never overwritten by the fetch — with one exception:** if the previously selected language is no longer present in the freshly fetched list (e.g. the admin removed it from the LibreTranslate instance), `fetchTranslationLanguages()` explicitly sets `translationTargetLanguage = null`:
+
+```js
+if (translationTargetLanguage && !langs.find(l => l.code === translationTargetLanguage)) {
+  update.translationTargetLanguage = null
+}
+```
+
+`getDefaultLanguage()` then falls back to `navigator.language` automatically — no user action required.
+
+**Adding a language to the LibreTranslate instance** takes effect after the user reloads the page and opens Settings → General (triggering a fresh fetch).
 
 ---
 
