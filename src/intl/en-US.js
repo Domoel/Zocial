@@ -323,6 +323,10 @@ export default {
     true { - Detected}
     other {}
   }`,
+  translation: 'Translation',
+  translationTargetLanguage: 'Translation language',
+  translationBrowserDefault: 'Browser default',
+  translationLanguageUnavailable: 'Language list unavailable — translation language follows browser default',
   translateError: 'There was an error translating this post',
   translateRateLimit: 'You hit the rate limit for translations',
   translateUnsupportedLanguage: 'This language is currently not supported',

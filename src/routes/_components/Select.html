@@ -1,5 +1,5 @@
-<div class="select-wrapper {className || ''}">
-  <select on:change aria-label={label}>
+<div class="select-wrapper {className || ''} {disabled ? 'select-wrapper-disabled' : ''}">
+  <select on:change aria-label={label} disabled={disabled}>
     {#each options as option (option.value)}
       <option value="{option.value}" selected="{option.value === defaultValue ? 'selected' : ''}">
         {option.label}
@@ -61,13 +61,21 @@
   select option {
     font-weight:normal;
   }
+  .select-wrapper-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .select-wrapper-disabled select {
+    cursor: not-allowed;
+  }
 </style>
 <script>
   import SvgIcon from './SvgIcon.html'
   export default {
     data: () => ({
       defaultValue: '',
-      className: ''
+      className: '',
+      disabled: false
     }),
     components: {
       SvgIcon

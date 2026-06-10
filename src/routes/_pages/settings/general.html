@@ -110,6 +110,22 @@
     </label>
   </form>
 
+  <h2 id="section-translation">{'intl.translation'}</h2>
+  <form class="ui-settings">
+    <div class="setting-group translation-language-group">
+      <label for="translation-language">{'intl.translationTargetLanguage'}</label>
+      <Select id="translation-language"
+              options={translationLanguageOptions}
+              defaultValue={$translationTargetLanguage || ''}
+              label="{'intl.translationTargetLanguage'}"
+              disabled={!translationLanguagesAvailable}
+              on:change="onTranslationLanguageChange(event)" />
+      {#if !translationLanguagesAvailable}
+        <span class="translation-language-hint">{'intl.translationLanguageUnavailable'}</span>
+      {/if}
+    </div>
+  </form>
+
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>
   <form class="ui-settings">
     <label class="setting-group">
@@ -258,6 +274,16 @@
     margin: 16px 0 4px;
     font-size: 1.4em;
   }
+  .translation-language-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .translation-language-hint {
+    font-size: 0.9em;
+    opacity: 0.7;
+  }
 </style>
 <script>
   import { getSingleInstance } from '../../_utils/getSingleInstance.js'
@@ -268,11 +294,14 @@
   import { store } from '../../_store/store.js'
   import Tooltip from '../../_components/Tooltip.html'
   import UISettingsStyles from '../../_components/settings/UISettingsStyles.html'
+  import Select from '../../_components/Select.html'
   import { formatIntl } from '../../_utils/formatIntl.js'
+  import { fetchTranslationLanguages } from '../../_actions/fetchTranslationLanguages.js'
 
   export default {
-    oncreate () {
+    async oncreate () {
       this.flushChangesToCheckAll()
+      await fetchTranslationLanguages()
     },
     components: {
       SettingsLayout,
@@ -280,7 +309,17 @@
       NotificationFilterSettings,
       PushNotificationSettings,
       Tooltip,
-      UISettingsStyles
+      UISettingsStyles,
+      Select
+    },
+    computed: {
+      translationLanguagesAvailable: ({ $translationLanguages }) =>
+        Array.isArray($translationLanguages) && $translationLanguages.length > 0,
+      translationLanguageOptions: ({ $translationLanguages }) => {
+        const base = [{ value: '', label: formatIntl('intl.translationBrowserDefault') }]
+        if (!Array.isArray($translationLanguages)) return base
+        return base.concat($translationLanguages.map(l => ({ value: l.code, name: l.name, label: l.name })))
+      }
     },
     methods: {
 
@@ -313,6 +352,11 @@
           disableRelativeTimestamps: checked,
           disableFollowRequestCount: checked
         })
+        this.store.save()
+      },
+      onTranslationLanguageChange (event) {
+        const value = event.target.value
+        this.store.set({ translationTargetLanguage: value || null })
         this.store.save()
       },
       onChange (event) {

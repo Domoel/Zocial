@@ -28,18 +28,19 @@ async function translate (html, to, from) {
   }
   return { content: await translate(html, to, from), sourceLanguageNames }
 }
-// Prefer the user's browser language over the build-time locale so that
-// e.g. a German user gets posts translated into German regardless of how
-// the image was built.
-const defaultLanguage = (
-  ZOCIAL_IS_BROWSER
-    ? navigator.language
-    : (process.env.LOCALE || 'en-US')
-).split('-')[0]
+// Read the target language at call time so that changes to the stored
+// preference take effect immediately without a page reload.
+function getDefaultLanguage () {
+  if (ZOCIAL_IS_BROWSER) {
+    const { translationTargetLanguage } = store.get()
+    return (translationTargetLanguage || navigator.language).split('-')[0]
+  }
+  return (process.env.LOCALE || 'en-US').split('-')[0]
+}
 export function translateStatus (
   status,
   currentInstance,
-  to = defaultLanguage,
+  to = getDefaultLanguage(),
   from = 'auto'
 ) {
   const id = currentInstance + '-' + status.id

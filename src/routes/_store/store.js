@@ -72,7 +72,9 @@ const persistedState = {
   // Logs page: when false (default) only error/warn lines are shown; when true, all
   // captured log levels (info/log/debug/…) are shown too. Persisted like other UI prefs.
   showAllLogs: false,
-  lastContentTypes: {}
+  lastContentTypes: {},
+  translationTargetLanguage: null,
+  translationLanguages: []
 }
 
 const nonPersistedState = {
