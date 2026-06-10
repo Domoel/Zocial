@@ -20,6 +20,7 @@
   import HiddenFromSSR from '../../_components/HiddenFromSSR.html'
   import DynamicPageBanner from '../../_components/DynamicPageBanner.html'
   import { createStream } from '../../_actions/stream/streaming.js'
+  import { setupTimeline } from '../../_actions/timeline.js'
 
   export default {
     oncreate () {
@@ -36,15 +37,21 @@
       try {
         this._listStream = createStream(streamingApi, currentInstance, accessToken, timelineName, firstStatusId, null)
       } catch (e) {
-        // Backend doesn't support list streaming — fall back to navigate-triggered fetches
+        // Backend doesn't support list streaming — periodic poll below covers updates
         console.warn('list streaming not available', e)
       }
+      // Poll every 60s as a fallback for backends without list streaming support.
+      // The 30s throttle in setupTimeline prevents redundant fetches when streaming
+      // is already delivering updates.
+      this._pollInterval = setInterval(() => { setupTimeline() }, 60_000)
     },
     ondestroy () {
       if (this._listStream) {
         this._listStream.close()
         this._listStream = null
       }
+      clearInterval(this._pollInterval)
+      this._pollInterval = null
     },
     computed: {
       list: ({ params, $lists }) => $lists && $lists.find(_ => _.id === params.listId),
