@@ -15,12 +15,21 @@ async function translate (html, to, from) {
     ])
     if (transResult.status === 'fulfilled') {
       const result = transResult.value
-      // The parallel /api/detect call strips HTML before sending and is more
-      // reliable than LibreTranslate's own detection on the HTML-wrapped input.
-      // Check both so that a misdetection in the translate response doesn't
-      // silently show a translated version of an already-matching-language post.
+      // The parallel /api/detect call strips HTML, URLs, mentions and hashtags before
+      // sending and is more reliable than LibreTranslate's own detection on the
+      // HTML-wrapped input. Check both so a misdetection in the translate response
+      // doesn't silently show a "translation" of an already-matching-language post.
       const detectedFromDetect = detectResult.status === 'fulfilled' ? detectResult.value : null
       if ((result.detected && result.detected === to) || (detectedFromDetect && detectedFromDetect === to)) {
+        return { content: null, sourceLanguageNames, sameLanguage: true }
+      }
+      // Final fallback: if LibreTranslate returned the text completely unchanged it
+      // effectively performed a no-op — treat it as same language regardless of what
+      // language detection said (handles cases where both detectors misfire).
+      const toPlain = (h) => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      const inputPlain = toPlain(html)
+      const outputPlain = toPlain(result.html || '')
+      if (inputPlain.length > 10 && inputPlain === outputPlain) {
         return { content: null, sourceLanguageNames, sameLanguage: true }
       }
       return { content: result, sourceLanguageNames }

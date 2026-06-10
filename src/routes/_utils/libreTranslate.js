@@ -161,8 +161,19 @@ export const targetLanguageNames = {
   zh: 'Chinese (Simplified)'
 }
 export async function detectLanguage (text) {
-  // Strip HTML tags before sending to detect — CLD3 works better on plain text
-  const plainText = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
+  // Strip HTML tags, then also remove URLs, @user@domain mentions, #hashtags and HTML
+  // entities — these ASCII tokens survive tag-stripping and pull CLD3 toward English.
+  const plainText = text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/@[\w.]+@[\w.-]+/g, ' ')
+    .replace(/#[A-Za-z0-9_]+/g, ' ')
+    .replace(/&(?:[a-z]+|#\d+);/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 500)
+  // Too little real content left — detection would be unreliable.
+  if (plainText.length < 10) return null
   try {
     const resp = await fetch('/api/detect', {
       method: 'POST',
@@ -171,7 +182,10 @@ export async function detectLanguage (text) {
     })
     if (!resp.ok) return null
     const data = await resp.json()
-    return (data && data[0] && data[0].language) || null
+    const top = data && data[0]
+    // Only trust the result when confidence is reasonable (≥ 50 %).
+    if (!top || top.confidence < 50) return null
+    return top.language || null
   } catch {
     return null
   }
