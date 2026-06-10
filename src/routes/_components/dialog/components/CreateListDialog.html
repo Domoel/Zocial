@@ -43,6 +43,8 @@
   import { show } from '../helpers/showDialog.js'
   import { close } from '../helpers/closeDialog.js'
   import { createNewList } from '../../../_actions/lists.js'
+  import { toast } from '../../../_components/toast/toast.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
 
   export default {
     oncreate () {
@@ -67,8 +69,16 @@
       async onCreate () {
         const { title } = this.get()
         if (!title.trim()) return
-        await createNewList(title.trim())
-        this.close()
+        try {
+          await createNewList(title.trim())
+          this.close()
+        } catch (e) {
+          // The GenericConfirmationDialog already closed itself on the positive click
+          // (it fires 'positive' on destroy), so we can't keep it open here. Surface the
+          // failure via a toast instead of letting it become an unhandled rejection.
+          console.error('failed to create list', e)
+          /* no await */ toast.say(formatIntl('intl.unableToCreateList', { error: (e.message || '') }))
+        }
       }
     },
     components: {

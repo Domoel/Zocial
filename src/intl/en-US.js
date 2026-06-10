@@ -271,6 +271,7 @@ export default {
   copyLinkToAccount: 'Copy link to account',
   copiedToClipboard: 'Copied to clipboard',
   createList: 'Create list',
+  unableToCreateList: 'Unable to create list: {error}',
   listTitle: 'List title',
   manageInLists: 'Manage list memberships',
   listMembership: 'List memberships for {account}',

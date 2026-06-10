@@ -142,9 +142,12 @@
       const { currentInstance } = this.store.get()
 
       if (currentInstance) {
+        // Best-effort refresh: a failure (rate-limit, 5xx, network blip, or a backend
+        // without lists support) must not surface as an uncaught promise rejection. The
+        // lists UI falls back to whatever is cached in the store.
         await Promise.all([
-          updateListsForInstance(currentInstance),
-          updateFollowRequestCountIfLockedAccount(currentInstance)
+          updateListsForInstance(currentInstance).catch(e => console.warn('failed to update lists', e)),
+          updateFollowRequestCountIfLockedAccount(currentInstance).catch(e => console.warn('failed to update follow request count', e))
         ])
       }
     },
