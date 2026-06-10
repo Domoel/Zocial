@@ -144,6 +144,7 @@ export default (translate) =>
     return {
       spoiler,
       html: DOMPurify.sanitize(div.innerHTML),
-      detected: translated.detected
+      detected: translated.detected,
+      detectedConfidence: translated.detectedConfidence
     }
   }

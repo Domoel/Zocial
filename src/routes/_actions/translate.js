@@ -8,15 +8,17 @@ function unsupportedLanguageError (language) {
   return err
 }
 
-// Decide whether a /api/detect result ({ language, confidence } | null) means the source
-// language is not supported by the backend. Two independent signals:
-//   1. confidence === 0: the backend has no detection model for this language and fell back
-//      to its default with zero confidence. This is the primary, most reliable signal and
-//      works even when we don't know the instance's supported-language list.
+// Decide whether a detection ({ language, confidence } | null) means the source language is
+// not supported by the backend. Two independent signals:
+//   1. confidence ≈ 0: the backend has no detection model for this language and fell back to
+//      its default with (near-)zero confidence. This is the primary, most reliable signal and
+//      works even when we don't know the instance's supported-language list. We use < 1 rather
+//      than === 0 to stay robust if a backend reports a tiny non-zero value for "no model".
+//      A null/undefined confidence (older backend) is NOT treated as unsupported.
 //   2. A confidently detected language (≥ 50) that is not in the known supported list — a
 //      backup for instances whose detector knows more languages than the translator supports.
 function isUnsupportedDetection (detection, trustedLanguage, supportedSourceCodes) {
-  if (detection && detection.confidence === 0) {
+  if (detection && typeof detection.confidence === 'number' && detection.confidence < 1) {
     return true
   }
   if (trustedLanguage && supportedSourceCodes && supportedSourceCodes.length > 0 &&
@@ -44,15 +46,25 @@ async function translate (html, to, from, supportedSourceCodes) {
     // more reliable than the translate endpoint's detection on raw HTML input.
     // It returns { language, confidence } or null.
     const detection = detectResult.status === 'fulfilled' ? detectResult.value : null
-    const trustedLanguage = detection && detection.confidence >= 50 ? detection.language : null
 
     if (transResult.status === 'fulfilled') {
       const result = transResult.value
 
+      // Prefer the dedicated /api/detect result. If it failed (network/empty), fall back to the
+      // translate endpoint's own detection — it carries a confidence too, so the zero-confidence
+      // "no model" signal still works even when /api/detect is unavailable.
+      const effectiveDetection = detection ||
+        (result.detected != null
+          ? { language: result.detected, confidence: result.detectedConfidence }
+          : null)
+      const trustedLanguage = effectiveDetection && effectiveDetection.confidence >= 50
+        ? effectiveDetection.language
+        : null
+
       // IMPORTANT: the unsupported-language check MUST run before the same-language /
       // text-similarity checks. The backend returns the text unchanged for a language it
       // can't translate, which would otherwise be mistaken for "already in your language".
-      if (isUnsupportedDetection(detection, trustedLanguage, supportedSourceCodes)) {
+      if (isUnsupportedDetection(effectiveDetection, trustedLanguage, supportedSourceCodes)) {
         throw unsupportedLanguageError(trustedLanguage)
       }
       if (trustedLanguage) {
@@ -80,7 +92,9 @@ async function translate (html, to, from, supportedSourceCodes) {
       }
       return { content: result, sourceLanguageNames }
     }
-    // Translate failed but we may still have a useful detection.
+    // Translate failed, so there is no translate-endpoint detection to fall back to —
+    // only the /api/detect result is available here.
+    const trustedLanguage = detection && detection.confidence >= 50 ? detection.language : null
     if (isUnsupportedDetection(detection, trustedLanguage, supportedSourceCodes)) {
       throw unsupportedLanguageError(trustedLanguage)
     }

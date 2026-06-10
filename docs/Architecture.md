@@ -768,7 +768,15 @@ This section captures significant design decisions, feature choices, and archite
 
 **Rationale:** CLD3 (LibreTranslate's detector) is confused by ASCII noise in Fediverse posts — URLs, `@mentions`, `#hashtags` — causing frequent misdetection. A single detection layer was insufficient. The text-similarity fallback catches cases where both detectors misfire.
 
-**Confidence threshold:** Detections below 50% confidence are ignored.
+**Confidence bands:** `detectLanguage` returns `{ language, confidence }` (or `null` on a network/empty failure). The caller interprets the confidence in three bands:
+
+| Confidence | Meaning | Action |
+|---|---|---|
+| `< 1` (≈ 0) | The backend has **no model** for this language and fell back to its default (`en`) with zero confidence | Treat as **unsupported language** (see below) |
+| `≥ 50` | Trustworthy detection | Used for same-language check and for the "Translated from X" display label |
+| `1 ≤ c < 50` | Ambiguous (e.g. mixed-language posts) | Ignored — translate normally |
+
+A `null`/`undefined` confidence (e.g. an older backend that doesn't report it) is **not** treated as unsupported — `isUnsupportedDetection` requires `typeof confidence === 'number'`.
 
 #### `/api/detect` input cleaning
 
@@ -787,13 +795,28 @@ The cleaned result is capped at 500 chars; if less than 10 chars remain, detecti
 
 #### Client-side unsupported-language check
 
-**Problem:** LibreTranslate can mis-detect an unsupported language (e.g. Finnish) as a supported one (e.g. English), silently produce a nonsense translation, and never return a 400 error. The user sees "Translated from English" on a Finnish post.
+**Problem:** When asked to translate a language it has no model for (e.g. Finnish on a de/en-only instance), the backend does **not** return a 400 error. The translate endpoint returns the text unchanged with `detectedLanguage: {confidence: 0, language: en}`, and `/api/detect` likewise returns `{confidence: 0, language: en}`. The user would see either "Translated from English" (garbage) or "Post is already in your language".
 
-**Decision:** After the parallel detect+translate calls, if `detectedFromDetect` names a language not present in `translationLanguages[currentInstance]` (the instance's supported language list from `/api/languages`), throw a client-side `{type: 'unsupportedLanguage'}` error. The existing `.catch` handler in `translateStatus` surfaces this as the "translateUnsupportedLanguage" UI message.
+**Root-cause insight (the key one):** This is **not a misdetection**. LibreTranslate's language detector only knows the languages whose models are installed. For an unsupported language it returns its default (`en`) with **confidence exactly `0`** — an explicit "I have no model for this" signal. Empirically verified against `translate.zocial.social`:
 
-**Check ordering:** The unsupported-language check must run **before** the same-language check. If LibreTranslate misdetects Finnish as English and the user's target language is also English, the same-language check (`detectedFromDetect === to`) would fire first — showing "Post is already in your language" instead of "Language not supported".
+| Input | `/detect` result |
+|---|---|
+| German sentence | `{confidence: 100, language: de}` |
+| English sentence | `{confidence: 100, language: en}` |
+| French / Finnish sentence | `{confidence: 0, language: en}` |
+| Mixed Finnish + English | `{confidence: 57, language: en}` |
 
-**Graceful degradation:** `supportedSourceCodes` is derived from `translationLanguages[currentInstance]`, which is only populated after the user visits Settings → General (where `fetchTranslationLanguages()` is called). Until then, `supportedSourceCodes` is `null` and the client-side check is skipped entirely. In that case, a genuinely unsupported language still surfaces a 400 error from the backend — the only gap is the misdetection scenario (backend returns 200 with a garbage translation). This tradeoff was accepted deliberately: see below.
+The separation between supported (≈100) and unsupported (≈0) is stark, which makes zero-confidence a reliable signal.
+
+**Decision:** Treat a `confidence === 0` detection as the **primary** unsupported-language signal (`isUnsupportedDetection` in `translate.js`). Throw a client-side `{type: 'unsupportedLanguage'}` error, which the `.catch` handler in `translateStatus` surfaces as the "translateUnsupportedLanguage" UI message.
+
+This signal is self-contained: it does **not** depend on `supportedSourceCodes`, so it works even for users who have never visited Settings → General. The earlier `<50 → null` threshold was the actual bug: it collapsed the zero-confidence signal to `null`, so the unsupported check (which only ran inside the `detectedFromDetect` branch) never fired for exactly the languages that were unsupported.
+
+**Two-detector redundancy:** Both endpoints carry the zero-confidence signal — `/api/detect` (`{language, confidence}`) and the translate response's `detectedLanguage` (exposed as `result.detected` + `result.detectedConfidence`). The code prefers `/api/detect` (cleaner input), but if that call fails (network/empty) it falls back to the translate endpoint's own detection. So a translation of an unsupported language is still caught even when `/api/detect` is unavailable. `detectLanguage` returning `null` no longer means "no signal" — the translate endpoint's confidence acts as a backup.
+
+**Secondary check (`supportedSourceCodes`):** A confidently detected language (`≥ 50`) that is not in `translationLanguages[currentInstance]` is also treated as unsupported. This is a backup for the theoretical case where a backend's detector knows more languages than its translator can handle. On instances where the detector and translator share the same model set (like ours), the zero-confidence signal already covers everything, and this check is redundant but harmless.
+
+**Check ordering:** The unsupported check must run **before** the same-language and text-similarity checks. The backend returns the source text unchanged for a language it can't translate, which the text-similarity fallback (input === output) would otherwise mistake for "already in your language".
 
 #### Settings-only fetch of supported languages
 
@@ -802,7 +825,7 @@ The cleaned result is capped at 500 chars; if less than 10 chars remain, detecti
 **Rationale:** Three approaches were considered:
 1. *Proactive on login (idle task in `instanceObservers`)* — fires for all users, including those who never translate. Rejected as unnecessary overhead.
 2. *Lazy fire-and-forget in `translateStatus`* — fires only when translation is used, but the very first call races against the fetch, so the unsupported check may not apply on that first click.
-3. *Settings-only (original design)* — simplest; the correctness gap (misdetected unsupported language shows as a garbage translation) only affects new users who have never visited Settings AND whose post language is misdetected. In every other case the backend 400 correctly surfaces the error. The default target language is the browser language, and Settings is a natural early stop for anyone configuring the instance. Accepted.
+3. *Settings-only (original design, chosen)* — simplest. Originally this left a correctness gap for users who never visited Settings (`supportedSourceCodes` null). That gap is now **closed** by the zero-confidence unsupported signal above, which does not need the supported-language list at all. So the only remaining purpose of fetching the list is (a) populating the target-language dropdown in Settings and (b) the secondary supported-codes check — both of which only matter once the user is actually in Settings. Settings-only fetch is therefore exactly the right scope.
 
 #### Language preference persistence and fetch lifecycle
 

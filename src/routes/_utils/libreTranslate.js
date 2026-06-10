@@ -217,10 +217,14 @@ export const translate = getLibreTranslateHTML(async function translate (text, t
     }
     throw err
   }
-  // LibreTranslate includes detectedLanguage in the translate response when source is 'auto'
-  const detected = (from === 'auto' && data.detectedLanguage && data.detectedLanguage.language) || null
+  // LibreTranslate includes detectedLanguage in the translate response when source is 'auto'.
+  // We keep both language and confidence: a confidence of 0 means the backend has no model
+  // for this language (same "unsupported" signal as the /detect endpoint), useful as a
+  // fallback when the parallel /api/detect call fails.
+  const detectedInfo = (from === 'auto' && data.detectedLanguage) || null
   return {
-    detected,
+    detected: (detectedInfo && detectedInfo.language) || null,
+    detectedConfidence: detectedInfo ? detectedInfo.confidence : null,
     text: data.translatedText,
     to,
     from
