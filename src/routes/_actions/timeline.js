@@ -138,18 +138,19 @@ async function fetchPagedItems (instanceName, accessToken, timelineName) {
   await addPagedTimelineItems(instanceName, timelineName, items)
 }
 
-async function fetchTimelineItems (instanceName, accessToken, timelineName, online) {
+async function fetchTimelineItems (instanceName, accessToken, timelineName, online, maxId) {
   mark('fetchTimelineItems')
-  const { lastTimelineItemId } = store.get()
+  // maxId=undefined → use store (pagination); maxId=null → no max_id (fresh fetch)
+  const itemId = maxId !== undefined ? maxId : store.get().lastTimelineItemId
   let items
   let stale = false
   if (!online) {
-    items = await database.getTimeline(instanceName, timelineName, lastTimelineItemId, TIMELINE_BATCH_SIZE)
+    items = await database.getTimeline(instanceName, timelineName, itemId, TIMELINE_BATCH_SIZE)
     stale = true
   } else {
     try {
       console.log('fetchTimelineItemsFromNetwork')
-      items = await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
+      items = await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, itemId)
       // DB write is for offline caching only — render immediately without waiting for it.
       /* no await */ storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
     } catch (e) {
@@ -160,7 +161,7 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
         items = []
       } else {
         /* no await */ toast.say('intl.showingOfflineContent')
-        items = await database.getTimeline(instanceName, timelineName, lastTimelineItemId, TIMELINE_BATCH_SIZE)
+        items = await database.getTimeline(instanceName, timelineName, itemId, TIMELINE_BATCH_SIZE)
         stale = true
       }
     }
@@ -200,7 +201,7 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
   }
 }
 
-async function fetchTimelineItemsAndPossiblyFallBack () {
+async function fetchTimelineItemsAndPossiblyFallBack (fresh) {
   console.log('fetchTimelineItemsAndPossiblyFallBack')
   mark('fetchTimelineItemsAndPossiblyFallBack')
   const {
@@ -215,7 +216,11 @@ async function fetchTimelineItemsAndPossiblyFallBack () {
     // these in IndexedDB because of "internal ID" system Mastodon uses to paginate these
     await fetchPagedItems(currentInstance, accessToken, currentTimeline)
   } else {
-    const { items, stale } = await fetchTimelineItems(currentInstance, accessToken, currentTimeline, online)
+    // fresh=true (navigate/poll refresh): pass null so no max_id is sent → fetches newest posts.
+    // fresh=false/undefined (pagination): pass undefined to fall back to lastTimelineItemId from
+    // the store → fetches posts older than the bottom of the current list.
+    const maxId = fresh ? null : undefined
+    const { items, stale } = await fetchTimelineItems(currentInstance, accessToken, currentTimeline, online, maxId)
     await addTimelineItems(currentInstance, currentTimeline, items, stale)
   }
   stop('fetchTimelineItemsAndPossiblyFallBack')
@@ -248,7 +253,7 @@ export async function setupTimeline () {
     // Clear stale buffered items before fetching so the "new posts" button
     // doesn't show items that the fresh fetch is about to include directly.
     store.setForCurrentTimeline({ timelineItemSummariesToAdd: [] })
-    await fetchTimelineItemsAndPossiblyFallBack()
+    await fetchTimelineItemsAndPossiblyFallBack(true)
     store.setForCurrentTimeline({ lastFetchedAt: Date.now() })
   }
   stop('setupTimeline')
