@@ -319,6 +319,8 @@
     methods: {
 
       flushChangesToCheckAll () {
+        const checkAllEl = document.querySelector('#choice-check-all')
+        if (!checkAllEl) return
         const {
           disableFollowerCounts,
           disableReblogCounts,
@@ -328,7 +330,7 @@
           disableRelativeTimestamps,
           disableFollowRequestCount
         } = this.store.get()
-        document.querySelector('#choice-check-all').checked = disableFollowerCounts &&
+        checkAllEl.checked = disableFollowerCounts &&
           disableReblogCounts &&
           disableFavCounts &&
           disableNotificationBadge &&
