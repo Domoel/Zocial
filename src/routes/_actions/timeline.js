@@ -236,7 +236,8 @@ export async function setupTimeline () {
   console.log({ timelineItemSummaries, timelineItemSummariesAreStale, currentTimeline })
   if (!timelineItemSummaries ||
     timelineItemSummariesAreStale ||
-    currentTimeline.startsWith('status/')) {
+    currentTimeline.startsWith('status/') ||
+    currentTimeline.startsWith('list/')) {
     await fetchTimelineItemsAndPossiblyFallBack()
   }
   stop('setupTimeline')
