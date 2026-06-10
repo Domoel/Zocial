@@ -245,6 +245,9 @@ export async function setupTimeline () {
   const lastFetchedAt = store.getForTimeline(currentInstance, currentTimeline, 'lastFetchedAt')
   const fetchedRecently = lastFetchedAt && (Date.now() - lastFetchedAt < 30_000)
   if (!hasFreshCache || (!alwaysStreaming && !fetchedRecently)) {
+    // Clear stale buffered items before fetching so the "new posts" button
+    // doesn't show items that the fresh fetch is about to include directly.
+    store.setForCurrentTimeline({ timelineItemSummariesToAdd: [] })
     await fetchTimelineItemsAndPossiblyFallBack()
     store.setForCurrentTimeline({ lastFetchedAt: Date.now() })
   }
