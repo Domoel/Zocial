@@ -431,7 +431,7 @@
       ),
       accountId: ({ account }) => account && account.id,
       originalAccount: ({ originalStatus }) => originalStatus.account,
-      originalAccountId: ({ originalAccount }) => originalAccount.id,
+      originalAccountId: ({ originalAccount }) => originalAccount && originalAccount.id,
       accountForShortcut: ({ originalAccount, notification }) => notification ? notification.account : originalAccount,
       visibility: ({ originalStatus }) => originalStatus.visibility,
       plainTextContent: ({ originalStatus }) => originalStatus.plainTextContent || '',
@@ -492,7 +492,7 @@
         originalStatus.media_attachments.length
       ),
       originalQuote: ({ originalStatus }) => originalStatus.quote,
-      showQuote: ({ quotedBy, originalQuote }) => quotedBy ? false : originalQuote,
+      showQuote: ({ quotedBy, originalQuote }) => quotedBy ? false : (originalQuote && originalQuote.account ? originalQuote : null),
       mediaAttachments: ({ originalStatus }) => (
         originalStatus.media_attachments
       ),
@@ -500,9 +500,9 @@
       sensitive: ({ originalStatus, $markMediaAsSensitive, $neverMarkMediaAsSensitive }) => (
         !$neverMarkMediaAsSensitive && ($markMediaAsSensitive || originalStatus.sensitive)
       ),
-      originalAccountEmojis: ({ originalAccount }) => (originalAccount.emojis || []),
+      originalAccountEmojis: ({ originalAccount }) => (originalAccount ? originalAccount.emojis || [] : []),
       originalStatusEmojis: ({ originalStatus }) => (originalStatus.emojis || []),
-      originalAccountDisplayName: ({ originalAccount }) => (originalAccount.display_name || originalAccount.username),
+      originalAccountDisplayName: ({ originalAccount }) => originalAccount ? (originalAccount.display_name || originalAccount.username) : '',
       originalAccountAccessibleName: ({ originalAccount, $omitEmojiInDisplayNames }) => {
         return getAccountAccessibleName(originalAccount, $omitEmojiInDisplayNames)
       },
