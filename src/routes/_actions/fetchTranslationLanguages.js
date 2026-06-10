@@ -19,6 +19,10 @@ export async function fetchTranslationLanguages () {
     store.set(update)
     store.save()
   } catch {
-    // leave whatever was previously cached in the store
+    // Reset flag so the next settings visit retries instead of silently giving up
+    const { translationLanguagesFetched: f } = store.get()
+    const reset = { ...f }
+    delete reset[currentInstance]
+    store.set({ translationLanguagesFetched: reset })
   }
 }

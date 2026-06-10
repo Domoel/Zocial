@@ -1,5 +1,5 @@
 <div class="select-wrapper {className || ''} {disabled ? 'select-wrapper-disabled' : ''}">
-  <select on:change aria-label={label} disabled={disabled}>
+  <select on:change aria-label={label} id={id} disabled={disabled}>
     {#each options as option (option.value)}
       <option value="{option.value}" selected="{option.value === defaultValue ? 'selected' : ''}">
         {option.label}
@@ -75,7 +75,9 @@
     data: () => ({
       defaultValue: '',
       className: '',
-      disabled: false
+      disabled: false,
+      id: undefined,
+      label: ''
     }),
     components: {
       SvgIcon
