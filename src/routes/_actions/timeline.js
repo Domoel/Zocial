@@ -159,6 +159,13 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
         // Server returned an HTTP error for a list timeline (e.g. GoToSocial returns
         // an error for empty lists). Not a network/offline issue — show empty timeline.
         items = []
+      } else if (timelineName.startsWith('list/')) {
+        // Non-HTTP failure (timeout, transient network blip) on a list timeline: fall
+        // back to cached content without a toast. List timelines re-fetch every ~60 s
+        // so transient errors here produce noisy "offline" toasts even when the user's
+        // connection is fine. Genuine offline state is visible via other timelines.
+        items = await database.getTimeline(instanceName, timelineName, itemId, TIMELINE_BATCH_SIZE)
+        stale = true
       } else {
         /* no await */ toast.say('intl.showingOfflineContent')
         items = await database.getTimeline(instanceName, timelineName, itemId, TIMELINE_BATCH_SIZE)
