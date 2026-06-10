@@ -1,6 +1,10 @@
 import { store } from '../_store/store.js'
 
 export async function fetchTranslationLanguages () {
+  const { translationLanguagesFetched } = store.get()
+  if (translationLanguagesFetched) return
+  // Mark as fetched immediately so concurrent calls (e.g. rapid settings re-opens) don't stack up
+  store.set({ translationLanguagesFetched: true })
   try {
     const resp = await fetch('/api/languages')
     if (!resp.ok) return
