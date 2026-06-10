@@ -61,6 +61,9 @@
   export default {
     oncreate () {
       console.log('timeline oncreate()')
+      // Track that a timeline is being viewed, so the 60s polling fallback only runs
+      // while the user is actually on a timeline (not on settings/profile/etc.).
+      this.store.set({ mountedTimelines: this.store.get().mountedTimelines + 1 })
       setupTimeline()
       this.setupStreaming()
       this.setupAsyncComponents()
@@ -75,6 +78,7 @@
       })
     },
     ondestroy () {
+      this.store.set({ mountedTimelines: Math.max(0, this.store.get().mountedTimelines - 1) })
       if (this._visibilityObserver) {
         this._visibilityObserver.cancel()
       }

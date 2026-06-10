@@ -107,7 +107,12 @@ const nonPersistedState = {
   statusTranslationContents: {},
   statusTranslations: {},
   instanceDataReady: {},
-  translationLanguagesFetched: {}
+  translationLanguagesFetched: {},
+  // Number of mounted Timeline components. Used to gate the 60s polling fallback so it only
+  // runs while the user is actually viewing a timeline (not on settings/profile/etc.). A count
+  // (rather than a boolean) stays correct even if a new Timeline mounts before the old one is
+  // destroyed during a route transition.
+  mountedTimelines: 0
 }
 
 const state = Object.assign({}, persistedState, nonPersistedState)
