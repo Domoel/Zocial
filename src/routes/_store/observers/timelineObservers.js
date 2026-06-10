@@ -1,5 +1,7 @@
 import { updateInstanceInfo } from '../../_actions/instances.js'
 import { createStream } from '../../_actions/stream/streaming.js'
+import { setupTimeline } from '../../_actions/timeline.js'
+import { scheduleInterval } from '../../_utils/scheduleInterval.js'
 import { store } from '../store.js'
 
 export function timelineObservers () {
@@ -27,6 +29,11 @@ export function timelineObservers () {
         !timeline.startsWith('tag/')
       )
   }
+
+  // Poll every 60s as a fallback for backends without streaming support.
+  // setupTimeline has a 30s throttle, so if a fetch already happened recently this is a no-op.
+  // runOnActive:false because Timeline.html already calls setupTimeline on tab re-activation.
+  scheduleInterval(setupTimeline, 60000, false)
 
   store.observe('currentTimeline', async (currentTimeline) => {
     if (!ZOCIAL_IS_BROWSER) {
