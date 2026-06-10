@@ -9,6 +9,7 @@ import { mark, stop } from '../../_utils/marks.js'
 import { store } from '../store.js'
 import { updateFollowRequestCountIfLockedAccount } from '../../_actions/followRequests.js'
 import { setupFiltersForInstance } from '../../_actions/filters.js'
+import { getStreamingApi } from '../../_api/utils.js'
 
 // stream to watch for home timeline updates and notifications
 let currentInstanceStream
@@ -69,12 +70,7 @@ async function refreshInstanceData (instanceName) {
 
 function stream (store, instanceName, currentInstanceInfo) {
   const { accessToken } = store.get()
-  let streamingApi
-  if (currentInstanceInfo?.configuration?.urls?.streaming) {
-    streamingApi = currentInstanceInfo.configuration.urls.streaming
-  } else {
-    streamingApi = currentInstanceInfo.urls.streaming_api
-  }
+  const streamingApi = getStreamingApi(currentInstanceInfo)
   const firstStatusId = store.getFirstTimelineItemId(instanceName, 'home')
   const firstNotificationId = store.getFirstTimelineItemId(instanceName, 'notifications')
 

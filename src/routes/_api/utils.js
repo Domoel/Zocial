@@ -25,3 +25,14 @@ export function auth (accessToken) {
     Authorization: `Bearer ${accessToken}`
   }
 }
+
+/**
+ * Derive the streaming API base URL from an instance's info object.
+ * Mastodon 4+ exposes it under configuration.urls.streaming; older/other backends
+ * use urls.streaming_api. Returns a falsy value if neither is present.
+ * @param {any} instanceInfo
+ */
+export function getStreamingApi (instanceInfo) {
+  return (instanceInfo?.configuration?.urls?.streaming) ||
+    (instanceInfo?.urls?.streaming_api)
+}

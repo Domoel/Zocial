@@ -234,7 +234,7 @@ export async function setupTimeline () {
     currentTimeline,
     currentInstance
   } = store.get()
-  console.log({ timelineItemSummaries, timelineItemSummariesAreStale, currentTimeline })
+  console.log('setupTimeline state', { currentTimeline, timelineItemSummariesAreStale })
   // home and notifications maintain a continuous background stream and never
   // go stale between visits — skip the fetch if they have a warm cache.
   // Every other timeline only streams while the page is open, so fetch on

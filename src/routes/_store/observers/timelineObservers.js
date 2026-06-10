@@ -2,6 +2,7 @@ import { updateInstanceInfo } from '../../_actions/instances.js'
 import { createStream } from '../../_actions/stream/streaming.js'
 import { setupTimeline } from '../../_actions/timeline.js'
 import { scheduleInterval } from '../../_utils/scheduleInterval.js'
+import { getStreamingApi } from '../../_api/utils.js'
 import { store } from '../store.js'
 
 export function timelineObservers () {
@@ -73,12 +74,7 @@ export function timelineObservers () {
 
     const firstStatusId = store.getFirstTimelineItemId(currentInstance, currentTimeline)
     const { currentInstanceInfo } = store.get()
-    let streamingApi
-    if (currentInstanceInfo?.configuration?.urls?.streaming) {
-      streamingApi = currentInstanceInfo.configuration.urls.streaming
-    } else {
-      streamingApi = currentInstanceInfo.urls.streaming_api
-    }
+    const streamingApi = getStreamingApi(currentInstanceInfo)
 
     currentTimelineStream = createStream(streamingApi, currentInstance, accessToken,
       currentTimeline, firstStatusId)
