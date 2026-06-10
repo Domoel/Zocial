@@ -74,7 +74,7 @@ const persistedState = {
   showAllLogs: false,
   lastContentTypes: {},
   translationTargetLanguage: null,
-  translationLanguages: []
+  translationLanguages: {}
 }
 
 const nonPersistedState = {
@@ -107,7 +107,7 @@ const nonPersistedState = {
   statusTranslationContents: {},
   statusTranslations: {},
   instanceDataReady: {},
-  translationLanguagesFetched: false
+  translationLanguagesFetched: {}
 }
 
 const state = Object.assign({}, persistedState, nonPersistedState)

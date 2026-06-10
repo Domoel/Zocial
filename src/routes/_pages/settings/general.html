@@ -397,12 +397,15 @@
           ? formatIntl('intl.themeForInstance', { instance: $currentInstance })
           : 'intl.theme'
       ),
-      translationLanguagesAvailable: ({ $translationLanguages }) =>
-        Array.isArray($translationLanguages) && $translationLanguages.length > 0,
-      translationLanguageOptions: ({ $translationLanguages }) => {
+      translationLanguagesAvailable: ({ $translationLanguages, $currentInstance }) => {
+        const langs = $translationLanguages && $translationLanguages[$currentInstance]
+        return Array.isArray(langs) && langs.length > 0
+      },
+      translationLanguageOptions: ({ $translationLanguages, $currentInstance }) => {
         const base = [{ value: '', label: formatIntl('intl.translationBrowserDefault') }]
-        if (!Array.isArray($translationLanguages)) return base
-        return base.concat($translationLanguages.map(l => ({ value: l.code, name: l.name, label: l.name })))
+        const langs = $translationLanguages && $translationLanguages[$currentInstance]
+        if (!Array.isArray(langs)) return base
+        return base.concat(langs.map(l => ({ value: l.code, label: l.name })))
       },
       // local-only posts are only available when the current instance advertises support
       localOnlySupported: ({ $currentSupportedToggles }) => !!($currentSupportedToggles && $currentSupportedToggles.local_only),
