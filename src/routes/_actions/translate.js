@@ -180,14 +180,16 @@ export function translateStatus (
         store.set({ statusTranslations, statusTranslationContents })
       })
       .catch(err => {
-        console.error('error translating status', err)
         const { statusTranslations, statusTranslationContents } = store.get()
         statusTranslations[id].loading = false
         if (err.type === 'rateLimit') {
           statusTranslations[id].rateLimited = true
         } else if (err.type === 'unsupportedLanguage') {
+          // Expected, classified outcome (not a supported language) — surfaced in the UI,
+          // not an error worth logging to the console.
           statusTranslations[id].unsupportedLanguage = true
         } else {
+          console.error('error translating status', err)
           statusTranslations[id].error = true
         }
         delete statusTranslationContents[id]
