@@ -584,29 +584,98 @@ After catching a non-HTTP error on a list timeline, the 60 s poll simply continu
 
 ## 13. Translation System
 
-**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`
+**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`, `src/routes/_utils/libreTranslateHTML.js`, `src/routes/_actions/fetchTranslationLanguages.js`, `src/routes/_components/status/StatusTranslateToolbar.html`
+
+The design rationale for the choices below is summarised in §19; this section is the working reference for *how* it behaves.
 
 ### Backend
 
 Default backend: `translate.zocial.social` (self-hosted LibreTranslate). Configurable in General Settings → Translation language. The proxy routes `/api/translate` and `/api/detect` to the configured backend, keeping the access key server-side.
 
+When `source=auto`, the translate and detect calls run in parallel (`Promise.allSettled`) to save a round-trip for the common case (a post in a different language).
+
+### Language detection — confidence bands
+
+`detectLanguage` (in `libreTranslate.js`) returns `{ language, confidence }`, or `null` on a network/empty failure. The caller in `translate.js` interprets the confidence in three bands:
+
+| Confidence | Meaning | Action |
+|---|---|---|
+| `< 1` (≈ 0) | The backend has **no model** for this language and fell back to its default (`en`) with zero confidence | Treat as **unsupported language** |
+| `≥ 50` | Trustworthy detection | Used for the same-language check and the "Translated from X" display label |
+| `1 ≤ c < 50` | Ambiguous (e.g. mixed-language posts) | Ignored — translate normally |
+
+A `null`/`undefined` confidence (e.g. an older backend that doesn't report it) is **not** treated as unsupported — `isUnsupportedDetection` requires `typeof confidence === 'number'`.
+
+### Unsupported-language detection — the zero-confidence signal
+
+When asked to translate a language it has no model for (e.g. Finnish on a de/en-only instance), the backend does **not** return a 400 error. The translate endpoint returns the text unchanged with `detectedLanguage: {confidence: 0, language: en}`, and `/api/detect` likewise returns `{confidence: 0, language: en}`.
+
+This is **not a misdetection.** LibreTranslate's detector only knows the languages whose models are installed; for anything else it returns its default (`en`) with **confidence exactly `0`** — an explicit "I have no model for this" signal. Empirically verified against `translate.zocial.social`:
+
+| Input | `/detect` result |
+|---|---|
+| German sentence | `{confidence: 100, language: de}` |
+| English sentence | `{confidence: 100, language: en}` |
+| French / Finnish sentence | `{confidence: 0, language: en}` |
+| Mixed Finnish + English | `{confidence: 57, language: en}` |
+
+The separation between supported (≈100) and unsupported (≈0) is stark, which makes zero-confidence reliable. `isUnsupportedDetection` treats it as the **primary** unsupported signal and throws `{type: 'unsupportedLanguage'}`, which `translateStatus`'s `.catch` surfaces as the "translateUnsupportedLanguage" UI message. This signal is self-contained — it does **not** depend on the instance's supported-language list, so it works even for users who have never opened Settings.
+
+**Two-detector redundancy:** both endpoints carry the signal — `/api/detect` and the translate response's `detectedLanguage` (exposed as `result.detected` + `result.detectedConfidence`). The code prefers `/api/detect` (cleaner input) but falls back to the translate endpoint's own detection if `/api/detect` fails, so an unsupported language is still caught when `/api/detect` is unavailable.
+
+**Secondary check (`supportedSourceCodes`):** a confidently detected language (`≥ 50`) that is not in `translationLanguages[currentInstance]` is also treated as unsupported. This is a backup for the theoretical case where a backend's detector knows more languages than its translator can handle. On instances where detector and translator share the same model set (like ours), the zero-confidence signal already covers everything and this check is redundant but harmless.
+
+### `/api/detect` input cleaning
+
+CLD3 (the underlying detector) is pulled toward English by ASCII tokens that survive HTML tag-stripping. The text sent to `/api/detect` therefore removes, in order:
+
+1. HTML tags
+2. URLs (`https?://…`)
+3. Mentions — both `@user@domain` and bare `@username` (local mentions without a domain part, e.g. `@rolle`, are NOT caught by the `@user@domain` regex and pull CLD3 toward English)
+4. Hashtags (`#word`)
+5. HTML entities (`&amp;`, `&#123;`, …)
+
+The cleaned result is capped at 500 chars; if fewer than 10 chars of real text remain, detection is skipped (returns `null`).
+
 ### Same-language detection — three layers
 
-When `source=auto`, translation and detection run in parallel (via `Promise.allSettled`) to save a round-trip for the common case (posts in a different language).
+Detecting "this post is already in my language" is hard because the translate response's `detectedLanguage` is unreliable on HTML input, and CLD3 misfires on ASCII noise. Three layers of defense:
 
-Detecting "this post is already in my language" is surprisingly hard because:
-- LibreTranslate's own `detectedLanguage` in the translate response is unreliable when the input contains HTML.
-- CLD3 (the underlying language detector) gets confused by ASCII tokens — URLs, @mentions, #hashtags — that survive HTML tag-stripping.
-
-Three layers of defense:
-
-1. **`/api/translate` `detectedLanguage`** — The translate endpoint returns a detected language. Checked first.
-
-2. **Parallel `/api/detect` call** on cleaned plain text — HTML tags stripped, then URLs, `@user@domain` mentions, `#hashtags`, and HTML entities removed before sending. Only trusted when confidence ≥ 50% and ≥ 10 characters of real text remain after cleaning.
-
-3. **Text-similarity fallback** — If the translated HTML, after tag-stripping, is identical to the input, LibreTranslate performed a no-op. Treated as same language regardless of what the detectors said.
+1. **Trusted detection (`≥ 50`)** — if the detected language (preferring `/api/detect`) equals the target, it's the same language.
+2. **Translate-endpoint fallback** — when no trusted detection is available, fall back to `result.detected === target`.
+3. **Text-similarity fallback** — if the translated HTML, after tag-stripping, is identical to the input, LibreTranslate performed a no-op; treated as same language regardless of what the detectors said.
 
 Any layer returning "same language" short-circuits: no translation panel is shown, the button collapses silently.
+
+**Check ordering matters:** the unsupported-language check must run **before** the same-language and text-similarity checks. The backend returns the source text unchanged for a language it can't translate, which the text-similarity fallback would otherwise mistake for "already in your language".
+
+### Display label
+
+When `/api/detect` returns a trusted result, it overrides `result.detected` so the "Translated from X" label in the toolbar is as accurate as possible (the translate endpoint's own detection runs on raw HTML and is less reliable). Unknown language codes fall back to the raw code in the label rather than showing `undefined`.
+
+### Language preference & fetch lifecycle
+
+Three store keys are involved, with different persistence behaviour:
+
+| Key | Persisted | Content |
+|---|---|---|
+| `translationTargetLanguage` | ✅ yes | user's chosen target language, e.g. `'de'` |
+| `translationLanguages[instance]` | ✅ yes | supported language list fetched from `/api/languages` |
+| `translationLanguagesFetched[instance]` | ❌ no | session-only guard: "already fetched this page load" |
+
+**Target language on page load:** `translationTargetLanguage` is loaded immediately from persisted storage. `getDefaultLanguage()` uses `(translationTargetLanguage || navigator.language).split('-')[0]` — so the user's preference is active from the very first translation, without any network request.
+
+**Fetch is Settings-only:** `fetchTranslationLanguages()` is called only from Settings → General. It checks `translationLanguagesFetched[instance]` first; because that key is non-persisted, it fires once per page load on the first Settings → General visit, refreshing `translationLanguages[instance]`. The list is only needed for (a) the target-language dropdown in Settings and (b) the secondary supported-codes check — both of which only matter once the user is in Settings. The zero-confidence signal handles unsupported detection without it.
+
+**Preference is never overwritten by the fetch — with one exception:** if the previously selected language is no longer in the freshly fetched list (e.g. the admin removed it from the instance), `fetchTranslationLanguages()` sets `translationTargetLanguage = null`, and `getDefaultLanguage()` falls back to `navigator.language` automatically:
+
+```js
+if (translationTargetLanguage && !langs.find(l => l.code === translationTargetLanguage)) {
+  update.translationTargetLanguage = null
+}
+```
+
+**Adding a language to the instance** takes effect after the user reloads the page and opens Settings → General (triggering a fresh fetch).
 
 ---
 
@@ -724,9 +793,25 @@ Logs are written to `localStorage` on `pagehide` and read back on startup, so th
 
 **Settings → Logs** shows the captured log entries. "Copy logs" exports them including the app version banner for support context. The `showAllLogs` preference (persisted) toggles between showing only `error`/`warn` (default) and all log levels.
 
-### Network error severity
+### Network / expected-condition severity
 
-Network errors (`TypeError: Failed to fetch`, timeouts, non-2xx responses) are logged as `warn` rather than `error`. This keeps them visually distinct from real bugs in the log viewer.
+Infrastructure noise — failed fetches, request timeouts, non-2xx responses — is logged as `warn`, not `error`, so genuine bugs stay visually distinct (`⛔`) in the log viewer.
+
+**Shared classifier:** `src/routes/_utils/isNetworkError.js` exports `isNetworkNoiseError(err)`. A failed fetch surfaces with a different message per engine, so the classifier matches all three:
+
+| Engine | Message |
+|---|---|
+| Chrome | `Failed to fetch` |
+| Firefox | `NetworkError when attempting to fetch resource` |
+| Safari | `Load failed` |
+
+It also matches our own ajax layer's `Timed out after N seconds` and `Request failed: NNN`. The fetch-failed wording is only treated as noise for genuine `TypeError`s, so a custom message that merely contains "failed to fetch …" isn't misclassified; timeouts/HTTP errors come from our ajax layer with any Error type and are matched unconditionally.
+
+**Where it's applied:**
+- `console/hook.ts` — the global `unhandledrejection` handler downgrades network-noise rejections to `warn`.
+- `_actions/timeline.js` — every branch of the timeline-fetch `catch` handles the failure gracefully (cached content / empty list / offline toast), so network noise there is logged as `warn`; genuine exceptions stay at `error`.
+
+**Other expected conditions, not just network:** the same "don't log handled outcomes as errors" principle applies elsewhere — e.g. the notification sound's `play()` rejection (autoplay blocked before a user gesture) is swallowed, and `translateStatus` logs only genuine translation failures, not the classified `unsupportedLanguage` / `rateLimit` outcomes.
 
 ---
 
@@ -758,100 +843,27 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
-### [v1.6.1 / v1.7.x] Same-language detection and unsupported-language handling
+### [v1.6.1 / v1.7.1] Unsupported-language detection via zero-confidence signal
 
-**Files:** `src/routes/_actions/translate.js`, `src/routes/_utils/libreTranslate.js`
+**Decision:** Treat a language-detection `confidence` of ≈ 0 as the primary "unsupported language" signal, rather than relying on the backend to return an HTTP 400 or on the instance's supported-language list.
 
-#### Three-layer same-language detection
+**Rationale:** A self-hosted LibreTranslate instance only loads detection models for the languages it supports. For anything else its detector returns its default (`en`) with confidence exactly `0` — an explicit "no model" signal, not a misdetection. The backend gives no 400 for these; it returns the text unchanged. Keying on the zero-confidence signal is reliable and self-contained — it needs no supported-language list, so it works even for users who never opened Settings.
 
-**Decision:** Use three independent layers to detect "post is already in my language": (1) `detectedLanguage` from the translate response, (2) a parallel `/api/detect` call on aggressively cleaned plain text, (3) text-similarity fallback (no-op translation = same language).
+**Tradeoff:** The check ordering is load-bearing (unsupported must be checked before same-language/text-similarity, or an untranslated post reads as "already in your language"). The supported-language list is kept only as a secondary check and to populate the Settings dropdown.
 
-**Rationale:** CLD3 (LibreTranslate's detector) is confused by ASCII noise in Fediverse posts — URLs, `@mentions`, `#hashtags` — causing frequent misdetection. A single detection layer was insufficient. The text-similarity fallback catches cases where both detectors misfire.
+**Files:** `_actions/translate.js`, `_utils/libreTranslate.js`, `_utils/libreTranslateHTML.js`, `_actions/fetchTranslationLanguages.js` — full mechanics in §13.
 
-**Confidence bands:** `detectLanguage` returns `{ language, confidence }` (or `null` on a network/empty failure). The caller interprets the confidence in three bands:
+---
 
-| Confidence | Meaning | Action |
-|---|---|---|
-| `< 1` (≈ 0) | The backend has **no model** for this language and fell back to its default (`en`) with zero confidence | Treat as **unsupported language** (see below) |
-| `≥ 50` | Trustworthy detection | Used for same-language check and for the "Translated from X" display label |
-| `1 ≤ c < 50` | Ambiguous (e.g. mixed-language posts) | Ignored — translate normally |
+### [v1.7.1] Log expected conditions as warnings, not errors
 
-A `null`/`undefined` confidence (e.g. an older backend that doesn't report it) is **not** treated as unsupported — `isUnsupportedDetection` requires `typeof confidence === 'number'`.
+**Decision:** Handled/expected runtime conditions are logged as `warn` (or swallowed), reserving `error` (`⛔`) for genuine, unclassified bugs. Network noise (failed fetch, timeout, non-2xx) is classified via a shared `isNetworkNoiseError` helper covering Chrome/Firefox/Safari wording.
 
-#### `/api/detect` input cleaning
+**Rationale:** Transient network failures, autoplay-blocked notification sounds, and classified translation outcomes (`unsupportedLanguage`, `rateLimit`) are all handled gracefully and surfaced in the UI — logging them as errors trained users to ignore `⛔`, hiding real bugs.
 
-The cleaned text sent to `/api/detect` removes (in order):
-1. HTML tags
-2. URLs (`https?://…`)
-3. Mentions — both `@user@domain` and bare `@username` (local mentions without a domain part, e.g. `@rolle`, are NOT caught by the `@user@domain` regex and can pull CLD3 toward English)
-4. Hashtags (`#word`)
-5. HTML entities (`&amp;`, `&#123;`, …)
+**Tradeoff:** A regex on error messages is engine-specific and must be kept current as browsers reword fetch failures. Centralising it in one helper limits the blast radius.
 
-The cleaned result is capped at 500 chars; if less than 10 chars remain, detection is skipped entirely.
-
-#### `/api/detect` result used for display
-
-`result.detected` from the `/api/translate` endpoint runs on raw HTML input and is less accurate than our parallel `/api/detect` call which receives the pre-cleaned plain text. When `/api/detect` returns a result, it overrides `result.detected` so the "Translated from X" label in the toolbar is as accurate as possible.
-
-#### Client-side unsupported-language check
-
-**Problem:** When asked to translate a language it has no model for (e.g. Finnish on a de/en-only instance), the backend does **not** return a 400 error. The translate endpoint returns the text unchanged with `detectedLanguage: {confidence: 0, language: en}`, and `/api/detect` likewise returns `{confidence: 0, language: en}`. The user would see either "Translated from English" (garbage) or "Post is already in your language".
-
-**Root-cause insight (the key one):** This is **not a misdetection**. LibreTranslate's language detector only knows the languages whose models are installed. For an unsupported language it returns its default (`en`) with **confidence exactly `0`** — an explicit "I have no model for this" signal. Empirically verified against `translate.zocial.social`:
-
-| Input | `/detect` result |
-|---|---|
-| German sentence | `{confidence: 100, language: de}` |
-| English sentence | `{confidence: 100, language: en}` |
-| French / Finnish sentence | `{confidence: 0, language: en}` |
-| Mixed Finnish + English | `{confidence: 57, language: en}` |
-
-The separation between supported (≈100) and unsupported (≈0) is stark, which makes zero-confidence a reliable signal.
-
-**Decision:** Treat a `confidence === 0` detection as the **primary** unsupported-language signal (`isUnsupportedDetection` in `translate.js`). Throw a client-side `{type: 'unsupportedLanguage'}` error, which the `.catch` handler in `translateStatus` surfaces as the "translateUnsupportedLanguage" UI message.
-
-This signal is self-contained: it does **not** depend on `supportedSourceCodes`, so it works even for users who have never visited Settings → General. The earlier `<50 → null` threshold was the actual bug: it collapsed the zero-confidence signal to `null`, so the unsupported check (which only ran inside the `detectedFromDetect` branch) never fired for exactly the languages that were unsupported.
-
-**Two-detector redundancy:** Both endpoints carry the zero-confidence signal — `/api/detect` (`{language, confidence}`) and the translate response's `detectedLanguage` (exposed as `result.detected` + `result.detectedConfidence`). The code prefers `/api/detect` (cleaner input), but if that call fails (network/empty) it falls back to the translate endpoint's own detection. So a translation of an unsupported language is still caught even when `/api/detect` is unavailable. `detectLanguage` returning `null` no longer means "no signal" — the translate endpoint's confidence acts as a backup.
-
-**Secondary check (`supportedSourceCodes`):** A confidently detected language (`≥ 50`) that is not in `translationLanguages[currentInstance]` is also treated as unsupported. This is a backup for the theoretical case where a backend's detector knows more languages than its translator can handle. On instances where the detector and translator share the same model set (like ours), the zero-confidence signal already covers everything, and this check is redundant but harmless.
-
-**Check ordering:** The unsupported check must run **before** the same-language and text-similarity checks. The backend returns the source text unchanged for a language it can't translate, which the text-similarity fallback (input === output) would otherwise mistake for "already in your language".
-
-#### Settings-only fetch of supported languages
-
-**Decision:** `fetchTranslationLanguages()` is called only from Settings → General, not proactively on login or lazily on first translate use.
-
-**Rationale:** Three approaches were considered:
-1. *Proactive on login (idle task in `instanceObservers`)* — fires for all users, including those who never translate. Rejected as unnecessary overhead.
-2. *Lazy fire-and-forget in `translateStatus`* — fires only when translation is used, but the very first call races against the fetch, so the unsupported check may not apply on that first click.
-3. *Settings-only (original design, chosen)* — simplest. Originally this left a correctness gap for users who never visited Settings (`supportedSourceCodes` null). That gap is now **closed** by the zero-confidence unsupported signal above, which does not need the supported-language list at all. So the only remaining purpose of fetching the list is (a) populating the target-language dropdown in Settings and (b) the secondary supported-codes check — both of which only matter once the user is actually in Settings. Settings-only fetch is therefore exactly the right scope.
-
-#### Language preference persistence and fetch lifecycle
-
-Three store keys are involved, with different persistence behaviour:
-
-| Key | Persisted | Content |
-|---|---|---|
-| `translationTargetLanguage` | ✅ yes | user's chosen target language, e.g. `'de'` |
-| `translationLanguages[instance]` | ✅ yes | supported language list fetched from `/api/languages` |
-| `translationLanguagesFetched[instance]` | ❌ no | session-only guard: "already fetched this page load" |
-
-**Target language on page load:** `translationTargetLanguage` is loaded immediately from persisted storage. `getDefaultLanguage()` uses `(translationTargetLanguage || navigator.language).split('-')[0]` — so the user's preference is active from the very first translation, without any network request.
-
-**Fetch on Settings → General visit:** `fetchTranslationLanguages()` checks `translationLanguagesFetched[instance]` first. Because that key is non-persisted, it is always `false` on a fresh page load. The fetch therefore fires once per page load on the first Settings → General visit. It updates `translationLanguages[instance]` (persisted) with the current list from the backend.
-
-**Preference is never overwritten by the fetch — with one exception:** if the previously selected language is no longer present in the freshly fetched list (e.g. the admin removed it from the LibreTranslate instance), `fetchTranslationLanguages()` explicitly sets `translationTargetLanguage = null`:
-
-```js
-if (translationTargetLanguage && !langs.find(l => l.code === translationTargetLanguage)) {
-  update.translationTargetLanguage = null
-}
-```
-
-`getDefaultLanguage()` then falls back to `navigator.language` automatically — no user action required.
-
-**Adding a language to the LibreTranslate instance** takes effect after the user reloads the page and opens Settings → General (triggering a fresh fetch).
+**Files:** `_utils/isNetworkError.js`, `_utils/console/hook.ts`, `_actions/timeline.js`, `_store/observers/notificationObservers.js` — full mechanics in §18.
 
 ---
 
