@@ -885,6 +885,38 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
+### [v1.1.0] Profile posting stats bar
+
+**Decision:** Add a visual bar on profile pages showing the ratio of original posts, replies, and boosts for an account.
+
+**Rationale:** Gives readers a quick signal about posting style (broadcaster vs. conversationalist vs. curator) without needing to scroll through the full timeline. Stats are cached per `instance/accountId` in non-persisted store state so switching between account tabs doesn't refetch.
+
+---
+
+### [v1.3.0] In-app profile editing
+
+**Decision:** Implement profile editing (display name, bio, metadata fields, avatar/header upload) inside Zocial rather than directing users to the instance web UI.
+
+**Rationale:** Minimising the need to leave the client improves the self-contained app experience. The Mastodon `PATCH /api/v1/accounts/update_credentials` endpoint is standard across all supported backends.
+
+---
+
+### [v1.3.0] Local-only posting
+
+**Decision:** Add a "local-only" toggle in the compose toolbar. The button is greyed out (but visible) on instances that don't support it.
+
+**Rationale:** Local-only posts are a Mastodon/Pleroma extension widely used on community instances. Surfacing the feature in the UI makes Zocial usable for communities that rely on it. Showing it as disabled (rather than hidden) on unsupported instances makes the feature discoverable.
+
+---
+
+### [v1.4.0] List management from within the app
+
+**Decision:** Add "Manage lists" to the profile "···" menu, and allow creating lists directly in the app.
+
+**Rationale:** GoToSocial users had no other way to manage list memberships — the official Mastodon web UI was unavailable to them. This was the primary driver. The feature was built generically so it works across all backends.
+
+---
+
 ### [v1.5.0] Quote post implementation: URL-in-text over FEP-e232
 
 **Decision:** Embed quoted posts as plain URLs in the post body. The server provides a link-preview card.
@@ -894,6 +926,14 @@ This section captures significant design decisions, feature choices, and archite
 **Tradeoff:** No inline rendering on servers that don't expose a `quote` field. Accepted — broad compatibility outweighs rich rendering for a minority of users.
 
 **Files:** `_actions/quote.js`, `Status.html` (computed `showQuote`, `originalAccount*`)
+
+---
+
+### [v1.5.0] IndexedDB writes moved to background for timeline rendering
+
+**Decision:** After fetching timeline items from the network, render them immediately and write to IndexedDB in the background (`/* no await */ storeFreshTimelineItemsInDatabase(...)`).
+
+**Rationale:** IndexedDB writes are only for offline caching. Waiting for them before rendering added latency users could feel. The worst case if a write fails is that the offline cache is slightly stale — acceptable.
 
 ---
 
@@ -916,30 +956,6 @@ This section captures significant design decisions, feature choices, and archite
 **Tradeoff:** The check ordering is load-bearing (unsupported must be checked before same-language/text-similarity, or an untranslated post reads as "already in your language"). The supported-language list is kept only as a secondary check and to populate the Settings dropdown.
 
 **Files:** `_actions/translate.js`, `_utils/libreTranslate.js`, `_utils/libreTranslateHTML.js`, `_actions/fetchTranslationLanguages.js` — full mechanics in §13.
-
----
-
-### [v1.7.1] Log expected conditions as warnings, not errors
-
-**Decision:** Handled/expected runtime conditions are logged as `warn` (or swallowed), reserving `error` (`⛔`) for genuine, unclassified bugs. Network noise (failed fetch, timeout, non-2xx) is classified via a shared `isNetworkNoiseError` helper covering Chrome/Firefox/Safari wording.
-
-**Rationale:** Transient network failures, autoplay-blocked notification sounds, and classified translation outcomes (`unsupportedLanguage`, `rateLimit`) are all handled gracefully and surfaced in the UI — logging them as errors trained users to ignore `⛔`, hiding real bugs.
-
-**Tradeoff:** A regex on error messages is engine-specific and must be kept current as browsers reword fetch failures. Centralising it in one helper limits the blast radius.
-
-**Files:** `_utils/isNetworkError.js`, `_utils/console/hook.ts`, `_actions/timeline.js`, `_store/observers/notificationObservers.js` — full mechanics in §19.
-
----
-
-### [v1.7.1] Unified device notifications with Web Push as the primary system
-
-**Decision:** Treat Web Push (service worker, "System B") as the primary OS-notification mechanism and the page-context `Notification` ("System A") as a foreground-only fallback. Collapse the two separate settings blocks into one "Notify me on this device" master toggle, and make System A descriptive + event-driven (off the streaming `notification` event). In-app notifications default **on**; OS notifications default **off** behind a one-time login prompt.
-
-**Rationale:** The page-context notification can't fire when the tab is frozen/closed or on a mobile PWA (streaming pauses on freeze), and only ever showed a generic count. Web Push covers all those cases with rich, type-specific content but needs server support and an explicit subscription. Two near-identical settings blocks (in-app filters vs push alerts) plus a third desktop toggle were genuinely confusing, so the UI was unified to one switch with the per-type list underneath.
-
-**Tradeoff:** A push subscription means System A defers entirely (no per-type foreground exceptions) — acceptable, since the per-type intent already lives in the push alerts. OS notifications depend on the server: no Web Push on GoToSocial < 0.18, where only the foreground fallback works.
-
-**Files:** see §18.
 
 ---
 
@@ -975,43 +991,27 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
-### [v1.4.0] List management from within the app
+### [v1.7.1] Log expected conditions as warnings, not errors
 
-**Decision:** Add "Manage lists" to the profile "···" menu, and allow creating lists directly in the app.
+**Decision:** Handled/expected runtime conditions are logged as `warn` (or swallowed), reserving `error` (`⛔`) for genuine, unclassified bugs. Network noise (failed fetch, timeout, non-2xx) is classified via a shared `isNetworkNoiseError` helper covering Chrome/Firefox/Safari wording.
 
-**Rationale:** GoToSocial users had no other way to manage list memberships — the official Mastodon web UI was unavailable to them. This was the primary driver. The feature was built generically so it works across all backends.
+**Rationale:** Transient network failures, autoplay-blocked notification sounds, and classified translation outcomes (`unsupportedLanguage`, `rateLimit`) are all handled gracefully and surfaced in the UI — logging them as errors trained users to ignore `⛔`, hiding real bugs.
 
----
+**Tradeoff:** A regex on error messages is engine-specific and must be kept current as browsers reword fetch failures. Centralising it in one helper limits the blast radius.
 
-### [v1.3.0] In-app profile editing
-
-**Decision:** Implement profile editing (display name, bio, metadata fields, avatar/header upload) inside Zocial rather than directing users to the instance web UI.
-
-**Rationale:** Minimising the need to leave the client improves the self-contained app experience. The Mastodon `PATCH /api/v1/accounts/update_credentials` endpoint is standard across all supported backends.
+**Files:** `_utils/isNetworkError.js`, `_utils/console/hook.ts`, `_actions/timeline.js`, `_store/observers/notificationObservers.js` — full mechanics in §19.
 
 ---
 
-### [v1.3.0] Local-only posting
+### [v1.8.0] Unified device notifications with Web Push as the primary system
 
-**Decision:** Add a "local-only" toggle in the compose toolbar. The button is greyed out (but visible) on instances that don't support it.
+**Decision:** Treat Web Push (service worker, "System B") as the primary OS-notification mechanism and the page-context `Notification` ("System A") as a foreground-only fallback. Collapse the two separate settings blocks into one "Notify me on this device" master toggle, and make System A descriptive + event-driven (off the streaming `notification` event). In-app notifications default **on**; OS notifications default **off** behind a one-time login prompt.
 
-**Rationale:** Local-only posts are a Mastodon/Pleroma extension widely used on community instances. Surfacing the feature in the UI makes Zocial usable for communities that rely on it. Showing it as disabled (rather than hidden) on unsupported instances makes the feature discoverable.
+**Rationale:** The page-context notification can't fire when the tab is frozen/closed or on a mobile PWA (streaming pauses on freeze), and only ever showed a generic count. Web Push covers all those cases with rich, type-specific content but needs server support and an explicit subscription. Two near-identical settings blocks (in-app filters vs push alerts) plus a third desktop toggle were genuinely confusing, so the UI was unified to one switch with the per-type list underneath.
 
----
+**Tradeoff:** A push subscription means System A defers entirely (no per-type foreground exceptions) — acceptable, since the per-type intent already lives in the push alerts. OS notifications depend on the server: no Web Push on GoToSocial < 0.18, where only the foreground fallback works.
 
-### [v1.5.0] IndexedDB writes moved to background for timeline rendering
-
-**Decision:** After fetching timeline items from the network, render them immediately and write to IndexedDB in the background (`/* no await */ storeFreshTimelineItemsInDatabase(...)`).
-
-**Rationale:** IndexedDB writes are only for offline caching. Waiting for them before rendering added latency users could feel. The worst case if a write fails is that the offline cache is slightly stale — acceptable.
-
----
-
-### [v1.1.0] Profile posting stats bar
-
-**Decision:** Add a visual bar on profile pages showing the ratio of original posts, replies, and boosts for an account.
-
-**Rationale:** Gives readers a quick signal about posting style (broadcaster vs. conversationalist vs. curator) without needing to scroll through the full timeline. Stats are cached per `instance/accountId` in non-persisted store state so switching between account tabs doesn't refetch.
+**Files:** see §18.
 
 ---
 
@@ -1030,3 +1030,5 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.6.0** | 2026-06-09 | Migrated translation from SimplyTranslate/Google to LibreTranslate; `TRANSLATE_API` env var; nginx proxy (no CORS) |
 | **1.6.1** | 2026-06-10 | Same-language detection with parallel detect/translate; language code normalisation (Hebrew, Javanese, Chinese); backend-unreachable crash fix |
 | **1.7.0** | 2026-06-10 | Translation target language selector in settings, per-instance language caching, 60 s poll fallback, list error handling (silent fallback vs. toast) |
+| **1.7.1** | 2026-06-11 | Reliable unsupported-language detection (zero-confidence signal); expected conditions (network noise, blocked autoplay sound) logged as warnings instead of errors |
+| **1.8.0** | 2026-06-11 | New notification system: Web Push as the primary mechanism (rich, type-specific, works with the tab closed / on a mobile PWA); descriptive event-driven foreground notifications; unified "Notify me on this device" settings with a one-time login prompt and hover explanations. In-app notifications default on, OS notifications default off |
