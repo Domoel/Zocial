@@ -179,9 +179,9 @@
   <h2 id="section-wellness">{'intl.wellness'}</h2>
 
   <form class="ui-settings">
-    <p>
-      {'intl.wellnessDescription'}
-    </p>
+    <h3>{'intl.all'}</h3>
+    <p class="settings-description">{'intl.wellnessDescription'}</p>
+    <p class="settings-description">{@html 'intl.wellnessFooter'}</p>
 
     <label class="setting-group">
       <input type="checkbox" id="choice-check-all"
@@ -233,9 +233,6 @@
           {'intl.showAbsoluteTimestamps'}
         </label>
 
-      <p>
-        {@html 'intl.wellnessFooter'}
-      </p>
   </form>
 
   <h2 id="section-notifications">{'intl.notifications'}</h2>
@@ -243,11 +240,11 @@
   <div class="ui-settings notifications-block">
     {#if $isUserLoggedIn}
       <h3>{'intl.osNotificationsHeading'}</h3>
-      <p class="notifications-description">{'intl.osNotificationsDescription'}</p>
+      <p class="settings-description">{'intl.osNotificationsDescription'}</p>
       <DeviceNotificationSettings instanceName={$currentInstance} />
 
       <h3>{'intl.inAppNotificationsHeading'}</h3>
-      <p class="notifications-description">{'intl.inAppNotificationsDescription'}</p>
+      <p class="settings-description">{'intl.inAppNotificationsDescription'}</p>
       <NotificationFilterSettings instanceName={$currentInstance} />
     {/if}
   </div>
@@ -270,11 +267,7 @@
     padding: 0;
   }
 
-  .notifications-block :global(h3) {
-    margin: 16px 0 4px;
-    font-size: 1.4em;
-  }
-  .notifications-description {
+  .settings-description {
     margin: 0 0 8px;
     font-size: 0.9em;
     opacity: 0.7;
