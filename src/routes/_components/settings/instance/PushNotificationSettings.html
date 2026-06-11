@@ -49,10 +49,17 @@
 
       const { form } = this.refs
       const pushSubscription = this.store.getInstanceData(instanceName, 'pushSubscriptions')
+      const hasSubscription = !!pushSubscription
 
       for (const { key } of options) {
         const saved = get(pushSubscription, ['alerts', key])
-        form.elements[key].checked = saved === undefined ? true : saved
+        // Reflect reality: with no active push subscription, show every box unchecked so the
+        // user can see push is OFF (and ticking a box actually registers a subscription via
+        // onPushSettingsChange). Only default to checked once a subscription exists but this
+        // particular alert key hasn't been set yet.
+        form.elements[key].checked = hasSubscription
+          ? (saved === undefined ? true : saved)
+          : false
       }
     },
     store: () => store,

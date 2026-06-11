@@ -3,6 +3,7 @@ import { deleteStatus } from '../deleteStatuses.js'
 import { addStatusOrNotification } from '../addStatusOrNotification.js'
 import { emit } from '../../_utils/eventBus.ts'
 import { updateStatus } from '../updateStatus.js'
+import { showDesktopNotification } from '../showDesktopNotification.js'
 
 const KNOWN_EVENTS = ['update', 'delete', 'notification', 'conversation', 'filters_changed', 'status.update']
 
@@ -29,6 +30,7 @@ export function processMessage (instanceName, timelineName, message) {
       if (payload.type === 'mention') {
         addStatusOrNotification(instanceName, 'notifications/mentions', payload)
       }
+      showDesktopNotification(instanceName, payload)
       break
     case 'conversation':
       // This is a hack in order to mostly fit the conversation model into
