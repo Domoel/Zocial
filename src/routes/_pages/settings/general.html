@@ -242,14 +242,12 @@
 
   <div class="ui-settings notifications-block">
     {#if $isUserLoggedIn}
+      <h3>{'intl.osNotificationsHeading'}</h3>
+      <p class="notifications-description">{'intl.osNotificationsDescription'}</p>
       <DeviceNotificationSettings instanceName={$currentInstance} />
 
-      <h3>
-        <Tooltip
-          text="{'intl.shownInNotificationsTab'}"
-          tooltipText="{'intl.shownInNotificationsTabDescription'}"
-        />
-      </h3>
+      <h3>{'intl.inAppNotificationsHeading'}</h3>
+      <p class="notifications-description">{'intl.inAppNotificationsDescription'}</p>
       <NotificationFilterSettings instanceName={$currentInstance} />
     {/if}
   </div>
@@ -275,6 +273,11 @@
   .notifications-block :global(h3) {
     margin: 16px 0 4px;
     font-size: 1.4em;
+  }
+  .notifications-description {
+    margin: 0 0 8px;
+    font-size: 0.9em;
+    opacity: 0.7;
   }
   .translation-language-group {
     display: flex;
