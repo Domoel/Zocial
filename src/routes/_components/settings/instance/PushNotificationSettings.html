@@ -41,46 +41,36 @@
   import { PUSH_ALERT_OPTIONS } from '../../../_static/pushAlerts.js'
 
   export default {
-    oncreate () {
-      const { instanceName } = this.get()
-      // Re-apply the checkbox states whenever this instance's stored subscription changes. The
-      // post-login prompt registers the subscription via an async dummy-key dance, so it may
-      // appear (or have its alerts filled in) while this panel is already open — without this
-      // the boxes would stay stuck on their initial (all-off) state.
-      this.observe('currentSubscription', () => this.applyAlertCheckboxes())
-      // Best-effort backend sync; the observer above re-applies once it updates the store.
-      /* no await */ updatePushSubscriptionForInstance(instanceName)
+    async oncreate () {
+      const { instanceName, options } = this.get()
+      await updatePushSubscriptionForInstance(instanceName)
+
+      const { form } = this.refs
+      // The user may have navigated away during the async sync above, destroying this component.
+      if (!form) {
+        return
+      }
+      const pushSubscription = this.store.getInstanceData(instanceName, 'pushSubscriptions')
+      const hasSubscription = !!pushSubscription
+      for (const { key } of options) {
+        const saved = get(pushSubscription, ['alerts', key])
+        // Reflect reality: with no active push subscription, show every box unchecked so the
+        // user can see push is OFF (and ticking a box actually registers a subscription via
+        // onPushSettingsChange). Only default to checked once a subscription exists but this
+        // particular alert key hasn't been set yet.
+        form.elements[key].checked = hasSubscription
+          ? (saved === undefined ? true : saved)
+          : false
+      }
     },
     store: () => store,
     data: () => ({
       options: PUSH_ALERT_OPTIONS
     }),
     computed: {
-      pushNotificationsSupport: ({ $pushNotificationsSupport }) => $pushNotificationsSupport,
-      currentSubscription: ({ $pushSubscriptions, instanceName }) => (
-        $pushSubscriptions && $pushSubscriptions[instanceName]
-      )
+      pushNotificationsSupport: ({ $pushNotificationsSupport }) => $pushNotificationsSupport
     },
     methods: {
-      applyAlertCheckboxes () {
-        const { instanceName, options } = this.get()
-        const { form } = this.refs
-        if (!form) {
-          return
-        }
-        const pushSubscription = this.store.getInstanceData(instanceName, 'pushSubscriptions')
-        const hasSubscription = !!pushSubscription
-        for (const { key } of options) {
-          const saved = get(pushSubscription, ['alerts', key])
-          // Reflect reality: with no active push subscription, show every box unchecked so the
-          // user can see push is OFF (and ticking a box actually registers a subscription via
-          // onPushSettingsChange). Only default to checked once a subscription exists but this
-          // particular alert key hasn't been set yet.
-          form.elements[key].checked = hasSubscription
-            ? (saved === undefined ? true : saved)
-            : false
-        }
-      },
       async onPushSettingsChange (e) {
         const { instanceName, options } = this.get()
         const { form } = this.refs
