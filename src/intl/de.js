@@ -403,7 +403,7 @@ export default {
   loggedInAs: 'Eingeloggt als',
   homeTimelineFilters: 'Filter für Startzeitleiste',
   notificationFilters: 'Filter für Benachrichtigungen',
-  osNotificationsHeading: 'Push- / Desktop- / Mobil-Benachrichtigungen',
+  osNotificationsHeading: 'Push-Benachrichtigungen',
   osNotificationsDescription: 'Werde auf diesem Gerät benachrichtigt, auch wenn Zocial geschlossen ist.',
   notifyOnThisDevice: 'Auf diesem Gerät benachrichtigen',
   deviceNotificationsForegroundOnly: 'Dieser Server unterstützt keine Hintergrund-Benachrichtigungen, daher wirst du nur benachrichtigt, solange Zocial in diesem Tab geöffnet ist.',
