@@ -25,9 +25,16 @@ export function notificationObservers () {
     if (numberOfNotifications > previousNumberOfNotifications) {
       if (!disableNotificationSound) {
         try {
-          (audio || (audio = new Audio('/boop.mp3'))).play()
+          const played = (audio || (audio = new Audio('/boop.mp3'))).play()
+          // play() returns a promise that rejects when the browser blocks autoplay
+          // (no user gesture yet). That rejection is asynchronous, so the surrounding
+          // try/catch can't catch it — swallow it explicitly to avoid an
+          // unhandled-rejection log for an entirely expected condition.
+          if (played && typeof played.catch === 'function') {
+            played.catch(() => {})
+          }
         } catch (_) {
-          // ignore
+          // ignore (older browsers where play() throws synchronously)
         }
       }
 

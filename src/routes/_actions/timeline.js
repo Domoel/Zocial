@@ -12,6 +12,7 @@ import { TIMELINE_BATCH_SIZE } from '../_static/timelines.js'
 import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
 import { addStatusesOrNotifications, insertUpdatesIntoTimeline } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
+import { isNetworkNoiseError } from '../_utils/isNetworkError.js'
 import { sortItemSummariesForThread, sortItemSummariesForNotificationBatch } from '../_utils/sortItemSummaries.ts'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
 import li from 'li'
@@ -154,7 +155,15 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
       // DB write is for offline caching only — render immediately without waiting for it.
       /* no await */ storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
     } catch (e) {
-      console.error(e)
+      // Every branch below handles the failure gracefully (cached content / empty list /
+      // offline toast). Transient network noise (timeout, dropped connection, expected HTTP
+      // errors) is therefore not a code bug — log it as warn so genuine exceptions stay
+      // visually distinct as errors.
+      if (isNetworkNoiseError(e)) {
+        console.warn(e)
+      } else {
+        console.error(e)
+      }
       if (e.status && timelineName.startsWith('list/')) {
         // Server returned an HTTP error for a list timeline (e.g. GoToSocial returns
         // an error for empty lists). Not a network/offline issue — show empty timeline.

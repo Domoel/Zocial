@@ -1,4 +1,5 @@
 import { emit } from '../eventBus.ts'
+import { isNetworkNoiseError } from '../isNetworkError.js'
 export type Log = {
   type: string
   args: unknown[]
@@ -122,11 +123,9 @@ if (ZOCIAL_IS_BROWSER) {
     // the message so the source is visible live, in "Copy logs", and after a reload
     const reason: any = event.reason
     const detail = (reason && reason.stack) || (reason && reason.message) || String(reason)
-    // Network/HTTP errors (Failed to fetch, timeouts, non-2xx responses) are infrastructure
+    // Network/HTTP errors (failed fetch, timeouts, non-2xx responses) are infrastructure
     // noise, not code bugs — log as warn so real errors stay visually distinct.
-    const isNetworkNoise = reason instanceof TypeError
-      ? /failed to fetch/i.test(reason.message)
-      : /failed to fetch|timed out after|request failed:\s*\d{3}/i.test(String(reason?.message))
+    const isNetworkNoise = isNetworkNoiseError(reason)
     add({
       type: isNetworkNoise ? 'warn' : 'error',
       args: ['Uncaught (in promise): ' + detail],
