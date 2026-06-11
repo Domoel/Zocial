@@ -180,8 +180,8 @@
 
   <form class="ui-settings">
     <h3>{'intl.all'}</h3>
-    <p class="settings-description">{'intl.wellnessDescription'}</p>
-    <p class="settings-description">{@html 'intl.wellnessFooter'}</p>
+    <p>{'intl.wellnessDescription'}</p>
+    <p>{@html 'intl.wellnessFooter'}</p>
 
     <label class="setting-group">
       <input type="checkbox" id="choice-check-all"
@@ -240,11 +240,11 @@
   <div class="ui-settings notifications-block">
     {#if $isUserLoggedIn}
       <h3>{'intl.osNotificationsHeading'}</h3>
-      <p class="settings-description">{'intl.osNotificationsDescription'}</p>
+      <p>{'intl.osNotificationsDescription'}</p>
       <DeviceNotificationSettings instanceName={$currentInstance} />
 
       <h3>{'intl.inAppNotificationsHeading'}</h3>
-      <p class="settings-description">{'intl.inAppNotificationsDescription'}</p>
+      <p>{'intl.inAppNotificationsDescription'}</p>
       <NotificationFilterSettings instanceName={$currentInstance} />
     {/if}
   </div>
@@ -267,11 +267,6 @@
     padding: 0;
   }
 
-  .settings-description {
-    margin: 0 0 8px;
-    font-size: 0.9em;
-    opacity: 0.7;
-  }
   .translation-language-group {
     display: flex;
     flex-direction: column;
