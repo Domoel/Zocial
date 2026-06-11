@@ -179,6 +179,14 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   event.waitUntil(
     (async () => {
+      // When the app is open and visible, the streaming connection handles the notification
+      // in-app (sound + notification list). Suppress the OS popup to avoid interrupting the
+      // user while they're actively using Zocial.
+      const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      if (windowClients.some(c => c.visibilityState === 'visible')) {
+        return
+      }
+
       const data = event.data.json()
       // If there is only once instance, then we know for sure that the push notification came from it
       const knownInstances = await getKnownInstances()
