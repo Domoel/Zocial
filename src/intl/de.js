@@ -1,10 +1,14 @@
 export default {
   // Home page, basic <title> and <description>
   appName: 'Zocial',
-  appDescription: 'Ein alternativer Web Client für Mastodon, der auf Geschwindigkeit und einfache Bedienung ausgelegt ist.',
+  appDescription: 'Ein minimalistischer, eigenwilliger Mastodon Webclient.',
   homeDescription: `
     <p>
       Ein minimalistischer, eigenwilliger Mastodon Webclient.
+    </p>`,
+  homeMultiInstance: `
+    <p>
+      Melde dich bei einer Instanz an, um loszulegen:
     </p>`,
   logIn: 'Anmelden',
   footer: `
@@ -13,6 +17,7 @@ export default {
     </p>
   `,
   // Generic UI
+  newStatus: 'Neuer Beitrag',
   loading: 'Wird geladen',
   okay: 'OK',
   cancel: 'Abbrechen',
@@ -20,6 +25,9 @@ export default {
   close: 'Schließen',
   error: 'Fehler: {error}',
   errorShort: 'Fehler:',
+  account: 'Account',
+  start: 'Start',
+  stop: 'Stop',
   // Relative timestamps
   justNow: 'gerade eben',
   // Navigation, page titles
@@ -43,9 +51,12 @@ export default {
   `,
   blockedUsers: 'Blockierte Benutzer',
   bookmarks: 'Lesezeichen',
+  bookmarks: 'Lesezeichen',
   directMessages: 'Direktnachrichten',
   favorites: 'Favoriten',
+  reactions: 'Reaktionen',
   federated: 'Föderiert',
+  bubble: 'Bubble',
   home: 'Startseite',
   local: 'Lokal',
   notifications: 'Benachrichtigungen',
@@ -63,6 +74,7 @@ export default {
   back: 'Zurück',
   profile: 'Profil',
   federatedTimeline: 'Föderierte Zeitleiste',
+  bubbleTimeline: 'Bubble-Zeitleiste',
   localTimeline: 'Lokale Zeitleiste',
   // community page
   community: 'Community',
@@ -88,6 +100,10 @@ export default {
   notificationMentionsNotLoggedIn: 'Hier erscheinen Deine Benachrichtigungen zu Erwähnungen, wenn Du Dich anmeldest.',
   statusNotLoggedIn: 'Hier erscheint der Faden zu einem Tröt, wenn Du Dich anmeldest.',
   tagNotLoggedIn: 'Hier erscheinen Tröts zu einem hashtag, wenn Du Dich anmeldest.',
+  bubbleTimelineNotLoggedIn: 'Deine Bubble-Zeitleiste erscheint hier, sobald Du angemeldet bist.',
+  bubbleTimelineNotSupported: 'Die Bubble-Zeitleiste wird von Deiner Instanz nicht unterstützt.',
+  accountNotLoggedIn: 'Die Account-Einstellungen erscheinen hier, sobald Du angemeldet bist.',
+  filtered: 'Gefiltert',
   // Notification subpages
   filters: 'Filter',
   all: 'Alle',
@@ -122,6 +138,7 @@ export default {
     <li><kbd>g</kbd> + <kbd>n</kbd> zu den Benachrichtigungen gehen</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> zur lokalen zeitleiste gehen</li>
     <li><kbd>g</kbd> + <kbd>t</kbd> zur föderierten Zeitleiste gehen</li>
+    <li><kbd>g</kbd> + <kbd>b</kbd> zur Bubble-Zeitleiste gehen</li>
     <li><kbd>g</kbd> + <kbd>c</kbd> zur Community-Seite gehen</li>
     <li><kbd>g</kbd> + <kbd>d</kbd> zur Seite mit Direktnachrichten gehen</li>
     <li><kbd>h</kbd> oder <kbd>?</kbd> zum Umschalten des Hilfe-Dialogs</li>
@@ -132,6 +149,9 @@ export default {
     <li><kbd>k</kbd> oder <kbd>↑</kbd> den vorherigen Tröt ansteuern</li>
     <li><kbd>.</kbd> neue Tröts anzeigen und nach oben scrollen</li>
     <li><kbd>o</kbd> Tröt öffnen</li>
+    <li><kbd>e</kbd> eigene Beiträge bearbeiten</li>
+    <li><kbd>q</kbd> einen Beitrag zitieren, falls unterstützt</li>
+    <li><kbd>Escape</kbd> Antwort schließen</li>
     <li><kbd>f</kbd> Tröt favorisieren</li>
     <li><kbd>b</kbd> Tröt boosten</li>
     <li><kbd>r</kbd> auf Tröt antworten</li>
@@ -139,6 +159,7 @@ export default {
     <li><kbd>y</kbd> sensible Medieninhalte zeigen oder verbergen</li>
     <li><kbd>m</kbd> den Verfasser erwähnen</li>
     <li><kbd>p</kbd> das Profil des Verfassers öffnen</li>
+    <li><kbd>l</kbd> den Link der Karte in einem neuen Tab öffnen</li>
     <li><kbd>l</kbd> den Link des aktuellen Tröts in einem neuen Tab öffnen</li>
     <li><kbd>x</kbd> den Text hinter der Inhaltswarnung anzeigen oder verbergen</li>
     <li><kbd>z</kbd> den Text hinter der Inhaltswarnung für alle in dieser Unterhaltung anzeigen oder verbergen</li>
@@ -160,7 +181,7 @@ export default {
     ·
     {showInstanceName, select,
       true {{instanceName}}
-      other {Zocial}
+      other {{appName}}
     }
   `,
   pinLabel: `{label} {pinnable, select,
@@ -195,6 +216,14 @@ export default {
   pollDuration: 'Dauer der Umfrage',
   fiveMinutes: '5 Minuten',
   thirtyMinutes: '30 Minuten',
+  twelveHours: '12 Stunden',
+  fourteenDays: '14 Tage',
+  thirtyDays: '30 Tage',
+  oneYear: '1 Jahr',
+  never: 'Nie',
+  schedulePost: 'Beitrag planen',
+  removeSchedule: 'Planung entfernen',
+  scheduleSet: 'Planen',
   oneHour: '1 Stunde',
   sixHours: '6 Stunden',
   oneDay: '1 Tag',
@@ -210,6 +239,20 @@ export default {
   altLabel: 'Beschreibe für Menschen mit Seheinschränkungen',
   extractText: 'Text aus Bild ermitteln',
   extractingText: 'Erkenne Text',
+  scheduleDateTimeLabel: 'Senden um',
+  scheduleTooSoon: 'Die geplante Zeit muss mindestens 5 Minuten in der Zukunft liegen',
+  scheduledStatusCreated: 'Beitrag geplant',
+  scheduledPosts: 'Geplante Beiträge',
+  noScheduledPosts: 'Keine geplanten Beiträge',
+  cancelScheduledPost: 'Abbrechen',
+  rescheduleLabel: 'Neu planen',
+  scheduledPostCancelled: 'Geplanter Beitrag abgebrochen',
+  scheduledPostRescheduled: 'Neu geplant',
+  youVotedFor: 'Du hast abgestimmt für',
+  backfill: 'Fehlende Beiträge laden',
+  createList: 'Liste erstellen',
+  unableToCreateList: 'Liste konnte nicht erstellt werden: {error}',
+  listTitle: 'Listentitel',
   extractingTextCompletion: 'Erkenne Text ({percent}% abgeschlossen)…',
   unableToExtractText: 'Es konnte kein Text erkannt werden.',
   // Account options
@@ -223,6 +266,11 @@ export default {
   hideReblogsFromAccount: 'Boosts von {account} verbergen',
   showDomain: 'Verbergen von {domain} aufheben',
   hideDomain: 'Verbirg {domain}',
+  manageInLists: 'Listenmitgliedschaften verwalten',
+  listMembership: 'Listenmitgliedschaften für {account}',
+  noListsYet: 'Noch keine Listen',
+  errorInListMembership: 'Fehler beim Aktualisieren der Listenmitgliedschaft',
+  listMembershipNotSupported: 'Wird von diesem Server nicht unterstützt',
   reportAccount: 'Melde {account}',
   mentionAccount: 'Erwähne {account}',
   copyLinkToAccount: 'Kopiere Link zu account',
@@ -274,6 +322,14 @@ export default {
   profileForAccount: 'Profil für {account}',
   statisticsAndMoreOptions: 'Statistiken und weitere Optionen',
   statuses: 'Tröts',
+  joined: 'Beigetreten',
+  postingStatsSummary: 'Letzte {posts} in den letzten {duration}',
+  postingStatsPosts: `{total, plural, one {# Beitrag} other {# Beiträge}}`,
+  postingStatsDays: `{days, plural, one {# Tag} other {# Tage}}`,
+  postingStatsYears: `{years, plural, one {# Jahr} other {# Jahre}}`,
+  postingStatsOriginal: 'Original',
+  postingStatsReplies: 'Antworten',
+  postingStatsBoosts: 'Boosts',
   follows: 'Folgt',
   followers: 'Folgende',
   moreOptions: 'Weitere Optionen',
@@ -287,6 +343,11 @@ export default {
     true {(Followeranfrage gestellt)}
     other {}
   }`,
+  unrequestLabel: 'Anfrage abbrechen',
+  unfollowingLabel: 'Entfolgen...',
+  unblockingLabel: 'Blockierung aufheben...',
+  unrequestingLabel: 'Abbrechen...',
+  }`,
   unblock: 'Blockade aufheben',
   nameAndFollowing: 'Name und folgt',
   clickToSeeAvatar: 'Klicke zum Anzeigen des Avatars',
@@ -295,6 +356,11 @@ export default {
   domainHidden: 'Domain verborgen',
   muted: 'Stummgeschaltet',
   followsYou: 'Folgt Dir',
+  locked: 'Dieses Konto ist gesperrt. Der Inhaber prüft manuell, wer ihm folgen darf.',
+  scrollToTopOfConversation: 'Zum Anfang der Unterhaltung scrollen',
+  scrollToTop: 'Nach oben scrollen',
+  notify: 'Abonnieren von {account}',
+  denotify: 'Abbestellen von {account}',
   avatarForAccount: 'Avatar für {account}',
   fields: 'Felder',
   accountHasMoved: '{account} ist umgezogen:',
@@ -349,12 +415,20 @@ export default {
   <p>
     Du nutzt Zocial-Version <code class="zocial-version"></code>.
   </p>`,
+  logs: 'Protokolle',
+  showAllLogs: 'Alle Protokolle anzeigen (Debug & Info)',
+  showAllLogsHint: 'Standardmäßig werden nur Warnungen und Fehler angezeigt. Aktiviere dies, um auch Debug- und Info-Protokolle einzuschließen.',
+  copyLogs: 'Protokolle kopieren',
+  logsCopied: 'Protokolle in die Zwischenablage kopiert',
+  logsCopyFailed: 'Protokolle konnten nicht kopiert werden',
+  </p>`,
   // Settings
   settings: 'Einstellungen',
   general: 'Allgemein',
   generalSettings: 'Allgemeine Einstellungen',
   generalSettingsLoginRequired: 'Allgemeine Einstellungen sind nur verfügbar, wenn du angemeldet bist.',
   showSensitive: 'Sensible Inhalte standardmäßig anzeigen',
+  showAllSpoilers: 'Inhaltswarnungen standardmäßig ausklappen',
   showPlain: 'Eine graue Fläche für sensible Inhalte anzeigen',
   allSensitive: 'Alle Medien als sensibel behandeln',
   largeMedia: 'Große eingebettete Bilder und Videos anzeigen',
@@ -366,15 +440,31 @@ export default {
   disableTappable: 'Berührungsempfindlichkeit auf ganzem Tröt deaktivieren',
   removeEmoji: 'Emoji aus Anzeigenamen der Benutzer entfernen',
   shortAria: 'Verkürzte aria-label für Artikel verwenden',
+  announceCardDescriptionsPre: 'Link-Vorschau-',
+  announceCardDescriptionsText: 'Beschreibungen',
+  announceCardDescriptionsDescription: 'Der Titel einer Link-Vorschau wird immer von Screenreadern angesagt. Aktiviere dies, um auch den Beschreibungstext darunter einzubeziehen.',
+  announceCardDescriptionsPost: 'ansagen',
   theme: 'Design',
   themeForInstance: 'Design für {instance}',
   disableCustomScrollbars: 'Angepasste Rollbalken deaktivieren',
+  bottomNav: 'Navigationsleiste am unteren Bildschirmrand platzieren',
+  centerNav: 'Navigationsleiste zentrieren',
   preferences: 'Vorlieben',
   hotkeySettings: 'Einstellungen für Tastenkürzel',
   disableHotkeys: 'Alle Tastenkürzel deaktivieren',
   leftRightArrows: 'Linke und rechte Pfeiltasten schalten den Fokus um anstatt der Spalten oder Medien',
+  editProfile: 'Profil bearbeiten',
+  editProfileDisplayName: 'Anzeigename',
+  editProfileBio: 'Bio',
+  editProfileFields: 'Profil-Metadaten',
+  editProfileFieldName: 'Bezeichnung',
+  editProfileFieldValue: 'Inhalt',
+  editProfileChangeAvatar: 'Avatar ändern',
   guide: 'Anleitung',
   reload: 'Neu laden',
+  disableFollowRequestCount: 'Anzahl der Followeranfragen verbergen',
+  hideLongPosts: 'Lange Beiträge ohne Inhaltswarnung einklappen',
+  longPostLengthLabel: 'Kürzungsschwelle (Zeichen)',
   // Wellness settings
   wellness: 'Wohlbefinden',
   wellnessDescription: `Die Einstellungen fürs Wohlbefinden dienen dazu, die süchtig machenden oder Angst induzierenden Aspekte von Social Media zu reduzieren.
@@ -383,13 +473,32 @@ export default {
   metrics: 'Messungen',
   hideFollowerCount: 'Verbirg Anzahl Folgender (ab 10 gedeckelt)',
   hideReblogCount: 'Verbirg Anzahl der Boosts',
+  hideReplyCount: 'Anzahl der Antworten verbergen',
+  hideFavoriteCount: 'Anzahl der Favoriten und Reaktionen verbergen',
+  hideUnread: 'Anzahl ungelesener Benachrichtigungen verbergen (d.h. der rote Punkt)',
+  disableNotificationSound: 'Benachrichtigungstöne deaktivieren',
+  threadPollingStart: 'Antworten automatisch aktualisieren (alle 30s)',
+  threadPollingStop: 'Auto-Refresh stoppen',
+  showAbsoluteTimestamps: 'Absolute Zeitstempel (z.B. "3. März") anstelle von relativen Zeitstempeln (z.B. "vor 5 Minuten") anzeigen',
+  enableThreadPolling: 'Auto-Refresh-Button in Threads anzeigen',
+  defaultUnlistedReplies: 'Antworten standardmäßig als "Nicht gelistet" markieren',
+  defaultLocalOnly: 'Beiträge standardmäßig nur auf der lokalen Instanz posten',
+  enableQuotePost: 'Auswahl zwischen Boost und Zitat beim Boosten anzeigen',
+  boostOrQuote: 'Boosten oder Zitieren',
+  localOnlyUnsupported: 'Deine Instanz unterstützt keine lokal-begrenzten Beiträge',
   hideFavoriteCount: 'Verbirg Anzahl Favorisierungen',
+  editProfileChangeHeader: 'Header ändern',
+  editProfileSave: 'Speichern',
+  editProfileSaving: 'Speichern…',
+  profileUpdated: 'Profil aktualisiert',
   hideUnread: 'Verbirg Anzeige ungelesener Benachrichtigungen (z.B. den roten Punkt)',
+  disableNotificationSound: 'Benachrichtigungstöne deaktivieren',
   ui: 'Benutzeroberfläche',
   grayscaleMode: 'Graustufenmodus',
   wellnessFooter: `Diese Einstellungen basieren zum Teil auf Richtlinien des
     <a rel="noopener" target="_blank" href="https://humanetech.com">Center for Humane Technology</a>.`,
   // This is a link: "You can filter or disable notifications in the _instance settings_"
+  profileUpdateFailed: 'Profil konnte nicht aktualisiert werden: {error}',
   filterNotificationsPre: 'Du kannst die Einstellungen für Benachrichtigungen in den',
   filterNotificationsText: 'Instanzeinstellungen',
   filterNotificationsPost: 'anpassen.',
@@ -413,12 +522,18 @@ export default {
   osNotificationsPromptText: 'Erhalte Desktop- oder Push-Benachrichtigungen auf diesem Gerät, wenn etwas passiert. Du kannst das jederzeit in den Einstellungen ändern. In-App-Benachrichtigungen bleiben so oder so aktiv.',
   enableNotifications: 'Aktivieren',
   notNow: 'Jetzt nicht',
+  enableDesktopNotifications: 'Desktop-Benachrichtigungen aktivieren',
+  desktopNotificationsNotSupported: 'Dein Browser unterstützt keine Desktop-Benachrichtigungen.',
+  desktopNotificationsBlocked: 'Desktop-Benachrichtigungen sind blockiert. Bitte erlaube sie in Deinen Browser- oder Systemeinstellungen.',
+  desktopNotificationTitle: 'Zocial',
+  desktopNotificationBody: `{count, plural, one {eine neue Benachrichtigung} other {{count} neue Benachrichtigungen}}`,
   followedHashtags: 'Gefolgten Hashtags',
   noFollowedHashtags: 'Du folgst keinen Hashtags.',
   addHashtag: 'Hashtag folgen',
   pushNotifications: 'Push-Benachrichtigungen',
   // Add instance page
   storageError: 'Es sieht so aus als ob Zocial lokal keine Daten speichern kann. Ist Dein Browser im privaten Modus oder blockiert Cookies? Zocial speichert alle Daten lokal und braucht zum ordnungsgemäßen Betrieb LocalStorage und IndexedDB.',
+  javaScriptError: 'Du musst JavaScript aktivieren, um dich anzumelden.',
   javaScriptError: 'Du musst zum Einloggen javaScript einschalten.',
   enterInstanceName: 'Namen der Instanz eingeben',
   instanceColon: 'Instanz:',
@@ -478,12 +593,17 @@ export default {
   showImage: `Zeige {animated, select,
     true {animiert}
     other {}
+    other {}
   } image: {description}`,
   playVideoOrAudio: `Wiedergabe von {audio, select,
     true {audio}
     other {video}
   }: {description}`,
   accountFollowedYou: '{name} folgt Dir jetzt, {account}',
+  accountSignedUp: '{name} hat sich angemeldet, {account}',
+  accountRequestedFollow: '{name} hat angefragt, dir zu folgen, {account}',
+  accountReported: '{name} hat einen Bericht eingereicht, {account}',
+  unhandledNotification: 'Unbekannter Benachrichtigungstyp {type}',
   reblogCountsHidden: 'Anzahl Boosts verborgen',
   favoriteCountsHidden: 'Anzahl Favorisierungen verborgen',
   rebloggedTimes: `Geboostet {count, plural,
@@ -494,10 +614,20 @@ export default {
     one {einmal}
     other {{count} mal}
   }`,
+  reactedTimes: `Reagiert {count, plural,
+    one {1 Mal}
+    other {{count} Mal}
+  }`,
   pinnedStatus: 'Angehefteter Tröt',
   rebloggedYou: 'hat Deinen Tröt geboostet',
   favoritedYou: 'hat Deinen Tröt favorisiert',
+  reacted: 'hat mit einem Emoji reagiert',
+  reactedWith: 'reagierte mit',
   followedYou: 'folgt Dir jetzt',
+  edited: 'hat seinen Beitrag bearbeitet',
+  requestedFollow: 'hat angefragt, dir zu folgen',
+  reported: 'hat einen Bericht eingereicht',
+  signedUp: 'hat sich angemeldet',
   pollYouCreatedEnded: 'Eine von Dir erstellte Umfrage ist beendet',
   pollYouVotedEnded: 'Eine Umfrage, an der Du teilgenommen hast, ist beendet',
   reblogged: 'geboostet',
@@ -505,6 +635,15 @@ export default {
   showSensitiveMedia: 'Sensible Inhalte zeigen',
   hideSensitiveMedia: 'Sensible Inhalte verbergen',
   clickToShowSensitive: 'Sensible Inhalte. Klicke zum Anzeigen.',
+  unreblogged: 'Boost aufgehoben',
+  unfavorited: 'Favorit entfernt',
+  translateStatus: 'Beitrag übersetzen',
+  translated: `Übersetzter Beitrag von {from}{detected, select, true { - Erkannt} other {}}`,
+  translation: 'Übersetzung',
+  translationTargetLanguage: 'Übersetzungssprache',
+translationBrowserDefault: 'Browser-Standard',
+translationLanguageUnavailable: 'Sprachliste nicht verfügbar – Übersetzungssprache folgt Browser-Standard',
+translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   longPost: 'Langer Beitrag',
   longPostLengthLabel: 'Kürzungsschwelle (Zeichen)',
   // Accessible status labels
@@ -512,6 +651,7 @@ export default {
   accountFavoritedYou: '{account} hat Deinen Tröt favorisiert',
   contentWarningContent: 'Inhaltswarnung: {spoiler}',
   hasMedia: 'hat Medien',
+  accountEdited: '{account} hat seinen Beitrag bearbeitet',
   hasPoll: 'hat Umfrage',
   shortStatusLabel: '{privacy} Tröt von {account}',
   // Privacy types
@@ -534,6 +674,7 @@ export default {
   themeSorcery: 'Sorcery',
   themePunk: 'Punk',
   themeRiot: 'Riot',
+  themeEmber: 'Ember',
   themeHacker: 'Hacker',
   themeMastodon: 'Mastodon',
   themePitchBlack: 'Pitch Black',
@@ -555,6 +696,7 @@ export default {
   showMore: 'Zeige mehr',
   showLess: 'Zeige weniger',
   closeReply: 'Antwort schließen',
+  reactToStatus: 'Auf Beitrag reagieren',
   cannotReblogFollowersOnly: 'Kann nicht geboostet werden, da nur Folgende',
   cannotReblogDirectMessage: 'Kann nicht geboostet werden, da dies eine Direktnachricht ist',
   reblog: 'Boost',
@@ -582,6 +724,7 @@ export default {
   unableToBookmark: 'Konnte kein lesezeichen setzen: {error}',
   unableToUnbookmark: 'Konnte Lesezeichen nicht entfernen: {error}',
   cannotPostOffline: 'Du kannst nicht senden, wenn Du offline bist',
+  unableToPost: 'Beitrag konnte nicht veröffentlicht werden: {error}',
   unableToPost: 'Konnte Tröt nicht posten: {error}',
   statusDeleted: 'Tröt gelöscht',
   unableToDelete: 'Konnte Tröt nicht löschen: {error}',
@@ -629,6 +772,7 @@ export default {
   unableToShowReblogs: 'Kann Boosts nicht anzeigen: {error}',
   unableToHideReblogs: 'Kann Boosts nicht verbergen: {error}',
   unableToShare: 'Teilen fehlgeschlagen: {error}',
+  unableToSubscribe: 'Abonnieren fehlgeschlagen: {error}',
   showingOfflineContent: 'Anforderung übers Internet fehlgeschlagen. Zeige Offline-Inhalte an.',
   youAreOffline: 'Du scheinst keine Verbindung zum Internet zu haben. Du kanst weiterhin Tröts lesen, solange Du offline bist.',
   // Snackbar UI

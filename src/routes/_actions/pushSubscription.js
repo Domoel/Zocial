@@ -71,6 +71,7 @@ export async function disablePushForInstance (instanceName) {
       }
     }
     store.setInstanceData(instanceName, 'pushSubscriptions', null)
+    store.set({ enableDesktopNotifications: false })
     store.save()
   })
 }

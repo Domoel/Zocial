@@ -1,7 +1,7 @@
 export default {
   // Home page, basic <title> and <description>
   appName: 'Zocial',
-  appDescription: 'Альтернативный веб-клиент для Mastodon, ориентированный на скорость и простоту.',
+  appDescription: 'Минималистичный веб-клиент Mastodon со своим видением интерфейса.',
   homeDescription: `
     <p>
       Минималистичный веб-клиент Mastodon со своим видением интерфейса.

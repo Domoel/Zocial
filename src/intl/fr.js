@@ -6,10 +6,15 @@ export default {
     <p>
       Un client Mastodon minimaliste et original.
     </p>`,
+  homeMultiInstance: `
+    <p>
+      Connectez-vous à une instance pour commencer :
+    </p>`,
   logIn: 'Se connecter',
   footer: `
     <p>
       Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
+    </p>
   `,
   // Generic UI
   loading: 'Chargement en cours',
@@ -17,6 +22,9 @@ export default {
   cancel: 'Annuler',
   alert: 'Alerte',
   close: 'Fermer',
+  account: 'Compte',
+  start: 'Démarrer',
+  stop: 'Arrêter',
   error: 'Erreur: {error}',
   errorShort: 'Erreur:',
   // Relative timestamps
@@ -44,6 +52,8 @@ export default {
   bookmarks: 'Signets',
   directMessages: 'Messages directs',
   favorites: 'Favoris',
+  reactions: 'Réactions',
+  bubble: 'Bulle',
   federated: 'Fédéré',
   home: 'Accueil',
   local: 'Local',
@@ -62,6 +72,7 @@ export default {
   back: 'Rentrer',
   profile: 'Profil',
   federatedTimeline: 'Historique fédéré',
+  bubbleTimeline: 'Fil de bulles',
   localTimeline: 'Historique local',
   // community page
   community: 'Communauté',
@@ -87,6 +98,10 @@ export default {
   notificationMentionsNotLoggedIn: "Vos notifications de mention s'apparêtront ici quand on est conncté.",
   statusNotLoggedIn: "Un historique de pouet s'apparêtra ici quand on est conncté.",
   tagNotLoggedIn: "Un historique de mot-dièse s'apparêtra ici quand on est conncté.",
+  bubbleTimelineNotLoggedIn: 'Votre fil de bulles apparaîtra ici une fois connecté.',
+  bubbleTimelineNotSupported: "Le fil de bulles n'est pas supporté par votre instance.",
+  accountNotLoggedIn: 'Les paramètres du compte apparaîtront ici une fois connecté.',
+  filtered: 'Filtré',
   // Notification subpages
   filters: 'Filtres',
   all: 'Tous',
@@ -354,6 +369,7 @@ export default {
   generalSettings: 'Paramètres générales',
   generalSettingsLoginRequired: 'Les paramètres généraux ne sont disponibles que lorsque vous êtes connecté(e).',
   showSensitive: 'Afficher les medias sensible par défaut',
+  showAllSpoilers: "Développer les avertissements de contenu par défaut",
   showPlain: 'Afficher un simple gris pour les medias sensibles',
   allSensitive: 'Considérer tous medias comme sensible',
   largeMedia: 'Afficher de plus grands images et vidéos',
@@ -365,6 +381,10 @@ export default {
   disableTappable: "Désactiver l'espace touchable sur un pouet entier",
   removeEmoji: "Enlever les emojis des noms d'utilisateur",
   shortAria: 'Utiliser des etiquettes courtes ARIA',
+  announceCardDescriptionsPre: 'Annoncer les descriptions des ',
+  announceCardDescriptionsText: 'aperçus de liens',
+  announceCardDescriptionsDescription: "Le titre est toujours annoncé. Activez ceci pour inclure la description.",
+  announceCardDescriptionsPost: '',
   theme: 'Thème',
   themeForInstance: 'Theème pour {instance}',
   disableCustomScrollbars: 'Désactiver les scrollbars customisés',
@@ -374,6 +394,8 @@ export default {
   leftRightArrows: 'Les flèches gauche/droit change de focus plutôt que les pages',
   guide: 'Guide',
   reload: 'Recharger',
+  disableFollowRequestCount: 'Cacher le nombre de demandes de suivi',
+  hideLongPosts: 'Réduire les longs messages sans avertissement de contenu',
   // Wellness settings
   wellness: 'Bien-être',
   wellnessDescription: `Les paramètres de bien-être sont dessinées pour rédruire les effets accrochants ou d'anxiété des réseaux sociaux.
@@ -384,6 +406,21 @@ export default {
   hideReblogCount: 'Cacher le nombre de partages',
   hideFavoriteCount: 'Cacher le nombre de favoris',
   hideUnread: "Cacher le nombre de notifications (c'est-à-dire le point rouge)",
+  osNotificationsHeading: 'Notifications Push',
+  osNotificationsDescription: 'Soyez notifié sur cet appareil, même si Zocial est fermé.',
+  notifyOnThisDevice: 'Me notifier sur cet appareil',
+  deviceNotificationsForegroundOnly: "Ce serveur ne supporte pas le push en arrière-plan.",
+  inAppNotificationsHeading: 'Notifications In-App',
+  inAppNotificationsDescription: 'Quelle activité apparaît dans l’onglet notifications.',
+  osNotificationsPromptTitle: 'Activer les notifications sur cet appareil ?',
+  osNotificationsPromptText: 'Recevez des notifications push ou de bureau.',
+  enableNotifications: 'Activer',
+  notNow: 'Pas maintenant',
+  enableDesktopNotifications: 'Activer les notifications de bureau',
+  desktopNotificationsNotSupported: 'Votre navigateur ne supporte pas les notifications de bureau.',
+  desktopNotificationsBlocked: 'Les notifications sont bloquées.',
+  desktopNotificationTitle: 'Zocial',
+  desktopNotificationBody: `{count, plural, one {une nouvelle notification} other {{count} nouvelles notifications}}`,
   ui: 'Interface Utilisateur',
   grayscaleMode: 'Mode echelle de gris',
   wellnessFooter: `Ces paramètres sont basé sur les recommendations du

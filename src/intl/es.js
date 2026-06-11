@@ -1,10 +1,14 @@
 export default {
   // Home page, basic <title> and <description>
   appName: 'Zocial',
-  appDescription: 'Un cliente web alternativo para Mastodon, centrado en la velocidad y la sencillez.',
+  appDescription: 'Un cliente web minimalista para Mastodon que hace las cosas a su manera.',
   homeDescription: `
     <p>
       Un cliente web minimalista para Mastodon que hace las cosas a su manera.
+    </p>`,
+  homeMultiInstance: `
+    <p>
+      Inicia sesión en una instancia para empezar:
     </p>`,
   logIn: 'Iniciar sesión',
   footer: `
@@ -20,6 +24,9 @@ export default {
   cancel: 'Cancelar',
   alert: 'Alerta',
   close: 'Cerrar',
+  account: 'Cuenta',
+  start: 'Comenzar',
+  stop: 'Detener',
   error: 'Error: {error}',
   errorShort: 'Error:',
   // Relative timestamps
@@ -47,6 +54,8 @@ export default {
   bookmarks: 'Marcadores',
   directMessages: 'Mensajes directos',
   favorites: 'Favoritos',
+  reactions: 'Reacciones',
+  bubble: 'Burbuja',
   federated: 'Federada',
   home: 'Inicio',
   local: 'Local',
@@ -65,6 +74,7 @@ export default {
   back: 'Atrás',
   profile: 'Perfil',
   federatedTimeline: 'Cronología federada',
+  bubbleTimeline: 'Cronología de burbujas',
   localTimeline: 'Cronología local',
   // community page
   community: 'Comunidad',
@@ -90,6 +100,10 @@ export default {
   notificationMentionsNotLoggedIn: 'Las notificaciones de tus menciones se mostrarán aquí cuando hayas iniciado sesión.',
   statusNotLoggedIn: 'Aquí se mostrará un hilo de toots cuando hayas iniciado sesión.',
   tagNotLoggedIn: 'Aquí se mostrará una cronología de hashtags cuando hayas iniciado sesión.',
+  bubbleTimelineNotLoggedIn: 'Tu cronología de burbujas aparecerá aquí cuando hayas iniciado sesión.',
+  bubbleTimelineNotSupported: 'Tu instancia no soporta la cronología de burbujas.',
+  accountNotLoggedIn: 'La configuración de la cuenta aparecerá aquí cuando hayas iniciado sesión.',
+  filtered: 'Filtrado',
   // Notification subpages
   filters: 'Filtros',
   all: 'Todo',
@@ -365,6 +379,7 @@ export default {
   generalSettings: 'Opciones generales',
   generalSettingsLoginRequired: 'Las opciones generales solo están disponibles cuando has iniciado sesión.',
   showSensitive: 'Mostrar multimedia sensible por defecto',
+  showAllSpoilers: 'Expandir advertencias de contenido por defecto',
   showPlain: 'Mostrar un color gris liso para multimedia sensible',
   allSensitive: 'Tratar todo multimedia como sensible',
   largeMedia: 'Mostrar imágenes y vídeos grandes incrustados',
@@ -376,6 +391,10 @@ export default {
   disableTappable: 'Deshabilitar área para tocar en todo el toot',
   removeEmoji: 'Eliminar emoji de nombres de usuario',
   shortAria: 'Usar etiquetas ARIA cortas para artículos',
+  announceCardDescriptionsPre: 'Anunciar descripciones de ',
+  announceCardDescriptionsText: 'previsualización de enlaces',
+  announceCardDescriptionsDescription: 'El título de una tarjeta de previsualización siempre se incluye. Activa esto para incluir también el texto de descripción.',
+  announceCardDescriptionsPost: '',
   theme: 'Diseño visual',
   themeForInstance: 'Diseño visual para {instance}',
   disableCustomScrollbars: 'Deshabilitar barras deslizantes personalizadas',
@@ -387,6 +406,8 @@ export default {
   leftRightArrows: 'Las flechas izquierda/derecha cambian el foco en vez de columnas/multimedia',
   guide: 'Guía',
   reload: 'Recargar',
+  disableFollowRequestCount: 'Ocultar recuento de solicitudes de seguimiento',
+  hideLongPosts: 'Colapsar publicaciones largas sin advertencia de contenido',
   // Wellness settings
   wellness: 'Bienestar',
   wellnessDescription: `Las opciones para el bienestar están diseñadas para reducir los aspectos que inducen adicción o ansiedad en las redes sociales.
@@ -397,6 +418,21 @@ export default {
   hideReblogCount: 'Ocultar recuento de reenvíos',
   hideFavoriteCount: 'Ocultar recuento de favoritos',
   hideUnread: 'Ocultar recuento de notificaciones sin leer (es decir, el punto rojo)',
+  osNotificationsHeading: 'Notificaciones Push',
+  osNotificationsDescription: 'Recibe notificaciones en este dispositivo, incluso cuando Zocial está cerrado.',
+  notifyOnThisDevice: 'Notificarme en este dispositivo',
+  deviceNotificationsForegroundOnly: 'Este servidor no soporta push en segundo plano.',
+  inAppNotificationsHeading: 'Notificaciones en la aplicación',
+  inAppNotificationsDescription: 'Qué actividad aparece en la pestaña de notificaciones.',
+  osNotificationsPromptTitle: '¿Activar notificaciones en este dispositivo?',
+  osNotificationsPromptText: 'Recibe notificaciones de escritorio o push. Puedes cambiar esto en cualquier momento.',
+  enableNotifications: 'Activar',
+  notNow: 'Ahora no',
+  enableDesktopNotifications: 'Activar notificaciones de escritorio',
+  desktopNotificationsNotSupported: 'Tu navegador no soporta notificaciones de escritorio.',
+  desktopNotificationsBlocked: 'Las notificaciones están bloqueadas.',
+  desktopNotificationTitle: 'Zocial',
+  desktopNotificationBody: `{count, plural, one {una nueva notificación} other {{count} nuevas notificaciones}}`,
   // The quality that makes something seem important or interesting because it seems to be happening now
   immediacy: 'Inmediatez',
   showAbsoluteTimestamps: 'Mostrar marcas de tiempo absolutas (p.ej., "3 de marzo") en vez de marcas de tiempo relativas (p. ej., "hace 5 minutos")',

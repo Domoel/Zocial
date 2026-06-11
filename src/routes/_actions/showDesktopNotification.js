@@ -34,7 +34,8 @@ export function showDesktopNotification (instanceName, notification) {
   // in the push alerts, so System A stays fully silent here to avoid double-notifying. System A
   // only acts as the foreground fallback when there is no push subscription (e.g. a server
   // without Web Push support).
-  if (currentPushSubscription) {
+  const isHidden = document.visibilityState === 'hidden'
+  if (isHidden && currentPushSubscription) {
     return
   }
 
