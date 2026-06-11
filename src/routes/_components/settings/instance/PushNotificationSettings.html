@@ -41,6 +41,7 @@
   import { toast } from '../../toast/toast.js'
   import { get } from '../../../_utils/lodash-lite.js'
   import { formatIntl } from '../../../_utils/formatIntl.js'
+  import { PUSH_ALERT_OPTIONS } from '../../../_static/pushAlerts.js'
 
   export default {
     async oncreate () {
@@ -64,32 +65,7 @@
     },
     store: () => store,
     data: () => ({
-      options: [
-        {
-          key: 'follow',
-          label: 'intl.newFollowers'
-        },
-        {
-          key: 'favourite',
-          label: 'intl.favorites'
-        },
-        {
-          key: 'reblog',
-          label: 'intl.reblogs'
-        },
-        {
-          key: 'mention',
-          label: 'intl.mentions'
-        },
-        {
-          key: 'poll',
-          label: 'intl.pollResults'
-        },
-        {
-          key: 'status',
-          label: 'intl.subscriptions'
-        }
-      ]
+      options: PUSH_ALERT_OPTIONS
     }),
     computed: {
       pushNotificationsSupport: ({ $pushNotificationsSupport }) => $pushNotificationsSupport

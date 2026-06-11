@@ -39,19 +39,9 @@
   import PushNotificationSettings from './PushNotificationSettings.html'
   import Tooltip from '../../Tooltip.html'
   import { store } from '../../../_store/store.js'
-  import { updateAlerts, disablePushForInstance } from '../../../_actions/pushSubscription.js'
+  import { enableOSNotificationsForInstance, disablePushForInstance } from '../../../_actions/pushSubscription.js'
   import { toast } from '../../toast/toast.js'
   import { formatIntl } from '../../../_utils/formatIntl.js'
-
-  // All push alert types default to on when the user first enables device notifications.
-  const ALL_ALERTS = {
-    follow: true,
-    favourite: true,
-    reblog: true,
-    mention: true,
-    poll: true,
-    status: true
-  }
 
   export default {
     oncreate () {
@@ -82,45 +72,34 @@
           return
         }
 
-        // Turning on requires notification permission (needed for both push and the
-        // foreground fallback). Revert the checkbox until permission is actually granted.
+        // Turning on requires notification permission. Revert the checkbox until we know it
+        // was actually granted; enableOSNotificationsForInstance handles permission + push.
         event.target.checked = false
-        if (!('Notification' in window)) {
+        let result
+        try {
+          result = await enableOSNotificationsForInstance(instanceName)
+        } catch (err) {
+          toast.say(formatIntl('intl.failedToUpdatePush', { error: err.message || '' }))
+          return
+        }
+        const { permission, pushError } = result
+        if (permission === 'unsupported') {
           alert('intl.desktopNotificationsNotSupported')
           return
         }
-        if (Notification.permission === 'denied') {
+        if (permission === 'denied') {
           alert('intl.desktopNotificationsBlocked')
           return
         }
-        const permission = await Notification.requestPermission()
         if (permission !== 'granted') {
-          alert('intl.desktopNotificationsBlocked')
-          return
+          return // 'default' — user dismissed the permission prompt; leave off
         }
 
         event.target.checked = true
-
-        // Register Web Push (System B) FIRST, with all alert types on, if the server supports
-        // it. Doing this before flipping the fallback flag means the per-type sub-component
-        // mounts only once the subscription already exists, so it reflects the real (all-on)
-        // state instead of momentarily showing every type unchecked.
-        const { pushNotificationsSupport } = this.store.get()
-        if (pushNotificationsSupport) {
-          try {
-            await updateAlerts(instanceName, ALL_ALERTS)
-          } catch (err) {
-            // The foreground fallback still works; surface the push failure softly.
-            toast.say(formatIntl('intl.failedToUpdatePush', {
-              error: err.message || ''
-            }))
-          }
+        if (pushError) {
+          // The foreground fallback still works; surface the push failure softly.
+          toast.say(formatIntl('intl.failedToUpdatePush', { error: pushError.message || '' }))
         }
-
-        // Enable the foreground fallback (System A); it stays dormant whenever a push
-        // subscription exists (see showDesktopNotification.js).
-        this.store.set({ enableDesktopNotifications: true })
-        this.store.save()
       }
     },
     components: {

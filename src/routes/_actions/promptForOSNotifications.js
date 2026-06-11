@@ -1,17 +1,8 @@
 import { store } from '../_store/store.js'
 import { importShowTextConfirmationDialog } from '../_components/dialog/asyncDialogs/importShowTextConfirmationDialog.js'
-import { updateAlerts } from './pushSubscription.js'
+import { enableOSNotificationsForInstance } from './pushSubscription.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { toast } from '../_components/toast/toast.js'
-
-const ALL_ALERTS = {
-  follow: true,
-  favourite: true,
-  reblog: true,
-  mention: true,
-  poll: true,
-  status: true
-}
 
 function markPrompted (instanceName) {
   const { osNotificationPrompted } = store.get()
@@ -20,21 +11,10 @@ function markPrompted (instanceName) {
 }
 
 async function enableOSNotifications (instanceName) {
-  // Record that we've asked, regardless of the outcome, so we don't prompt again.
-  markPrompted(instanceName)
   try {
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') {
-      // User declined at the OS level — default stays off.
-      return
-    }
-    // Foreground fallback (System A); stays dormant whenever a push subscription exists.
-    store.set({ enableDesktopNotifications: true })
-    store.save()
-    // Register Web Push (System B) if the server supports it.
-    const { pushNotificationsSupport } = store.get()
-    if (pushNotificationsSupport) {
-      await updateAlerts(instanceName, ALL_ALERTS)
+    const { pushError } = await enableOSNotificationsForInstance(instanceName)
+    if (pushError) {
+      toast.say(formatIntl('intl.failedToUpdatePush', { error: pushError.message || '' }))
     }
   } catch (e) {
     toast.say(formatIntl('intl.failedToUpdatePush', { error: e.message || '' }))
@@ -75,15 +55,15 @@ export async function maybePromptForOSNotifications (instanceName) {
       positiveText: 'intl.enableNotifications',
       negativeText: 'intl.notNow'
     })
+    // Mark as soon as the dialog is shown: prevents a concurrent call from opening a second
+    // dialog, and means dismissing it (Escape / overlay) won't re-prompt on the next load.
+    markPrompted(instanceName)
     dialog.on('positive', () => {
       /* no await */ enableOSNotifications(instanceName)
     })
-    dialog.on('negative', () => {
-      markPrompted(instanceName)
-    })
   } catch (e) {
-    // Anything goes wrong → leave OS notifications OFF (the default). Don't mark as prompted, so
-    // it can be retried on a future login.
+    // Anything goes wrong before the dialog is shown → leave OS notifications OFF (the default)
+    // and don't mark as prompted, so it can be retried on a future login.
     console.warn('OS notification prompt failed', e)
   }
 }

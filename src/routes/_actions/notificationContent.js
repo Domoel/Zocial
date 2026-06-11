@@ -29,11 +29,27 @@ function plainName (account) {
   return cleaned || account.acct || account.username || ''
 }
 
-// Turn status HTML into a short plain-text snippet for the notification body.
+const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+
+// Decode the handful of HTML entities Mastodon actually emits (notably `&amp;`). Anything we
+// don't recognise is left as-is rather than dropped, so text isn't silently mangled.
+function decodeEntities (text) {
+  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, body) => {
+    if (body[0] === '#') {
+      const code = (body[1] === 'x' || body[1] === 'X')
+        ? parseInt(body.slice(2), 16)
+        : parseInt(body.slice(1), 10)
+      return (code > 0 && code <= 0x10FFFF) ? String.fromCodePoint(code) : match
+    }
+    const named = NAMED_ENTITIES[body.toLowerCase()]
+    return named === undefined ? match : named
+  })
+}
+
+// Turn status HTML into a short plain-text snippet for the notification body. Tags become spaces
+// (so words across block elements stay separated), then entities are decoded.
 function snippet (html, max = 120) {
-  const text = String(html || '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&(?:[a-z]+|#\d+);/g, ' ')
+  const text = decodeEntities(String(html || '').replace(/<[^>]+>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim()
   if (text.length <= max) {

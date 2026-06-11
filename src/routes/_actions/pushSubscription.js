@@ -1,6 +1,7 @@
 import { getSubscription, deleteSubscription, postSubscription, putSubscription } from '../_api/pushSubscription.js'
 import { store } from '../_store/store.js'
 import { urlBase64ToUint8Array } from '../_utils/base64.js'
+import { ALL_PUSH_ALERTS } from '../_static/pushAlerts.js'
 
 const dummyApplicationServerKey = 'BImgAz4cF_yvNFp8uoBJCaGpCX4d0atNIFMHfBvAAXCyrnn9IMAFQ10DW_ZvBCzGeR4fZI5FnEi2JVcRE-L88jY='
 
@@ -118,4 +119,36 @@ export async function updateAlerts (instanceName, alerts) {
       }
     }
   })
+}
+
+// Enable OS-level notifications for an instance: request permission and, when granted, register
+// Web Push (if the server supports it) and turn on the foreground-fallback flag. Returns
+// `{ permission, pushError }` where permission is 'granted' | 'denied' | 'default' | 'unsupported'.
+//
+// Push is registered BEFORE the foreground flag is set, so any UI reacting to
+// `enableDesktopNotifications` (e.g. the per-type list) sees an already-registered subscription
+// instead of momentarily showing every type unchecked. A push-registration failure is returned as
+// `pushError` (not thrown) — the foreground fallback still works, so the caller may keep the
+// notifications "on" and surface the error softly. Shared by the settings master toggle and the
+// one-time login prompt.
+export async function enableOSNotificationsForInstance (instanceName) {
+  if (typeof Notification === 'undefined') {
+    return { permission: 'unsupported' }
+  }
+  const permission = await Notification.requestPermission()
+  if (permission !== 'granted') {
+    return { permission }
+  }
+  let pushError = null
+  const { pushNotificationsSupport } = store.get()
+  if (pushNotificationsSupport) {
+    try {
+      await updateAlerts(instanceName, ALL_PUSH_ALERTS)
+    } catch (e) {
+      pushError = e
+    }
+  }
+  store.set({ enableDesktopNotifications: true })
+  store.save()
+  return { permission, pushError }
 }
