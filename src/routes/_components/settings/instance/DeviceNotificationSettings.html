@@ -36,8 +36,7 @@
   import PushNotificationSettings from './PushNotificationSettings.html'
   import { store } from '../../../_store/store.js'
   import { enableOSNotificationsForInstance, disablePushForInstance } from '../../../_actions/pushSubscription.js'
-  import { toast } from '../../toast/toast.js'
-  import { formatIntl } from '../../../_utils/formatIntl.js'
+  import { handlePushError } from '../../../_actions/handlePushError.js'
 
   export default {
     oncreate () {
@@ -75,7 +74,7 @@
         try {
           result = await enableOSNotificationsForInstance(instanceName)
         } catch (err) {
-          toast.say(formatIntl('intl.failedToUpdatePush', { error: err.message || '' }))
+          await handlePushError(instanceName, err)
           return
         }
         const { permission, pushError } = result
@@ -93,8 +92,8 @@
 
         event.target.checked = true
         if (pushError) {
-          // The foreground fallback still works; surface the push failure softly.
-          toast.say(formatIntl('intl.failedToUpdatePush', { error: pushError.message || '' }))
+          // The foreground fallback still works; surface the push failure (re-auth on 403).
+          await handlePushError(instanceName, pushError)
         }
       }
     },

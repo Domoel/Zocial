@@ -1,8 +1,7 @@
 import { store } from '../_store/store.js'
 import { importShowTextConfirmationDialog } from '../_components/dialog/asyncDialogs/importShowTextConfirmationDialog.js'
 import { enableOSNotificationsForInstance } from './pushSubscription.js'
-import { formatIntl } from '../_utils/formatIntl.js'
-import { toast } from '../_components/toast/toast.js'
+import { handlePushError } from './handlePushError.js'
 
 function markPrompted (instanceName) {
   const { osNotificationPrompted } = store.get()
@@ -13,11 +12,9 @@ function markPrompted (instanceName) {
 async function enableOSNotifications (instanceName) {
   try {
     const { pushError } = await enableOSNotificationsForInstance(instanceName)
-    if (pushError) {
-      toast.say(formatIntl('intl.failedToUpdatePush', { error: pushError.message || '' }))
-    }
+    await handlePushError(instanceName, pushError)
   } catch (e) {
-    toast.say(formatIntl('intl.failedToUpdatePush', { error: e.message || '' }))
+    await handlePushError(instanceName, e)
   }
 }
 
