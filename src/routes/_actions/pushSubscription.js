@@ -49,6 +49,31 @@ export async function updatePushSubscriptionForInstance (instanceName) {
   })
 }
 
+// Fully turn off Web Push for an instance: unsubscribe the browser push subscription, delete it
+// on the backend, and clear it from the store. Used by the "Notify me on this device" master
+// toggle when switched off.
+export async function disablePushForInstance (instanceName) {
+  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
+    const accessToken = loggedInInstances[instanceName].access_token
+
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    if (subscription) {
+      await subscription.unsubscribe()
+    }
+    try {
+      await deleteSubscription(instanceName, accessToken)
+    } catch (e) {
+      // 404 = the backend already has no subscription; anything else is best-effort cleanup.
+      if (e.status !== 404) {
+        console.warn('failed to delete push subscription on backend', e)
+      }
+    }
+    store.setInstanceData(instanceName, 'pushSubscriptions', null)
+    store.save()
+  })
+}
+
 export async function updateAlerts (instanceName, alerts) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token

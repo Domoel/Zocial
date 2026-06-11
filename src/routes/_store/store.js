@@ -37,6 +37,9 @@ const persistedState = {
   announceCardDescriptions: false,
   disableNotificationBadge: false,
   enableDesktopNotifications: false,
+  // Per-instance flag: have we already shown the one-time "enable OS notifications?" login
+  // prompt for this account? Persisted so we ask at most once per account.
+  osNotificationPrompted: {},
   enableThreadPolling: true,
   disableNotificationSound: (() => {
     try {

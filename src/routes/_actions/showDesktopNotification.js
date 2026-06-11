@@ -29,9 +29,12 @@ export function showDesktopNotification (instanceName, notification) {
     return
   }
 
-  // Per-type dedup: if Web Push is subscribed for this notification type, let System B own it.
-  const alerts = currentPushSubscription && currentPushSubscription.alerts
-  if (alerts && alerts[notification.type]) {
+  // When a Web Push subscription exists, System B owns device notifications entirely (it
+  // delivers richer notifications, even with the tab closed). The per-type granularity lives
+  // in the push alerts, so System A stays fully silent here to avoid double-notifying. System A
+  // only acts as the foreground fallback when there is no push subscription (e.g. a server
+  // without Web Push support).
+  if (currentPushSubscription) {
     return
   }
 

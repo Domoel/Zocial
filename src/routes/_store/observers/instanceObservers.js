@@ -5,6 +5,7 @@ import { createStream } from '../../_actions/stream/streaming.js'
 import { updatePushSubscriptionForInstance } from '../../_actions/pushSubscription.js'
 import { setupCustomEmojiForInstance } from '../../_actions/emoji.js'
 import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
+import { maybePromptForOSNotifications } from '../../_actions/promptForOSNotifications.js'
 import { mark, stop } from '../../_utils/marks.js'
 import { store } from '../store.js'
 import { updateFollowRequestCountIfLockedAccount } from '../../_actions/followRequests.js'
@@ -101,5 +102,12 @@ export function instanceObservers () {
     // floating on purpose, but guard it so a failed critical refresh (instanceInfo /
     // verifyCredentials, e.g. on a 429 rate-limit) can't become an uncaught rejection
     refreshInstanceDataAndStream(store, currentInstance).catch(ignoreRefreshError)
+
+    // One-time per-account: ask whether to enable OS notifications. Idle-scheduled so the
+    // dialog appears once the app has settled, not during initial hydration. The prompt
+    // gates itself (persisted flag), so this is a cheap no-op after the first time.
+    scheduleIdleTask(() => {
+      /* no await */ maybePromptForOSNotifications(currentInstance)
+    })
   })
 }

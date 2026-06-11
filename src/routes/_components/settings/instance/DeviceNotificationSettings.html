@@ -1,0 +1,127 @@
+<div class="generic-instance-settings device-notifications">
+  <label class="setting-group">
+    <input type="checkbox" ref:master
+           id="device-notifications-master"
+           on:change="onMasterChange(event)">
+    {'intl.notifyOnThisDevice'}
+  </label>
+
+  {#if permissionDenied}
+    <p role="alert">{'intl.deniedPush'}</p>
+  {/if}
+
+  {#if enabled}
+    {#if pushSupported}
+      <div class="device-notifications-types">
+        <PushNotificationSettings {instanceName} />
+      </div>
+    {:else}
+      <p class="device-notifications-note">{'intl.deviceNotificationsForegroundOnly'}</p>
+    {/if}
+  {/if}
+</div>
+<GenericInstanceSettingsStyle/>
+<style>
+  .device-notifications-types {
+    margin: 8px 0 0 24px;
+  }
+  .device-notifications-note {
+    margin: 8px 0 0 24px;
+    font-size: 0.9em;
+    opacity: 0.7;
+  }
+</style>
+<script>
+  import GenericInstanceSettingsStyle from './GenericInstanceSettingsStyle.html'
+  import PushNotificationSettings from './PushNotificationSettings.html'
+  import { store } from '../../../_store/store.js'
+  import { updateAlerts, disablePushForInstance } from '../../../_actions/pushSubscription.js'
+  import { toast } from '../../toast/toast.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
+
+  // All push alert types default to on when the user first enables device notifications.
+  const ALL_ALERTS = {
+    follow: true,
+    favourite: true,
+    reblog: true,
+    mention: true,
+    poll: true,
+    status: true
+  }
+
+  export default {
+    oncreate () {
+      // Reconcile the master checkbox with the actual current state (a push subscription may
+      // already exist from a previous session, or desktop notifications may be enabled).
+      this.refs.master.checked = this.get().enabled
+    },
+    store: () => store,
+    computed: {
+      // "Device notifications are on" if either delivery mechanism is active: a Web Push
+      // subscription (System B) or the foreground desktop-notification flag (System A fallback).
+      enabled: ({ $enableDesktopNotifications, $pushSubscriptions, instanceName }) => (
+        $enableDesktopNotifications ||
+        !!($pushSubscriptions && $pushSubscriptions[instanceName])
+      ),
+      pushSupported: ({ $pushNotificationsSupport }) => !!$pushNotificationsSupport,
+      permissionDenied: ({ $notificationPermission }) => $notificationPermission === 'denied'
+    },
+    methods: {
+      async onMasterChange (event) {
+        const { instanceName } = this.get()
+
+        if (!event.target.checked) {
+          // Turn everything off: stop foreground notifications and unsubscribe from push.
+          this.store.set({ enableDesktopNotifications: false })
+          this.store.save()
+          /* no await */ disablePushForInstance(instanceName)
+          return
+        }
+
+        // Turning on requires notification permission (needed for both push and the
+        // foreground fallback). Revert the checkbox until permission is actually granted.
+        event.target.checked = false
+        if (!('Notification' in window)) {
+          alert('intl.desktopNotificationsNotSupported')
+          return
+        }
+        if (Notification.permission === 'denied') {
+          alert('intl.desktopNotificationsBlocked')
+          return
+        }
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          alert('intl.desktopNotificationsBlocked')
+          return
+        }
+
+        event.target.checked = true
+
+        // Register Web Push (System B) FIRST, with all alert types on, if the server supports
+        // it. Doing this before flipping the fallback flag means the per-type sub-component
+        // mounts only once the subscription already exists, so it reflects the real (all-on)
+        // state instead of momentarily showing every type unchecked.
+        const { pushNotificationsSupport } = this.store.get()
+        if (pushNotificationsSupport) {
+          try {
+            await updateAlerts(instanceName, ALL_ALERTS)
+          } catch (err) {
+            // The foreground fallback still works; surface the push failure softly.
+            toast.say(formatIntl('intl.failedToUpdatePush', {
+              error: err.message || ''
+            }))
+          }
+        }
+
+        // Enable the foreground fallback (System A); it stays dormant whenever a push
+        // subscription exists (see showDesktopNotification.js).
+        this.store.set({ enableDesktopNotifications: true })
+        this.store.save()
+      }
+    },
+    components: {
+      GenericInstanceSettingsStyle,
+      PushNotificationSettings
+    }
+  }
+</script>
