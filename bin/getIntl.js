@@ -14,8 +14,8 @@ const locales = {
   es
 }
 
-const intl = locales[LOCALE]
-const defaultIntl = locales[DEFAULT_LOCALE]
+const intl = locales[LOCALE] || {}
+const defaultIntl = locales[DEFAULT_LOCALE] || {}
 
 export function warningOrError (message) { // avoid crashing the whole server on `pnpm dev`
   if (process.env.NODE_ENV === 'production') {
@@ -29,11 +29,19 @@ export function warningOrError (message) { // avoid crashing the whole server on
 const cache = {}
 export function getIntl (key) {
   if (cache[key]) return cache[key]
-  const res = intl[key] || defaultIntl[key]
+
+  // 1. Suche in der gewählten Sprache, dann im Englischen Fallback
+  let res = intl[key] || defaultIntl[key]
+
+  // 2. Wenn gar nichts gefunden wurde, gib eine Warnung aus und nutze den Key als Notlösung
   if (typeof res !== 'string') {
-    return warningOrError('Unknown intl string: ' + key)
+    res = warningOrError('Unknown intl string: ' + key)
   }
+
+  // 3. Bereinige den String (Leerzeichen etc.)
   const parsed = parse(res.trim().replace(/\s+/g, ' '))
+
+  // 4. Cache das Ergebnis (entweder ein String oder ein AST-Array für format-message)
   if (parsed.length === 1 && typeof parsed[0] === 'string') {
     cache[key] = parsed[0]
     return cache[key]

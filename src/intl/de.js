@@ -51,7 +51,6 @@ export default {
   `,
   blockedUsers: 'Blockierte Benutzer',
   bookmarks: 'Lesezeichen',
-  bookmarks: 'Lesezeichen',
   directMessages: 'Direktnachrichten',
   favorites: 'Favoriten',
   reactions: 'Reaktionen',
@@ -421,7 +420,6 @@ export default {
   copyLogs: 'Protokolle kopieren',
   logsCopied: 'Protokolle in die Zwischenablage kopiert',
   logsCopyFailed: 'Protokolle konnten nicht kopiert werden',
-  </p>`,
   // Settings
   settings: 'Einstellungen',
   general: 'Allgemein',
@@ -474,8 +472,8 @@ export default {
   hideFollowerCount: 'Verbirg Anzahl Folgender (ab 10 gedeckelt)',
   hideReblogCount: 'Verbirg Anzahl der Boosts',
   hideReplyCount: 'Anzahl der Antworten verbergen',
-  hideFavoriteCount: 'Anzahl der Favoriten und Reaktionen verbergen',
-  hideUnread: 'Anzahl ungelesener Benachrichtigungen verbergen (d.h. der rote Punkt)',
+  hideFavoriteCount: 'Verbirg Anzahl Favorisierungen',
+  hideUnread: 'Verbirg Anzeige ungelesener Benachrichtigungen (z.B. den roten Punkt)',
   disableNotificationSound: 'Benachrichtigungstöne deaktivieren',
   threadPollingStart: 'Antworten automatisch aktualisieren (alle 30s)',
   threadPollingStop: 'Auto-Refresh stoppen',
@@ -486,13 +484,10 @@ export default {
   enableQuotePost: 'Auswahl zwischen Boost und Zitat beim Boosten anzeigen',
   boostOrQuote: 'Boosten oder Zitieren',
   localOnlyUnsupported: 'Deine Instanz unterstützt keine lokal-begrenzten Beiträge',
-  hideFavoriteCount: 'Verbirg Anzahl Favorisierungen',
   editProfileChangeHeader: 'Header ändern',
   editProfileSave: 'Speichern',
   editProfileSaving: 'Speichern…',
   profileUpdated: 'Profil aktualisiert',
-  hideUnread: 'Verbirg Anzeige ungelesener Benachrichtigungen (z.B. den roten Punkt)',
-  disableNotificationSound: 'Benachrichtigungstöne deaktivieren',
   ui: 'Benutzeroberfläche',
   grayscaleMode: 'Graustufenmodus',
   wellnessFooter: `Diese Einstellungen basieren zum Teil auf Richtlinien des
@@ -534,7 +529,6 @@ export default {
   // Add instance page
   storageError: 'Es sieht so aus als ob Zocial lokal keine Daten speichern kann. Ist Dein Browser im privaten Modus oder blockiert Cookies? Zocial speichert alle Daten lokal und braucht zum ordnungsgemäßen Betrieb LocalStorage und IndexedDB.',
   javaScriptError: 'Du musst JavaScript aktivieren, um dich anzumelden.',
-  javaScriptError: 'Du musst zum Einloggen javaScript einschalten.',
   enterInstanceName: 'Namen der Instanz eingeben',
   instanceColon: 'Instanz:',
   // Custom tooltip, concatenated together
@@ -592,7 +586,6 @@ export default {
   animatedImage: 'Animiertes Gif: {description}',
   showImage: `Zeige {animated, select,
     true {animiert}
-    other {}
     other {}
   } image: {description}`,
   playVideoOrAudio: `Wiedergabe von {audio, select,
@@ -724,7 +717,6 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   unableToBookmark: 'Konnte kein lesezeichen setzen: {error}',
   unableToUnbookmark: 'Konnte Lesezeichen nicht entfernen: {error}',
   cannotPostOffline: 'Du kannst nicht senden, wenn Du offline bist',
-  unableToPost: 'Beitrag konnte nicht veröffentlicht werden: {error}',
   unableToPost: 'Konnte Tröt nicht posten: {error}',
   statusDeleted: 'Tröt gelöscht',
   unableToDelete: 'Konnte Tröt nicht löschen: {error}',
