@@ -800,7 +800,8 @@ A browser `Notification` created directly by the running page.
 
 - **Trigger:** the streaming `notification` event (`processMessage.js` → `showDesktopNotification(instanceName, payload)`), where the **full notification payload** is available. It is *not* driven by a count delta — that older approach produced generic "N new notifications" text and fired a burst of stale popups when a backgrounded tab unfroze and gap-filled. Firing per live streamed event means one popup per notification, with real content, and **no** popups for catch-up fetches.
 - **Descriptive content:** `notificationContent.js` builds `{ title, body }` per type — e.g. *"Alice / boosted your post"*, the status snippet for mentions — reusing the existing parameter-less intl strings (`rebloggedYou`, `favoritedYou`, …), which `svelte-intl-loader` resolves to plain text at build time (it runs over `.js`/`.ts`, not just `.html`). The actor's avatar is used as the icon.
-- **Gating:** `enableDesktopNotifications` (persisted) + `Notification.permission === 'granted'`; the sound is separately gated by `disableNotificationSound`.
+- **Sound vs. popup split:** The notification sound always plays (gated only by `disableNotificationSound`). The `Notification()` popup is only shown when the tab is **hidden** AND there is **no active push subscription** (see Dedup below). This means: when the user is actively looking at the app, sound fires but no popup interrupts them; the popup only appears as a last-resort fallback for servers without Web Push support.
+- **Gating:** `enableDesktopNotifications` (persisted) + `Notification.permission === 'granted'` + `document.visibilityState === 'hidden'` + no `currentPushSubscription`.
 - **Fundamental limitation:** the streaming WebSocket is **paused when the tab freezes** (`TimelineStream.js`, Page Lifecycle API). So System A only fires while the tab is alive/foreground, and never when the tab is closed or on a backgrounded mobile PWA. This is why it cannot be the primary system.
 
 ### System B — Web Push
@@ -813,7 +814,31 @@ The first-class system: the server sends a push message, the service worker wake
 
 ### Dedup: how A and B coexist
 
-When a push subscription exists for the current instance, **System A defers entirely** — `showDesktopNotification` early-returns if `currentPushSubscription` is set. System B then owns OS delivery, and the per-type granularity lives in the push alerts (an unchecked type means no push *and* no foreground popup — i.e. the user doesn't want it). System A is therefore purely the **foreground fallback for servers/users without an active push subscription**.
+Two-layer approach — one in the page, one in the service worker:
+
+**Layer 1 — `showDesktopNotification.js` (page side):**
+- Sound always plays.
+- `Notification()` popup is suppressed when `document.visibilityState === 'visible'` (user is looking at the app — in-app indicators suffice) OR when `currentPushSubscription` is set (System B owns OS delivery). The popup only fires when the tab is **hidden** AND there is **no push subscription** — i.e. purely as a fallback for servers without Web Push support.
+
+**Layer 2 — `service-worker.js` push handler:**
+- Before showing any OS notification, the handler checks whether any window client is currently visible:
+  ```js
+  const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  if (windowClients.some(c => c.visibilityState === 'visible')) return
+  ```
+  If the app is open and in focus, the streaming connection already delivers the notification in-app (sound + notification list). The service worker skips `showNotification()` entirely to avoid interrupting the user. This is an industry-standard PWA pattern; `WindowClient.visibilityState` degrades safely — if `undefined` (old Safari), the expression is `false` and the push fires anyway.
+
+**Result — three cases:**
+
+| State | OS popup | Sound | Source |
+|---|---|---|---|
+| Tab visible | ✗ | ✓ (streaming) | System A (sound only) |
+| Tab hidden, push active | ✓ | ✓ (streaming, if alive) | System B |
+| Tab hidden, no push | ✓ | ✓ (streaming, if alive) | System A |
+
+System A is therefore purely the **foreground sound player + last-resort popup fallback** for servers without Web Push support. System B owns all OS notifications when the tab is not in view.
+
+**Known edge case:** If the tab is visible but the streaming connection is momentarily reconnecting, a push arrives and the service worker suppresses it (tab visible). The notification will appear in the notifications tab once streaming reconnects, but no sound plays during that brief window. This is an accepted limitation shared by all competing PWAs using this dedup pattern.
 
 ### Settings UI (unified)
 
@@ -1015,6 +1040,18 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
+### [v1.8.1] Two-layer dedup: no OS popup when the app tab is visible
+
+**Decision:** Suppress OS notifications entirely when the user is actively looking at the app. Sound still plays (via streaming), the notification list updates, and the favicon badge increments — no popup interrupts the session. Two-layer implementation: (1) `showDesktopNotification` skips the `Notification()` constructor when `visibilityState === 'visible'`; (2) the service worker `push` handler bails out early when any window client reports `visibilityState === 'visible'` (`clients.matchAll({ type: 'window', includeUncontrolled: true })`).
+
+**Rationale:** This is the standard PWA pattern used by Twitter/X, Slack, and others. An OS popup while the app is open and visible is disruptive and redundant — the user can already see the notification arriving. The previous `isHidden && currentPushSubscription` guard (introduced in the v1.8.0 crash fix commit) caused double-notification (System A popup + System B push) when the tab was visible.
+
+**Tradeoff:** If the streaming connection is momentarily reconnecting while the tab is visible, a push notification arrives and is suppressed by the service worker. The notification is not lost — it appears in the notification list on reconnect — but no sound plays during that window. Accepted; all competing PWAs with this pattern share the same limitation. `WindowClient.visibilityState` degrades safely on older Safari (undefined → expression is false → push fires).
+
+**Files:** `_actions/showDesktopNotification.js`, `src/service-worker.js` — full mechanics in §18.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
@@ -1032,3 +1069,4 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.7.0** | 2026-06-10 | Translation target language selector in settings, per-instance language caching, 60 s poll fallback, list error handling (silent fallback vs. toast) |
 | **1.7.1** | 2026-06-11 | Reliable unsupported-language detection (zero-confidence signal); expected conditions (network noise, blocked autoplay sound) logged as warnings instead of errors |
 | **1.8.0** | 2026-06-11 | New notification system: Web Push as the primary mechanism (rich, type-specific, works with the tab closed / on a mobile PWA); descriptive event-driven foreground notifications; unified "Notify me on this device" settings with a one-time login prompt and hover explanations. In-app notifications default on, OS notifications default off |
+| **1.8.1** | 2026-06-12 | Two-layer OS-notification dedup: no popup when app tab is visible (sound still plays); service worker skips `showNotification()` when any window client is visible; crash fix for `this.observe` on destroyed `PushNotificationSettings` component |
