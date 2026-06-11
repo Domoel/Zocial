@@ -3,7 +3,10 @@
     <input type="checkbox" ref:master
            id="device-notifications-master"
            on:change="onMasterChange(event)">
-    {'intl.notifyOnThisDevice'}
+    <Tooltip
+      text="{'intl.notifyOnThisDevice'}"
+      tooltipText="{'intl.notifyOnThisDeviceDescription'}"
+    />
   </label>
 
   {#if permissionDenied}
@@ -34,6 +37,7 @@
 <script>
   import GenericInstanceSettingsStyle from './GenericInstanceSettingsStyle.html'
   import PushNotificationSettings from './PushNotificationSettings.html'
+  import Tooltip from '../../Tooltip.html'
   import { store } from '../../../_store/store.js'
   import { updateAlerts, disablePushForInstance } from '../../../_actions/pushSubscription.js'
   import { toast } from '../../toast/toast.js'
@@ -121,7 +125,8 @@
     },
     components: {
       GenericInstanceSettingsStyle,
-      PushNotificationSettings
+      PushNotificationSettings,
+      Tooltip
     }
   }
 </script>

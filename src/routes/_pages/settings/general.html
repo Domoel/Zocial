@@ -244,7 +244,12 @@
     {#if $isUserLoggedIn}
       <DeviceNotificationSettings instanceName={$currentInstance} />
 
-      <h3>{'intl.shownInNotificationsTab'}</h3>
+      <h3>
+        <Tooltip
+          text="{'intl.shownInNotificationsTab'}"
+          tooltipText="{'intl.shownInNotificationsTabDescription'}"
+        />
+      </h3>
       <NotificationFilterSettings instanceName={$currentInstance} />
     {/if}
   </div>
