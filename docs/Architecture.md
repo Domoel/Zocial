@@ -581,6 +581,16 @@ Any error on other timelines
 
 After catching a non-HTTP error on a list timeline, the 60 s poll simply continues on the next tick. The user sees stale content quietly rather than repeated error toasts.
 
+### List/tag reliability: slow server endpoint, three mitigations
+
+The `timelines/list/:id` endpoint is assembled per-list **server-side** (heavy on GoToSocial, or when a Mastodon list feed needs regenerating), so it is frequently far slower than the cheap `timelines/public` read — list fetches time out at the default 20 s even on a perfectly stable connection. Client handling is otherwise identical to federated (same `getTimeline`, same active-only streaming + 60 s poll); the difference is purely the endpoint cost. Three list/tag-scoped mitigations (fast timelines are untouched):
+
+1. **Longer read timeout** — `SLOW_READ_TIMEOUT` (40 s) instead of `DEFAULT_TIMEOUT` (20 s) for `list/*` and `tag/*` reads (`getTimeline` in `_api/timelines.js`), so a slow-but-working response isn't aborted.
+2. **Cache-first render** — on a cold store, `setupTimeline` calls `prefillCurrentTimelineFromCache` for `list/*`/`tag/*`: it loads cached items from IndexedDB and renders them immediately (marked stale), so the user isn't blocked on the slow fetch. The network fetch **still runs** afterwards (the prefilled summaries are stale, so the fetch is never skipped) and refreshes the content — a successful refresh clears the stale marker so the 30 s throttle resumes. Fast timelines (local/federated) stay net-first.
+3. **Smaller batch** — `list/*` fetches use `LIST_BATCH_SIZE` (10) instead of `TIMELINE_BATCH_SIZE` (20), so the per-list server query is cheaper/faster. Infinite scroll + streaming fill the rest in.
+
+Together: the long timeout lets the background refresh actually succeed, cache-first makes that wait invisible, and the smaller batch shortens the wait — so list timeouts become rare and, when they do happen, unnoticed.
+
 ---
 
 ## 13. Translation System
@@ -1166,6 +1176,18 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
+### [v1.8.3] List timeline reliability: longer timeout, cache-first, smaller batch
+
+**Decision:** Make `list/*` (and `tag/*`) timelines reliable against frequent timeouts with three list-scoped mitigations: a longer read timeout (`SLOW_READ_TIMEOUT` 40 s vs 20 s), cache-first rendering on cold load (prefill from IndexedDB, then still fetch in the background), and a smaller fetch batch for lists (`LIST_BATCH_SIZE` 10 vs 20). Fast timelines (local/federated/home) are untouched.
+
+**Rationale:** List and federated timelines are handled identically client-side; the only difference is the server endpoint — `timelines/list/:id` is assembled per-list (heavy on GoToSocial / on Mastodon feed regeneration) and regularly takes >20 s, so it timed out even on a stable connection. We can't change the server, so we (1) give the slow read more headroom, (2) stop blocking the user on it by showing cached content first, and (3) shrink the query so it returns faster. This generalises the previously-deferred "cache-first" idea (see [[project_timeline_cachefirst_deferred]]) but **only** for the slow timelines, where the tradeoff clearly pays off — the fast timelines stay net-first.
+
+**Tradeoff:** lists show briefly-stale cached content before the refresh lands (acceptable — it's a list you've seen, and the refresh merges in via the streaming buffer), and a smaller first page means infinite scroll triggers slightly sooner. The cache-first prefill required clearing the stale marker after a successful refresh, which also fixes a latent case where a recovered-from-offline timeline kept bypassing the 30 s fetch throttle.
+
+**Files:** `_utils/ajax.js` (`SLOW_READ_TIMEOUT`), `_api/timelines.js` (per-timeline timeout), `_static/timelines.js` (`LIST_BATCH_SIZE`), `_actions/timeline.js` (`isCacheFirstTimeline`, `prefillCurrentTimelineFromCache`, stale-clear). Full mechanics in §12.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
@@ -1185,4 +1207,4 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.8.0** | 2026-06-11 | New notification system: Web Push as the primary mechanism (rich, type-specific, works with the tab closed / on a mobile PWA); descriptive event-driven foreground notifications; unified "Notify me on this device" settings with a one-time login prompt and hover explanations. In-app notifications default on, OS notifications default off |
 | **1.8.1** | 2026-06-12 | Two-layer OS-notification dedup: no popup when app tab is visible (sound still plays); service worker skips `showNotification()` when any window client is visible; crash fix for `this.observe` on destroyed `PushNotificationSettings` component |
 | **1.8.2** | 2026-06-12 | Push subscription self-healing (`canSilentlyReregister`): auto-reregisters on page load after silent subscription loss, restoring saved per-type prefs via `lastPushAlerts`; permission-revoked reconciliation clears the master toggle; foreground sound/popup now respect the in-app notification filter; VAPID key-rotation detection fixed (was a no-op); `describeDOMException` export fixes blank DOMException error toasts; "Add word filter" context menu entry on status posts; Notification Sound moved from Wellness to its own section under Notifications |
-| **1.8.3** | 2026-06-12 | OS notifications made push-only: master toggle renamed "Enable OS push notifications on this device" and now reflects push state honestly (goes off on enable failure or after a runtime circuit breaker concludes push is dead); foreground `Notification()` popup (System A) removed — page side keeps only the sound; in-app notifications + sound fully independent of the push toggle; `notificationContent.js` deleted |
+| **1.8.3** | 2026-06-12 | OS notifications made push-only: master toggle renamed "Enable OS push notifications on this device" and now reflects push state honestly (goes off on enable failure or after a runtime circuit breaker concludes push is dead); foreground `Notification()` popup (System A) removed — page side keeps only the sound; in-app notifications + sound fully independent of the push toggle; `notificationContent.js` deleted. List timeline reliability: longer read timeout (40 s), cache-first rendering on cold load, and smaller fetch batch for lists — far fewer timeouts on slow per-list endpoints (esp. GoToSocial) |

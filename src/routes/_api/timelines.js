@@ -1,4 +1,4 @@
-import { getWithHeaders, paramsString, DEFAULT_TIMEOUT } from '../_utils/ajax.js'
+import { getWithHeaders, paramsString, DEFAULT_TIMEOUT, SLOW_READ_TIMEOUT } from '../_utils/ajax.js'
 import { auth, basename } from './utils.js'
 import { notMentions } from '../_static/notifications.ts'
 
@@ -74,7 +74,12 @@ export async function getTimeline (instanceName, accessToken, timeline, maxId, s
 
   url += '?' + paramsString(params)
 
-  let { json: items, headers } = await getWithHeaders(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })
+  // List and tag timelines are assembled per-list/-tag server-side and are often much slower than
+  // the cheap public/home reads, so give them more headroom before timing out.
+  const isSlowTimeline = timeline.startsWith('list/') || timeline.startsWith('tag/')
+  const timeout = isSlowTimeline ? SLOW_READ_TIMEOUT : DEFAULT_TIMEOUT
+
+  let { json: items, headers } = await getWithHeaders(url, auth(accessToken), { timeout })
 
   if (timeline === 'direct') {
     items = items.map(item => item.last_status).filter(Boolean) // ignore falsy last_status'es

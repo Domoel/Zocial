@@ -1,4 +1,9 @@
 export const DEFAULT_TIMEOUT = 20000
+// Some read endpoints are legitimately slow server-side — notably list timelines, where the
+// server assembles a per-list feed (heavy on GoToSocial, or when a Mastodon list feed needs
+// regenerating). Give those reads more headroom so a slow-but-working response isn't aborted at
+// 20 s. With cache-first rendering the user already sees content, so this longer wait is invisible.
+export const SLOW_READ_TIMEOUT = 40000
 export const MEDIA_WRITE_TIMEOUT = 90000 // media uploads can take awhile
 export const WRITE_TIMEOUT = 45000 // allow more time if the user did a write action
 

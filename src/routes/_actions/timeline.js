@@ -8,7 +8,7 @@ import { isEqual, uniqById } from '../_utils/lodash-lite.js'
 import { database } from '../_database/database.js'
 import { getStatus, getStatusContext } from '../_api/statuses.js'
 import { emit } from '../_utils/eventBus.ts'
-import { TIMELINE_BATCH_SIZE } from '../_static/timelines.js'
+import { TIMELINE_BATCH_SIZE, LIST_BATCH_SIZE } from '../_static/timelines.js'
 import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
 import { addStatusesOrNotifications, insertUpdatesIntoTimeline } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
@@ -94,7 +94,9 @@ async function fetchTimelineItemsFromNetwork (instanceName, accessToken, timelin
   if (timelineName.startsWith('status/')) { // special case - this is a list of descendents and ancestors
     return fetchThreadFromNetwork(instanceName, accessToken, timelineName)
   } else { // normal timeline
-    const { items } = await getTimeline(instanceName, accessToken, timelineName, lastTimelineItemId, null, TIMELINE_BATCH_SIZE)
+    // List timelines use a smaller batch so the per-list server query is cheaper/faster.
+    const limit = timelineName.startsWith('list/') ? LIST_BATCH_SIZE : TIMELINE_BATCH_SIZE
+    const { items } = await getTimeline(instanceName, accessToken, timelineName, lastTimelineItemId, null, limit)
     return items
   }
 }
@@ -247,11 +249,37 @@ async function fetchTimelineItemsAndPossiblyFallBack (fresh) {
     const existingSummaries = store.getForTimeline(currentInstance, currentTimeline, 'timelineItemSummaries')
     if (fresh && !stale && existingSummaries && existingSummaries.length > 0) {
       await insertUpdatesIntoTimeline(currentInstance, currentTimeline, items)
+      // We just refreshed with fresh network data; clear any stale marker (e.g. left by a cache
+      // prefill or a previous offline fallback). Otherwise hasFreshCache stays false and the
+      // timeline keeps bypassing the 30s fetch throttle, re-fetching on every setupTimeline call.
+      if (store.getForTimeline(currentInstance, currentTimeline, 'timelineItemSummariesAreStale')) {
+        store.setForTimeline(currentInstance, currentTimeline, { timelineItemSummariesAreStale: false })
+      }
     } else {
       await addTimelineItems(currentInstance, currentTimeline, items, stale)
     }
   }
   stop('fetchTimelineItemsAndPossiblyFallBack')
+}
+
+// Timelines whose server endpoint is slow/unreliable (per-list/-tag feed assembly), so we render
+// cached content first and refresh in the background instead of blocking on the network fetch.
+function isCacheFirstTimeline (timelineName) {
+  return timelineName.startsWith('list/') || timelineName.startsWith('tag/')
+}
+
+// Render cached items from IndexedDB immediately (marked stale) so a slow list/tag fetch doesn't
+// leave the user staring at a blank screen on a cold load. The caller still runs the network fetch
+// afterwards, which refreshes the content (or silently keeps the cache on failure).
+async function prefillCurrentTimelineFromCache (instanceName, timelineName) {
+  try {
+    const items = await database.getTimeline(instanceName, timelineName, null, TIMELINE_BATCH_SIZE)
+    if (items && items.length) {
+      await addTimelineItems(instanceName, timelineName, items, /* stale */ true)
+    }
+  } catch (e) {
+    console.warn('timeline cache prefill failed:', e.message || e)
+  }
 }
 
 export async function setupTimeline () {
@@ -268,6 +296,13 @@ export async function setupTimeline () {
     currentInstance
   } = store.get()
   console.log('setupTimeline state', { currentTimeline, timelineItemSummariesAreStale })
+  // Cache-first for slow timelines (lists/tags): on a cold store, show cached items right away from
+  // IndexedDB so the user isn't blocked on the slow network fetch. We then fall through to the
+  // normal fetch below — which still runs and refreshes the content (the prefilled summaries are
+  // marked stale, so the fetch is never skipped). Fast timelines stay net-first.
+  if (!timelineItemSummaries && isCacheFirstTimeline(currentTimeline)) {
+    await prefillCurrentTimelineFromCache(currentInstance, currentTimeline)
+  }
   // home and notifications maintain a continuous background stream and never
   // go stale between visits — skip the fetch if they have a warm cache.
   // Every other timeline only streams while the page is open, so fetch on
