@@ -46,9 +46,10 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       if (canSilentlyReregister()) {
         try {
           await updateAlerts(instanceName, getSavedAlerts(instanceName))
-        } catch (_) {
-          // Re-registration failed silently — foreground notifications still work if
-          // enableDesktopNotifications is true, so leave everything else as-is.
+        } catch (e) {
+          // Re-registration failed. Count it; after a threshold (or a permanent error) push is
+          // given up on and the master toggle is turned off (recordPushFailure).
+          await recordPushFailure(instanceName, e)
         }
       }
       return
@@ -75,8 +76,12 @@ export async function updatePushSubscriptionForInstance (instanceName) {
         try {
           await updateAlerts(instanceName, getSavedAlerts(instanceName))
           return
-        } catch (_) {
-          // Fall through to clearing the stored subscription below.
+        } catch (e) {
+          if (await recordPushFailure(instanceName, e)) {
+            return // gave up on push — markPushUnavailable already cleaned up
+          }
+          // Transient: fall through to clear the stale sub; the null-subscription branch retries
+          // on the next load (the failure count persists across loads).
         }
       }
       store.setInstanceData(instanceName, 'pushSubscriptions', null)
@@ -242,21 +247,73 @@ export async function updateAlerts (instanceName, alerts) {
   })
 }
 
+// Persist the alert config AND clear the failure counter — saving alerts only happens after a
+// successful (re-)registration, so any prior failure streak is over.
 function savePushAlerts (instanceName, alerts) {
-  const { lastPushAlerts } = store.get()
-  store.set({ lastPushAlerts: Object.assign({}, lastPushAlerts, { [instanceName]: alerts }) })
+  const { lastPushAlerts, pushFailureCount } = store.get()
+  const update = { lastPushAlerts: Object.assign({}, lastPushAlerts, { [instanceName]: alerts }) }
+  if (pushFailureCount && pushFailureCount[instanceName]) {
+    update.pushFailureCount = Object.assign({}, pushFailureCount)
+    delete update.pushFailureCount[instanceName]
+  }
+  store.set(update)
 }
 
-// Enable OS-level notifications for an instance: request permission and, when granted, register
-// Web Push (if the server supports it) and turn on the foreground-fallback flag. Returns
-// `{ permission, pushError }` where permission is 'granted' | 'denied' | 'default' | 'unsupported'.
-//
-// Push is registered BEFORE the foreground flag is set, so any UI reacting to
-// `enableDesktopNotifications` (e.g. the per-type list) sees an already-registered subscription
-// instead of momentarily showing every type unchecked. A push-registration failure is returned as
-// `pushError` (not thrown) — the foreground fallback still works, so the caller may keep the
-// notifications "on" and surface the error softly. Shared by the settings master toggle and the
-// one-time login prompt.
+// How many consecutive silent re-registration failures before we conclude push is dead.
+const PUSH_FAILURE_THRESHOLD = 3
+
+// Errors that mean push fundamentally can't work on this device/server (no point retrying).
+function isPermanentPushError (e) {
+  return e instanceof DOMException && e.name === 'NotSupportedError'
+}
+
+// Push has failed for good: drop the subscription and clear the intent flag so the master toggle
+// honestly shows "off", and reset the counter. Best-effort browser unsubscribe.
+async function markPushUnavailable (instanceName) {
+  const { pushFailureCount } = store.get()
+  const nextCount = Object.assign({}, pushFailureCount)
+  delete nextCount[instanceName]
+  store.setInstanceData(instanceName, 'pushSubscriptions', null)
+  store.set({ enableDesktopNotifications: false, pushFailureCount: nextCount })
+  store.save()
+  try {
+    const registration = await navigator.serviceWorker.ready
+    const sub = await registration.pushManager.getSubscription()
+    if (sub) {
+      await sub.unsubscribe()
+    }
+  } catch (_) {
+    // best-effort — push is being abandoned anyway
+  }
+}
+
+// Record a failed silent re-registration. Returns true if push has now been given up on (caller
+// should stop). A permanent error gives up immediately; otherwise we tolerate up to
+// PUSH_FAILURE_THRESHOLD consecutive failures (transient blips heal via savePushAlerts' reset).
+async function recordPushFailure (instanceName, e) {
+  if (isPermanentPushError(e)) {
+    await markPushUnavailable(instanceName)
+    return true
+  }
+  const { pushFailureCount } = store.get()
+  const count = ((pushFailureCount && pushFailureCount[instanceName]) || 0) + 1
+  if (count >= PUSH_FAILURE_THRESHOLD) {
+    await markPushUnavailable(instanceName)
+    return true
+  }
+  store.set({ pushFailureCount: Object.assign({}, pushFailureCount, { [instanceName]: count }) })
+  store.save()
+  return false
+}
+
+// Enable OS push notifications for an instance: request permission and, when granted, register
+// Web Push. OS notifications are push-only, so the intent flag `enableDesktopNotifications` is set
+// ONLY when registration actually succeeds — a failure leaves it off so the master toggle never
+// falsely shows "on". Returns `{ permission, pushError, pushUnsupported }`:
+//   - permission: 'granted' | 'denied' | 'default' | 'unsupported'
+//   - pushUnsupported: true when the browser can't do Web Push at all (nothing to enable)
+//   - pushError: the registration error when push is supported but registration failed
+// Shared by the settings master toggle and the one-time login prompt.
 export async function enableOSNotificationsForInstance (instanceName) {
   if (typeof Notification === 'undefined') {
     return { permission: 'unsupported' }
@@ -265,16 +322,19 @@ export async function enableOSNotificationsForInstance (instanceName) {
   if (permission !== 'granted') {
     return { permission }
   }
-  let pushError = null
   const { pushNotificationsSupport } = store.get()
-  if (pushNotificationsSupport) {
-    try {
-      await updateAlerts(instanceName, ALL_PUSH_ALERTS)
-    } catch (e) {
-      pushError = e
-    }
+  if (!pushNotificationsSupport) {
+    // No Web Push in this browser — with OS notifications now push-only there is nothing to turn
+    // on. Don't set the intent flag; let the caller explain.
+    return { permission, pushUnsupported: true }
+  }
+  try {
+    await updateAlerts(instanceName, ALL_PUSH_ALERTS)
+  } catch (e) {
+    // Registration failed — leave the flag off so the toggle reflects reality.
+    return { permission, pushError: e }
   }
   store.set({ enableDesktopNotifications: true })
   store.save()
-  return { permission, pushError }
+  return { permission, pushError: null }
 }

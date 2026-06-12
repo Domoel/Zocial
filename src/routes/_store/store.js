@@ -69,6 +69,10 @@ const persistedState = {
   navTabOrder: {},
   pushSubscriptions: {},
   lastPushAlerts: {},
+  // Per-instance count of consecutive silent push re-registration failures. Used to give up on
+  // push (turn the master toggle off) after a threshold, so a permanently-broken push service
+  // doesn't leave the toggle stuck "on". Reset to 0 on any successful registration.
+  pushFailureCount: {},
   lastPings: {},
   reduceMotion:
     !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,

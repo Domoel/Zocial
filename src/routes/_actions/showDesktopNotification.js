@@ -1,5 +1,4 @@
 import { store } from '../_store/store.js'
-import { describeNotification } from './notificationContent.js'
 import { get } from '../_utils/lodash-lite.js'
 import {
   NOTIFICATION_REBLOGS,
@@ -10,16 +9,13 @@ import {
   NOTIFICATION_SUBSCRIPTIONS
 } from '../_static/instanceSettings.js'
 
-// In-page sound + OS popup for a live streamed notification (System A). Driven by the streaming
-// `notification` event (processMessage.js), where the full payload is available, rather than by
-// a count delta — so each notification fires exactly once with real content.
+// In-page SOUND for a live streamed notification. Driven by the streaming `notification` event
+// (processMessage.js), so each notification plays exactly once.
 //
-// Sound always plays (when not disabled) regardless of tab visibility or push state.
-// OS popup is only shown when the tab is hidden AND there is no push subscription:
-//   - Tab visible   → user sees the app directly; sound + in-app indicators are enough
-//   - Tab hidden + push active → service worker (System B) delivers the OS notification
-//   - Tab hidden + no push   → System A is the only path to an OS notification
-// See the notification system notes in Architecture.md §18.
+// NOTE (legacy name): this used to also raise a foreground OS popup ("System A"). OS notifications
+// are now push-only (delivered by the service worker / Web Push), so this function only plays the
+// in-app sound. The sound respects the in-app notification filter and the "Notification Sounds"
+// toggle. See the notification system notes in Architecture.md §18.
 
 // Maps a notification type to its in-app filter key (instanceSettings). Types not listed here
 // (follow_request, admin.*, update, reaction) have no in-app toggle and are always allowed —
@@ -34,8 +30,8 @@ const TYPE_TO_FILTER_KEY = {
 }
 
 // Whether this notification type is shown in the in-app notifications tab for this instance. If
-// the user filtered the type out there, System A stays silent too — no sound, no popup — so the
-// foreground experience matches the notifications tab (and the badge).
+// the user filtered the type out there, it makes no sound either, so the foreground experience
+// matches the notifications tab (and the badge).
 function isAllowedByInAppFilter (type, currentInstance, instanceSettings) {
   const key = TYPE_TO_FILTER_KEY[type]
   if (!key) {
@@ -52,20 +48,18 @@ export function showDesktopNotification (instanceName, notification) {
   }
   const {
     currentInstance,
-    enableDesktopNotifications,
     disableNotificationSound,
-    currentPushSubscription,
     instanceSettings
   } = store.get()
 
   // Streaming only runs for the current instance, but guard anyway so a just-switched-away
-  // instance can't pop a notification.
+  // instance can't make a sound.
   if (instanceName !== currentInstance) {
     return
   }
 
   // Respect the in-app notification filter: a type the user hid from the notifications tab
-  // shouldn't make a sound or pop up either.
+  // shouldn't make a sound either.
   if (!isAllowedByInAppFilter(notification.type, currentInstance, instanceSettings)) {
     return
   }
@@ -79,33 +73,5 @@ export function showDesktopNotification (instanceName, notification) {
     } catch (_) {
       // ignore (older browsers where play() throws synchronously)
     }
-  }
-
-  if (!enableDesktopNotifications) {
-    return
-  }
-  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
-    return
-  }
-  // Tab visible: user sees the app, no popup needed.
-  // Push active: service worker handles the OS notification when tab is hidden.
-  if (document.visibilityState === 'visible' || currentPushSubscription) {
-    return
-  }
-
-  const { title, body } = describeNotification(notification)
-  try {
-    const n = new Notification(title, {
-      body,
-      icon: (notification.account && notification.account.avatar) || '/icons/favicon.ico',
-      tag: 'zocial-' + notification.id,
-      renotify: true
-    })
-    n.onclick = () => {
-      window.focus()
-      n.close()
-    }
-  } catch (_) {
-    // ignore — Notification constructor can throw on some platforms
   }
 }

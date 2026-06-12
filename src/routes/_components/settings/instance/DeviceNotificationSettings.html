@@ -16,7 +16,7 @@
         <PushNotificationSettings {instanceName} />
       </div>
     {:else}
-      <p class="device-notifications-note">{'intl.deviceNotificationsForegroundOnly'}</p>
+      <p class="device-notifications-note">{'intl.browserDoesNotSupportPush'}</p>
     {/if}
   {/if}
 </div>
@@ -46,8 +46,8 @@
     },
     store: () => store,
     computed: {
-      // "Device notifications are on" if either delivery mechanism is active: a Web Push
-      // subscription (System B) or the foreground desktop-notification flag (System A fallback).
+      // "Push notifications are on" — OS notifications are push-only, so this is true when the
+      // user wants push (enableDesktopNotifications intent flag) or a Web Push subscription exists.
       enabled: ({ $enableDesktopNotifications, $pushSubscriptions, instanceName }) => (
         $enableDesktopNotifications ||
         !!($pushSubscriptions && $pushSubscriptions[instanceName])
@@ -60,7 +60,7 @@
         const { instanceName } = this.get()
 
         if (!event.target.checked) {
-          // Turn everything off: stop foreground notifications and unsubscribe from push.
+          // Turn push off: clear the intent flag and unsubscribe from Web Push.
           this.store.set({ enableDesktopNotifications: false })
           this.store.save()
           /* no await */ disablePushForInstance(instanceName)
@@ -77,7 +77,7 @@
           await handlePushError(instanceName, err)
           return
         }
-        const { permission, pushError } = result
+        const { permission, pushError, pushUnsupported } = result
         if (permission === 'unsupported') {
           alert('intl.desktopNotificationsNotSupported')
           return
@@ -89,12 +89,20 @@
         if (permission !== 'granted') {
           return // 'default' — user dismissed the permission prompt; leave off
         }
+        if (pushUnsupported) {
+          // Browser can't do Web Push; OS notifications are push-only, so there's nothing to turn
+          // on. Leave the toggle off and explain.
+          alert('intl.browserDoesNotSupportPush')
+          return
+        }
+        if (pushError) {
+          // Push-only: a failed registration must NOT leave the toggle showing "on". Surface the
+          // error (re-auth on 403) and keep it off so the user can retry.
+          await handlePushError(instanceName, pushError)
+          return
+        }
 
         event.target.checked = true
-        if (pushError) {
-          // The foreground fallback still works; surface the push failure (re-auth on 403).
-          await handlePushError(instanceName, pushError)
-        }
       }
     },
     components: {

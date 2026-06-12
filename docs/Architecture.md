@@ -785,27 +785,27 @@ There are **three distinct concepts** here that look similar in the UI but are t
 | Concept | What it is | Where it lives |
 |---|---|---|
 | **In-app notifications** | Which activity types appear in the in-app **Notifications tab** (and feed the unread badge) | client-side display filter |
-| **System A** — foreground OS notification | A browser `Notification` popup created by the **open page** | `showDesktopNotification.js` |
-| **System B** — Web Push | An OS notification delivered by the **service worker** from a server push message | `service-worker.js` push handler |
+| **Foreground sound** | The in-app audio cue (`boop.mp3`) played when a notification streams in while the app is open | `showDesktopNotification.js` |
+| **OS push** (Web Push) | An OS notification delivered by the **service worker** from a server push message — the *only* OS-level notification mechanism | `service-worker.js` push handler |
 
-In-app notifications are a *display filter*; Systems A and B are two *delivery mechanisms* for OS-level notifications. A user-facing explanation of the difference lives in the settings tooltips (`notifyOnThisDeviceDescription`, `shownInNotificationsTabDescription`).
+In-app notifications are a *display filter*; the foreground sound is an in-app cue; OS push is the single OS-level delivery mechanism.
+
+> **Historical note (≤ v1.8.2):** there used to be a third mechanism, "System A" — a foreground `Notification()` **popup** raised by the open page as a fallback for servers without Web Push. It was removed (v1.8.3): conflating it with push under one toggle made the master switch dishonest (it stayed "on" when push silently failed), and the popup's unique value was niche (it only fired when the tab was backgrounded-but-alive on a no-push server; Mastodon's push suppressed it via dedup, so it almost never fired). OS notifications are now **push-only**; the page side keeps only the sound. References to "System A / System B" below are retained only where they clarify the history.
 
 ### In-app notifications (the Notifications tab)
 
 The Notifications tab is a timeline filtered by per-type toggles (`NotificationFilterSettings` → `instanceSettings`). All types **default to on** — `get(instanceSettings, [currentInstance, key], true)` in `timelineFilterComputations.js`. `numberOfNotifications` (the badge) is derived from `filteredTimelineNotificationItemSummaries`, so unchecking a type both hides it from the list and removes it from the badge. This concept has nothing to do with OS notifications.
 
-### System A — foreground page-context notification
+### Foreground sound
 
-A browser `Notification` created directly by the running page.
+`showDesktopNotification.js` plays the in-app sound (`boop.mp3`) for a live streamed notification.
 
-- **Trigger:** the streaming `notification` event (`processMessage.js` → `showDesktopNotification(instanceName, payload)`), where the **full notification payload** is available. It is *not* driven by a count delta — that older approach produced generic "N new notifications" text and fired a burst of stale popups when a backgrounded tab unfroze and gap-filled. Firing per live streamed event means one popup per notification, with real content, and **no** popups for catch-up fetches.
-- **Descriptive content:** `notificationContent.js` builds `{ title, body }` per type — e.g. *"Alice / boosted your post"*, the status snippet for mentions — reusing the existing parameter-less intl strings (`rebloggedYou`, `favoritedYou`, …), which `svelte-intl-loader` resolves to plain text at build time (it runs over `.js`/`.ts`, not just `.html`). The actor's avatar is used as the icon.
-- **In-app filter gate (applies to both sound and popup):** Before anything fires, System A checks the **in-app notification filter** (`instanceSettings`, same per-type toggles as the notifications tab) via `isAllowedByInAppFilter`. A type the user hid from the notifications tab makes **no sound and no popup** either — the foreground experience matches the tab and the badge. Types without a toggle (`follow_request`, `admin.*`, `update`, `reaction`) are always allowed, exactly as the tab treats them. This is distinct from the push `alerts` config (System B) — the in-app filter governs the foreground path, push alerts govern the server-side push.
-- **Sound vs. popup split:** The notification sound plays for allowed types (gated only by `disableNotificationSound` on top of the in-app filter). The `Notification()` popup is only shown when the tab is **hidden** AND there is **no active push subscription** (see Dedup below). This means: when the user is actively looking at the app, sound fires but no popup interrupts them; the popup only appears as a last-resort fallback for servers without Web Push support.
-- **Gating:** in-app filter allows the type + (for the popup) `enableDesktopNotifications` (persisted) + `Notification.permission === 'granted'` + `document.visibilityState === 'hidden'` + no `currentPushSubscription`. (Sound is gated only by the in-app filter + `disableNotificationSound`, independent of `enableDesktopNotifications`.)
-- **Fundamental limitation:** the streaming WebSocket is **paused when the tab freezes** (`TimelineStream.js`, Page Lifecycle API). So System A only fires while the tab is alive/foreground, and never when the tab is closed or on a backgrounded mobile PWA. This is why it cannot be the primary system.
+- **Trigger:** the streaming `notification` event (`processMessage.js` → `showDesktopNotification(instanceName, payload)`), so it plays exactly once per live notification (not per count delta, so no burst on gap-fill).
+- **In-app filter gate:** before playing, it checks the **in-app notification filter** (`instanceSettings`, same per-type toggles as the notifications tab) via `isAllowedByInAppFilter`. A type the user hid from the notifications tab makes **no sound** — the foreground experience matches the tab and the badge. Types without a toggle (`follow_request`, `admin.*`, `update`, `reaction`) are always allowed, exactly as the tab treats them.
+- **Gating:** in-app filter allows the type + `disableNotificationSound` is false. Independent of `enableDesktopNotifications` and of push — the sound is its own concern with its own toggle.
+- **Limitation:** the streaming WebSocket is **paused when the tab freezes** (`TimelineStream.js`, Page Lifecycle API), so the sound only plays while the tab is alive. (Function name `showDesktopNotification` is legacy — it no longer raises any popup.)
 
-### System B — Web Push
+### OS push — Web Push (the only OS-level mechanism)
 
 The first-class system: the server sends a push message, the service worker wakes up and shows the notification **even with the tab closed or on a mobile PWA**.
 
@@ -816,44 +816,39 @@ The first-class system: the server sends a push message, the service worker wake
 - **Self-healing subscription (`canSilentlyReregister`):** Browser push subscriptions are occasionally lost without warning — typically after a service worker update or the browser clearing storage. Previously this left the UI in an inconsistent state: the master "Notify me on this device" toggle showed ON (persisted), but all per-type checkboxes showed unchecked (subscription null → early return). On every page load, `updatePushSubscriptionForInstance` (called via `instanceObservers` as an idle task) now detects a null subscription and, when `enableDesktopNotifications === true` + `Notification.permission === 'granted'`, silently re-registers via `updateAlerts` — no Settings visit required. This is gated by `canSilentlyReregister()` to prevent unexpected permission prompts.
 - **Per-type preference preservation (`lastPushAlerts`):** Re-registration previously used `ALL_PUSH_ALERTS`, discarding the user's saved per-type choices. Now `updateAlerts` saves the alert config to `lastPushAlerts[instanceName]` in persisted store after every successful registration. The self-healing path reads back `getSavedAlerts(instanceName)` so the user's configuration is restored exactly.
 - **Permission-revoked reconciliation:** `updatePushSubscriptionForInstance` runs on every page load. If `Notification.permission === 'denied'`, it reconciles state and returns early — nothing useful can be synced. It clears `enableDesktopNotifications` **and** drops any stored subscription (`pushSubscriptions[instance] = null`, best-effort browser `unsubscribe()`), so the master toggle no longer shows "on" via the `enabled` computed (`enableDesktopNotifications || hasSubscription`). The cleanup is guarded so it only writes once — subsequent denied loads find nothing to reconcile and no-op. The settings UI additionally surfaces a "denied" alert via the `notificationPermission` observer. End state: master toggle off + denied alert.
+- **Failure detection — honest "off" when push is permanently broken:** because the toggle is push-only, "on" should mean push actually works. Two layers decide when to give up:
+  - **Enable time** (`enableOSNotificationsForInstance`): the intent flag `enableDesktopNotifications` is set **only** on a successful registration. A failure returns `{ pushError }` (or `{ pushUnsupported: true }` when the browser has no Web Push) and leaves the flag off, so the master toggle reverts to off + a toast instead of falsely showing "on".
+  - **Runtime circuit breaker** (`recordPushFailure` + persisted `pushFailureCount[instance]`): the self-healing path tolerates transient failures but counts consecutive ones. A permanent error (`NotSupportedError`) gives up immediately; otherwise after `PUSH_FAILURE_THRESHOLD` (3) consecutive failed loads, `markPushUnavailable` drops the subscription + clears the intent flag (toggle → off) and best-effort unsubscribes. Any successful (re-)registration resets the counter via `savePushAlerts`, so genuine transient blips (a flaky load, a brief network drop) heal without ever flipping the toggle. This is the fix for the old behaviour where a dead push service left the toggle stuck "on" forever (silent retry never concluded "broken").
 
-### Dedup: how A and B coexist
+### Dedup: don't pop while the app is in view
 
-Two-layer approach — one in the page, one in the service worker:
+With OS notifications now push-only, there's a single dedup point — the **service worker `push` handler**. Before showing any OS notification it checks whether a window client is currently visible:
 
-**Layer 1 — `showDesktopNotification.js` (page side):**
-- Sound always plays.
-- `Notification()` popup is suppressed when `document.visibilityState === 'visible'` (user is looking at the app — in-app indicators suffice) OR when `currentPushSubscription` is set (System B owns OS delivery). The popup only fires when the tab is **hidden** AND there is **no push subscription** — i.e. purely as a fallback for servers without Web Push support.
+```js
+const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+if (windowClients.some(c => c.visibilityState === 'visible')) return
+```
 
-**Layer 2 — `service-worker.js` push handler:**
-- Before showing any OS notification, the handler checks whether any window client is currently visible:
-  ```js
-  const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-  if (windowClients.some(c => c.visibilityState === 'visible')) return
-  ```
-  If the app is open and in focus, the streaming connection already delivers the notification in-app (sound + notification list). The service worker skips `showNotification()` entirely to avoid interrupting the user. This is an industry-standard PWA pattern; `WindowClient.visibilityState` degrades safely — if `undefined` (old Safari), the expression is `false` and the push fires anyway.
+If the app is open and in focus, the streaming connection already delivers the notification in-app (sound + notification list), so a push popup would be redundant and disruptive — the SW skips `showNotification()`. Industry-standard PWA pattern; `WindowClient.visibilityState` degrades safely — if `undefined` (old Safari), the expression is `false` and the push fires anyway.
 
-**Result — three cases:**
+**Result — two cases:**
 
-| State | OS popup | Sound | Source |
-|---|---|---|---|
-| Tab visible | ✗ | ✓ (streaming) | System A (sound only) |
-| Tab hidden, push active | ✓ | ✓ (streaming, if alive) | System B |
-| Tab hidden, no push | ✓ | ✓ (streaming, if alive) | System A |
+| State | OS popup (push) | Sound |
+|---|---|---|
+| Tab visible | ✗ (suppressed) | ✓ (streaming) |
+| Tab hidden / app closed | ✓ | ✓ if streaming still alive |
 
-System A is therefore purely the **foreground sound player + last-resort popup fallback** for servers without Web Push support. System B owns all OS notifications when the tab is not in view.
+**Known edge case:** if the tab is visible but the streaming connection is momentarily reconnecting, a push arrives and the SW suppresses it (tab visible). The notification still appears in the notifications tab once streaming reconnects, but no sound plays in that brief window. Accepted limitation, shared by all PWAs using this pattern.
 
-**Known edge case:** If the tab is visible but the streaming connection is momentarily reconnecting, a push arrives and the service worker suppresses it (tab visible). The notification will appear in the notifications tab once streaming reconnects, but no sound plays during that brief window. This is an accepted limitation shared by all competing PWAs using this dedup pattern.
+### Settings UI
 
-### Settings UI (unified)
+`DeviceNotificationSettings.html` is one master switch, **"Enable OS push notifications on this device"** — push-only (`enableDesktopNotifications` is the push-intent flag; despite its legacy name it no longer gates any foreground popup):
 
-`DeviceNotificationSettings.html` collapses what used to be two confusing, near-identical blocks ("Enable desktop notifications" + "Push notifications") into one master switch **"Notify me on this device"**:
+- **On:** requests `Notification` permission, then registers Web Push with all alert types. The intent flag is set **only after** registration succeeds (see Failure detection). If the browser can't do Web Push (`pushUnsupported`) or registration fails (`pushError`), the toggle stays **off** with an explanation/toast — it never falsely shows "on". On success the per-type sub-component (`PushNotificationSettings`) mounts against an already-existing subscription and reflects the real all-on state.
+- **Off:** clears `enableDesktopNotifications` and calls `disablePushForInstance` (browser + backend + store).
+- The per-type checkboxes reflect reality: with no subscription they render **unchecked**, and ticking one actually subscribes.
 
-- **On:** requests `Notification` permission, sets `enableDesktopNotifications = true` (dormant fallback), and registers Web Push with all alert types on (if supported). Push is registered **before** flipping the fallback flag so the per-type sub-component (`PushNotificationSettings`, shown only when push is supported) mounts against an already-existing subscription and reflects the real all-on state.
-- **Off:** clears `enableDesktopNotifications` and calls `disablePushForInstance`.
-- The per-type checkboxes now reflect reality: with no subscription they render **unchecked** (so the user can see push is off, and ticking one actually subscribes — the old UI showed them checked despite no subscription).
-
-"Shown in the notifications tab" is the relabelled in-app filter. Both controls carry hover tooltips.
+The **In-App Notifications** section (per-type filter for the notifications tab + badge) and the **Notification Sounds** section are independent of this toggle — turning OS push off does **not** affect what shows in the app or the sound.
 
 A dedicated **Notification Sound** section sits below In-App Notifications in the Notifications block. It has its own on/off toggle (default on) and is intentionally separate from Wellness — sound is a notification preference, not a wellness tool. `disableNotificationSound` was previously included in the Wellness "Enable All" toggle; removing it makes "Enable All" refer purely to wellness metrics and immediacy settings.
 
@@ -884,19 +879,20 @@ How they behave across the lifecycle:
   - `default` (never decided) → like first login: prompt shows again, Push off until opt-in.
   - `granted` → no prompt (no nag); Push silently re-registers on load (all types) — convenient restore. (The global `enableDesktopNotifications` survives logout, so the self-healing path brings it back.)
   - `denied` → no prompt; Push stays off with the "blocked" hint.
-- **Browser permission revoked:** on the next load the "Notify me on this device" master toggle flips to **off**, the subscription is cleaned up, and the settings show the "blocked" hint. In-app notifications and sound keep working untouched.
+- **Browser permission revoked:** on the next load the "Enable OS push notifications" master toggle flips to **off**, the subscription is cleaned up, and the settings show the "blocked" hint. In-app notifications and sound keep working untouched.
+- **Push service permanently fails** (e.g. a server without Web Push, or a browser push service that never works): the toggle won't stick on a false "on". Enable-time failures keep it off with a toast; a push that worked then breaks is given up on after 3 consecutive failed loads (or immediately on `NotSupportedError`) and the toggle flips off. Transient blips just retry and heal. In-app notifications and sound are unaffected.
 
-The deliberate compromise: on re-login with permission already `granted`, Push returns automatically rather than re-asking — because the foreground flag is global across accounts and can't be reset per-account on logout. This is convenience, not breakage: the user already granted permission in this browser. Net effect — Push is the only layer that can fail/be blocked, and when it does the user falls back cleanly to in-app + sound, with no toggle ever falsely showing "on".
+The deliberate compromise: on re-login with permission already `granted`, Push returns automatically rather than re-asking — because the intent flag is global across accounts and can't be reset per-account on logout. This is convenience, not breakage: the user already granted permission in this browser. Net effect — OS push is the only layer that can fail/be blocked, and when it does the user falls back cleanly to in-app + sound, with **no toggle ever falsely showing "on"**.
 
 ### Persistence
 
-All notification settings persist (`persistedState` in `store.js`): `enableDesktopNotifications`, `pushSubscriptions` (also server-backed), `osNotificationPrompted`, `lastPushAlerts` (per-instance alert config, used for self-healing re-registration), `disableNotificationSound`, `disableNotificationBadge`, and the in-app filters in `instanceSettings`.
+All notification settings persist (`persistedState` in `store.js`): `enableDesktopNotifications` (push-intent flag), `pushSubscriptions` (also server-backed), `osNotificationPrompted`, `lastPushAlerts` (per-instance alert config, used for self-healing re-registration), `pushFailureCount` (per-instance consecutive-failure counter for the circuit breaker), `disableNotificationSound`, `disableNotificationBadge`, and the in-app filters in `instanceSettings`.
 
-The per-instance keys (`pushSubscriptions`, `lastPushAlerts`, `osNotificationPrompted`) are cleared for an instance on logout (`logOutOfInstance` in `_actions/instances.js`), alongside the other per-instance objects, so the account's **push subscription** is dropped. Clearing `osNotificationPrompted` lets the one-time opt-in prompt run again on re-login. Note what is **not** per-instance and therefore survives logout: the global `enableDesktopNotifications` flag (shared across accounts, so it can't be safely cleared on a single-account logout), the global sound/badge prefs, the per-instance in-app filters (`instanceSettings`, which default to all-on anyway), and the browser-level `Notification.permission` (per-origin). See "Login prompt & defaults" for how these combine on re-login.
+The per-instance keys (`pushSubscriptions`, `lastPushAlerts`, `pushFailureCount`, `osNotificationPrompted`) are cleared for an instance on logout (`logOutOfInstance` in `_actions/instances.js`), alongside the other per-instance objects, so the account's **push subscription** is dropped. Clearing `osNotificationPrompted` lets the one-time opt-in prompt run again on re-login. Note what is **not** per-instance and therefore survives logout: the global `enableDesktopNotifications` flag (shared across accounts, so it can't be safely cleared on a single-account logout), the global sound/badge prefs, the per-instance in-app filters (`instanceSettings`, which default to all-on anyway), and the browser-level `Notification.permission` (per-origin). See "Login prompt & defaults" for how these combine on re-login.
 
 ### Files
 
-`_actions/showDesktopNotification.js`, `_actions/notificationContent.js`, `_actions/stream/processMessage.js`, `_actions/pushSubscription.js`, `_actions/promptForOSNotifications.js`, `_store/observers/notificationObservers.js` (favicon only now), `_components/settings/instance/DeviceNotificationSettings.html` + `PushNotificationSettings.html` + `NotificationFilterSettings.html`, `service-worker.js` (push / notificationclick).
+`_actions/showDesktopNotification.js` (foreground sound only — legacy name), `_actions/stream/processMessage.js`, `_actions/pushSubscription.js` (registration, self-healing, circuit breaker), `_actions/promptForOSNotifications.js`, `_store/observers/notificationObservers.js` (favicon only now), `_components/settings/instance/DeviceNotificationSettings.html` + `PushNotificationSettings.html` + `NotificationFilterSettings.html`, `service-worker.js` (push / notificationclick). (`notificationContent.js` was removed with the foreground popup.)
 
 ---
 
@@ -1158,6 +1154,18 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
+### [v1.8.3] OS notifications made push-only; foreground popup (System A) removed
+
+**Decision:** Make the device-notification toggle mean **only** Web Push (System B), rename it "Enable OS push notifications on this device", and **remove** the foreground `Notification()` popup (the old "System A"). The page side keeps only the sound. The toggle now honestly reflects push state: it goes **off** when push fails (enable-time failure, or a runtime circuit breaker after 3 consecutive silent-reregister failures / immediately on `NotSupportedError`), and a successful registration resets the counter so transient blips heal.
+
+**Rationale:** One toggle was driving two delivery mechanisms (foreground popup + push), so it stayed "on" even when push silently failed — the user couldn't tell push was broken. Splitting honestly required deciding what to do with the foreground popup. It was removed rather than given its own toggle because its unique value was niche: it only fired when the tab was backgrounded-but-alive on a server without Web Push (Mastodon's push suppressed it via dedup, so for most users it never fired), and the "alert me while the app is open" need is already covered by the sound. Net result: each user-facing control maps to one thing — in-app filter (tab/badge), sound, and OS push — and OS push can't show a misleading "on".
+
+**Tradeoff:** users on servers without Web Push (e.g. GoToSocial < 0.18) lose the foreground OS popup entirely (they still get in-app notifications + sound). Accepted deliberately in favour of a clear, honest single-purpose toggle.
+
+**Files:** `_actions/showDesktopNotification.js` (popup removed), `_actions/pushSubscription.js` (`enableOSNotificationsForInstance` push-only, `recordPushFailure`/`markPushUnavailable`/`isPermanentPushError` circuit breaker), `_store/store.js` (`pushFailureCount`), `_actions/instances.js` (logout cleanup), `_components/settings/instance/DeviceNotificationSettings.html`, `_intl/en-US.js` + `de.js`; `notificationContent.js` deleted. Full mechanics in §18.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
@@ -1177,3 +1185,4 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.8.0** | 2026-06-11 | New notification system: Web Push as the primary mechanism (rich, type-specific, works with the tab closed / on a mobile PWA); descriptive event-driven foreground notifications; unified "Notify me on this device" settings with a one-time login prompt and hover explanations. In-app notifications default on, OS notifications default off |
 | **1.8.1** | 2026-06-12 | Two-layer OS-notification dedup: no popup when app tab is visible (sound still plays); service worker skips `showNotification()` when any window client is visible; crash fix for `this.observe` on destroyed `PushNotificationSettings` component |
 | **1.8.2** | 2026-06-12 | Push subscription self-healing (`canSilentlyReregister`): auto-reregisters on page load after silent subscription loss, restoring saved per-type prefs via `lastPushAlerts`; permission-revoked reconciliation clears the master toggle; foreground sound/popup now respect the in-app notification filter; VAPID key-rotation detection fixed (was a no-op); `describeDOMException` export fixes blank DOMException error toasts; "Add word filter" context menu entry on status posts; Notification Sound moved from Wellness to its own section under Notifications |
+| **1.8.3** | 2026-06-12 | OS notifications made push-only: master toggle renamed "Enable OS push notifications on this device" and now reflects push state honestly (goes off on enable failure or after a runtime circuit breaker concludes push is dead); foreground `Notification()` popup (System A) removed — page side keeps only the sound; in-app notifications + sound fully independent of the push toggle; `notificationContent.js` deleted |
