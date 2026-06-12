@@ -52,6 +52,7 @@ export async function logOutOfInstance (instanceName, message) {
     pinnedPages,
     statusModifications,
     pushSubscriptions,
+    lastPushAlerts,
     instanceDataReady,
     lastContentTypes,
     instanceFollowedHashtags
@@ -70,6 +71,7 @@ export async function logOutOfInstance (instanceName, message) {
     pinnedPages,
     statusModifications,
     pushSubscriptions,
+    lastPushAlerts,
     instanceDataReady,
     lastContentTypes,
     instanceFollowedHashtags
@@ -95,6 +97,7 @@ export async function logOutOfInstance (instanceName, message) {
     verifyCredentials,
     statusModifications,
     pushSubscriptions,
+    lastPushAlerts,
     instanceDataReady,
     lastContentTypes,
     instanceFollowedHashtags

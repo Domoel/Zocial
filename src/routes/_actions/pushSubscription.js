@@ -11,14 +11,31 @@ export async function updatePushSubscriptionForInstance (instanceName) {
 
     // OS permission was revoked since we were last enabled. Nothing can deliver an OS notification
     // anymore (System A checks permission, System B won't receive pushes), so reconcile the stored
-    // flag with reality: clear enableDesktopNotifications so the master toggle no longer shows "on".
-    // The settings UI additionally surfaces a "denied" alert via the notificationPermission observer.
+    // state with reality and stop — there is nothing useful to sync. Clear enableDesktopNotifications
+    // and drop any stored subscription (best-effort browser unsubscribe; most browsers already
+    // revoked it, but some keep it, which would otherwise leave the master toggle showing "on" via
+    // the `enabled` computed). The settings UI also surfaces a "denied" alert via the
+    // notificationPermission observer.
     if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
       const { enableDesktopNotifications } = store.get()
-      if (enableDesktopNotifications) {
+      // Nothing left to reconcile (already cleaned up on a previous load) — avoid a redundant write.
+      if (enableDesktopNotifications || currentPushSubscription) {
         store.set({ enableDesktopNotifications: false })
+        if (currentPushSubscription) {
+          store.setInstanceData(instanceName, 'pushSubscriptions', null)
+          try {
+            const registration = await navigator.serviceWorker.ready
+            const sub = await registration.pushManager.getSubscription()
+            if (sub) {
+              await sub.unsubscribe()
+            }
+          } catch (_) {
+            // best-effort: the subscription is dead anyway with permission denied
+          }
+        }
         store.save()
       }
+      return
     }
 
     if (currentPushSubscription === null) {
