@@ -23,15 +23,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
         store.set({ enableDesktopNotifications: false })
         if (currentPushSubscription) {
           store.setInstanceData(instanceName, 'pushSubscriptions', null)
-          try {
-            const registration = await navigator.serviceWorker.ready
-            const sub = await registration.pushManager.getSubscription()
-            if (sub) {
-              await sub.unsubscribe()
-            }
-          } catch (_) {
-            // best-effort: the subscription is dead anyway with permission denied
-          }
+          await unsubscribeBrowserPush()
         }
         store.save()
       }
@@ -173,17 +165,13 @@ export function describeDOMException (e) {
 }
 
 // Fully turn off Web Push for an instance: unsubscribe the browser push subscription, delete it
-// on the backend, and clear it from the store. Used by the "Notify me on this device" master
-// toggle when switched off.
+// on the backend, and clear it (+ the failure counter) from the store. Used by the "Enable OS push
+// notifications on this device" master toggle when switched off.
 export async function disablePushForInstance (instanceName) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
-    if (subscription) {
-      await subscription.unsubscribe()
-    }
+    await unsubscribeBrowserPush()
     try {
       await deleteSubscription(instanceName, accessToken)
     } catch (e) {
@@ -192,8 +180,9 @@ export async function disablePushForInstance (instanceName) {
         console.warn('failed to delete push subscription on backend', e)
       }
     }
+    const { pushFailureCount } = store.get()
     store.setInstanceData(instanceName, 'pushSubscriptions', null)
-    store.set({ enableDesktopNotifications: false })
+    store.set({ enableDesktopNotifications: false, pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
     store.save()
   })
 }
@@ -253,8 +242,7 @@ function savePushAlerts (instanceName, alerts) {
   const { lastPushAlerts, pushFailureCount } = store.get()
   const update = { lastPushAlerts: Object.assign({}, lastPushAlerts, { [instanceName]: alerts }) }
   if (pushFailureCount && pushFailureCount[instanceName]) {
-    update.pushFailureCount = Object.assign({}, pushFailureCount)
-    delete update.pushFailureCount[instanceName]
+    update.pushFailureCount = withPushFailureCount(pushFailureCount, instanceName, 0)
   }
   store.set(update)
 }
@@ -267,15 +255,9 @@ function isPermanentPushError (e) {
   return e instanceof DOMException && e.name === 'NotSupportedError'
 }
 
-// Push has failed for good: drop the subscription and clear the intent flag so the master toggle
-// honestly shows "off", and reset the counter. Best-effort browser unsubscribe.
-async function markPushUnavailable (instanceName) {
-  const { pushFailureCount } = store.get()
-  const nextCount = Object.assign({}, pushFailureCount)
-  delete nextCount[instanceName]
-  store.setInstanceData(instanceName, 'pushSubscriptions', null)
-  store.set({ enableDesktopNotifications: false, pushFailureCount: nextCount })
-  store.save()
+// Best-effort: unsubscribe the browser's push subscription. Safe to call when there may be none;
+// never throws (callers are tearing push down and have nothing to do on failure).
+async function unsubscribeBrowserPush () {
   try {
     const registration = await navigator.serviceWorker.ready
     const sub = await registration.pushManager.getSubscription()
@@ -283,8 +265,30 @@ async function markPushUnavailable (instanceName) {
       await sub.unsubscribe()
     }
   } catch (_) {
-    // best-effort — push is being abandoned anyway
+    // best-effort — nothing actionable if the browser won't unsubscribe
   }
+}
+
+// Return a copy of the per-instance failure-count map with this instance's count set (count > 0)
+// or removed (count <= 0).
+function withPushFailureCount (current, instanceName, count) {
+  const next = Object.assign({}, current)
+  if (count > 0) {
+    next[instanceName] = count
+  } else {
+    delete next[instanceName]
+  }
+  return next
+}
+
+// Push has failed for good: drop the subscription and clear the intent flag so the master toggle
+// honestly shows "off", and reset the counter. Best-effort browser unsubscribe.
+async function markPushUnavailable (instanceName) {
+  const { pushFailureCount } = store.get()
+  store.setInstanceData(instanceName, 'pushSubscriptions', null)
+  store.set({ enableDesktopNotifications: false, pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
+  store.save()
+  await unsubscribeBrowserPush()
 }
 
 // Record a failed silent re-registration. Returns true if push has now been given up on (caller
@@ -301,7 +305,7 @@ async function recordPushFailure (instanceName, e) {
     await markPushUnavailable(instanceName)
     return true
   }
-  store.set({ pushFailureCount: Object.assign({}, pushFailureCount, { [instanceName]: count }) })
+  store.set({ pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, count) })
   store.save()
   return false
 }
