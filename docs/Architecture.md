@@ -889,6 +889,28 @@ This is the most counter-intuitive part of the whole system and the source of a 
 
 > **Verified against current Mastodon API + this codebase (June 2026).** Folding into any rework: (1) the VAPID public key is now exposed at `GET /api/v2/instance` → `configuration.vapid.public_key` (**Mastodon 4.3.0**), so the historical "dummy-subscribe to read back `server_key`" dance (`mastodon#8785`, still in `updateAlerts`) is only needed as a fallback for older servers / GoToSocial. (2) At the Mastodon-*protocol* level the VAPID key is per-instance, so multiple accounts on one instance *could* share push — **but Zocial forbids two accounts on one instance** (`addInstance.js`), so its multi-account is always cross-instance and the hard limit always applies; the practical model is one push *account* per device. (3) The hard cross-instance limit itself is a Web-Platform fact (W3C Push API + RFC 8292) and is unchanged.
 
+#### Decision aid — behaviour per path, single vs. multi usage
+
+Complements the options table above with a usage-scenario view. "Multi-account" here means accounts on **different instances** (the only multi-account Zocial allows).
+
+| Path | Effort / infra | **Single account** | **Multi-account (different instances)** | UI honesty |
+|---|---|---|---|---|
+| **D — current (v1.8.5)** — per-instance maps + lifecycle guards | ✅ done, no infra | **Perfect.** Push works, rich notifications, nothing to improve | **Only one instance gets through — non-deterministically** (whichever last re-keyed). And even that one shows a **bare** notification (title/body only, no deep-links/actions), because the SW doesn't enrich with >1 instance. The guards do prevent friendly-fire & the logout leak | ⚠️ the toggle can read "on" for **several** accounts while only one actually delivers |
+| **C — honest single-account** | 🟢 small (~½ day), no infra | **Identical to D** (invisible to single-account users) | **Deterministic:** the user *picks* the one push account; enabling a second re-keys + shows a clear message. No more race. *But* the notification stays **bare** while the other account is logged in (C doesn't fix routing) | ✅ only one account can be "on" — the toggle tells the truth |
+| **C+ — fix SW routing** *(with C)* | 🟡 small–moderate, no infra¹ | identical | **Best client-only state:** deterministic push account **+ rich notifications** for it, even with other accounts logged in. The second account still isn't pushed (platform limit), but the chosen one is fully functional | ✅ as C |
+| **B — push relay (self-hosted)** | 🔴 large (server project) | works, but a relay sits in the path (metadata/latency) — **no benefit** over D | **The only path to true parallel push:** *both* accounts pushed, correctly routed & enriched | ✅ honest (real parallelism) |
+
+¹ *C+ needs one prerequisite: the service worker must resolve the payload's `access_token` → instance origin (store per-account tokens in IndexedDB), otherwise it can't call the right API to enrich.*
+
+**Is D a good compromise?** **Yes — as an interim state.** For **single-account use** (likely the large majority) D is **completely fine** — there is nothing to improve, and the real bugs (friendly-fire teardown, logout leak) are fixed. Zero risk, zero infra. Its weaknesses are **exclusively** in the multi-account / different-instance case:
+
+1. **Non-determinism** — which account actually pushes is unpredictable.
+2. **Residual dishonesty** — the toggle can show "on" for two accounts while only one delivers.
+3. **Degraded notifications** — even the working account drops to bare title/body once a second account is logged in.
+4. **The per-instance illusion remains** — it invites future changes to re-introduce the same class of bugs (exactly why this section exists).
+
+**Should we move to C?** **Recommendation: yes — C together with C+, but low urgency.** **C** fixes weaknesses 1 + 2 for very little code, no infra, and makes the model *simpler* (`otherInstancesWantPush` falls away); it's invisible to single-account users. **C+** additionally fixes weakness 3 (rich notifications for the chosen account). Together they are the **clean, fully client-side end state** — only **B** could ever deliver the second account, and that's a server project you likely don't want to take on for a client PWA. **The only reason to stay on D** is if multi-account-across-different-instances is practically irrelevant for the user base *and* the residual dishonesty (#2) doesn't bother us — then D is "fixed & fine" and C is just cosmetics + cleanup. Honest call: **C + C+ is the right, cheap investment in determinism and an honest, simpler model — but it is not an emergency; D is fine to ship in the meantime.**
+
 ### Dedup: don't pop while the app is in view
 
 With OS notifications now push-only, there's a single dedup point — the **service worker `push` handler**. Before showing any OS notification it checks whether a window client is currently visible:
