@@ -70,6 +70,12 @@ export function doAccountSearch (searchText) {
   }
 
   function onError (err) {
+    // A cancellation — the user typed another character, so the previous search was aborted — is
+    // expected, not a failure. Don't log it (it would spam the log on every keystroke); only warn
+    // on genuine errors.
+    if (canceled || (err && (err.message === 'canceled' || err.name === 'AbortError'))) {
+      return
+    }
     console.warn('ignored autosuggest error', err)
   }
 

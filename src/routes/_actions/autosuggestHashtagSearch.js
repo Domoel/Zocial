@@ -41,6 +41,11 @@ export function doHashtagSearch (searchText) {
         autosuggestSearchResults: results
       })
     } catch (err) {
+      // A cancellation (user typed another character → previous search aborted) is expected, not a
+      // failure; don't spam the log on every keystroke. Only warn on genuine errors.
+      if (err && (err.message === 'canceled' || err.name === 'AbortError')) {
+        return
+      }
       console.warn('ignored autosuggest error', err)
     }
   })
