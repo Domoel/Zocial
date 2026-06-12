@@ -861,13 +861,13 @@ A dedicated **Notification Sound** section sits below In-App Notifications in th
 
 - **In-app notifications: default ON.** OS notifications (A and B): **default OFF.**
 - `maybePromptForOSNotifications` shows a **one-time, per-account** dialog at login asking whether to enable OS notifications. On *Enable* → permission request + push registration; on *Not now* / permission denied / platform unsupported / any error → stays **off** (the default).
-- Gated by the persisted `osNotificationPrompted[instance]` flag (asked at most once per account). Idle-scheduled from `instanceObservers` on `currentInstance`, so it covers both fresh logins and existing accounts on first load after the update. If showing the dialog itself throws, the flag is *not* set, so it retries next login. If the OS permission is already decided (`granted`/`denied`), the prompt is skipped and the flag set.
+- Gated by the persisted `osNotificationPrompted[instance]` flag (asked at most once per account *per login*). Idle-scheduled from `instanceObservers` on `currentInstance`, so it covers both fresh logins and existing accounts on first load after the update. If showing the dialog itself throws, the flag is *not* set, so it retries next login. If the OS permission is already decided (`granted`/`denied`), the prompt is skipped and the flag set. The flag is cleared on logout (see Persistence), so logging back in re-prompts — consistent with logout resetting the account's notification state to the default.
 
 ### Persistence
 
 All notification settings persist (`persistedState` in `store.js`): `enableDesktopNotifications`, `pushSubscriptions` (also server-backed), `osNotificationPrompted`, `lastPushAlerts` (per-instance alert config, used for self-healing re-registration), `disableNotificationSound`, `disableNotificationBadge`, and the in-app filters in `instanceSettings`.
 
-The per-instance keys (`pushSubscriptions`, `lastPushAlerts`) are cleared for an instance on logout (`logOutOfInstance` in `_actions/instances.js`), alongside the other per-instance objects, so no stale alert config lingers after an account is removed.
+The per-instance keys (`pushSubscriptions`, `lastPushAlerts`, `osNotificationPrompted`) are cleared for an instance on logout (`logOutOfInstance` in `_actions/instances.js`), alongside the other per-instance objects. Clearing `osNotificationPrompted` means a re-login re-shows the one-time OS-notification prompt — intentional, because logout also resets the account's notification state back to the default (OS notifications off), so the user should get the chance to opt in again.
 
 ### Files
 
@@ -1104,6 +1104,16 @@ This section captures significant design decisions, feature choices, and archite
 **Tradeoff:** Existing users who had enabled all Wellness settings (including sound-off) will keep their saved preference; only the UI placement changed. The `disableNotificationSound` store key and default are unchanged.
 
 **Files:** `_pages/settings/general.html`, `_intl/en-US.js`, `_intl/de.js`.
+
+---
+
+### [v1.8.2] Re-prompt for OS notifications after logout
+
+**Decision:** Clear the per-instance `osNotificationPrompted` flag on logout (alongside `pushSubscriptions` and `lastPushAlerts`), so logging back into the same account re-shows the one-time OS-notification opt-in prompt.
+
+**Rationale:** Logout already resets the account's notification state to the default (OS notifications off, subscription dropped). Keeping the "already prompted" flag would mean a returning user is silently left with notifications off and never offered the opt-in again — inconsistent with the reset. Re-prompting matches the fresh-login experience. The prompt still only shows a dialog when `Notification.permission === 'default'`; if the browser-level permission was already granted or denied (that decision survives logout, being per-origin), the prompt is skipped and the flag re-set — so users who already decided aren't nagged.
+
+**Files:** `_actions/instances.js` (`logOutOfInstance`), `_actions/promptForOSNotifications.js`.
 
 ---
 

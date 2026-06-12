@@ -53,6 +53,7 @@ export async function logOutOfInstance (instanceName, message) {
     statusModifications,
     pushSubscriptions,
     lastPushAlerts,
+    osNotificationPrompted,
     instanceDataReady,
     lastContentTypes,
     instanceFollowedHashtags
@@ -72,6 +73,7 @@ export async function logOutOfInstance (instanceName, message) {
     statusModifications,
     pushSubscriptions,
     lastPushAlerts,
+    osNotificationPrompted,
     instanceDataReady,
     lastContentTypes,
     instanceFollowedHashtags
@@ -98,6 +100,7 @@ export async function logOutOfInstance (instanceName, message) {
     statusModifications,
     pushSubscriptions,
     lastPushAlerts,
+    osNotificationPrompted,
     instanceDataReady,
     lastContentTypes,
     instanceFollowedHashtags
