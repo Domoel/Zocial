@@ -936,6 +936,10 @@ It also matches our own ajax layer's `Timed out after N seconds` and `Request fa
 
 **Other expected conditions, not just network:** the same "don't log handled outcomes as errors" principle applies elsewhere — e.g. the notification sound's `play()` rejection (autoplay blocked before a user gesture) is swallowed, and `translateStatus` logs only genuine translation failures, not the classified `unsupportedLanguage` / `rateLimit` outcomes.
 
+**Log the readable message, not the bare `Error`.** `stringifyValue` in `hook.ts` renders an `Error` argument as its `.stack` — which in a production/dev build is **minified and unreadable** (e.g. a timeout surfaced in the log viewer as `7638/i/r</s<@…1481.js:1:800`). So for handled network-noise warnings, pass `e.message` rather than the bare error: `console.warn('timeline fetch failed:', e.message || e)` shows the actionable `Timed out after 20 seconds` instead of a minified frame. (`console.error(e)` for genuine bugs deliberately keeps the full stack — there, a deminified trace via the source map is worth the noise; see the dev-environment note below.)
+
+**Resolving a minified frame:** the dev deployment (`dev.zocial.social`) serves the built client chunks **and** their source maps (`*.js.map`). A frame like `…/client/<chunk>.<hash>.js:1:<col>` can be mapped back to source by fetching the chunk (its tail has `//# sourceMappingURL=…`) and its `.map` (whose `sources` array lists the original files) — no local build required.
+
 ---
 
 ## 20. Design Decisions Log
