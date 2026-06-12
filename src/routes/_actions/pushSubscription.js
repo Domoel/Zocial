@@ -14,7 +14,18 @@ export async function updatePushSubscriptionForInstance (instanceName) {
     }
 
     const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
+    let subscription
+    try {
+      subscription = await registration.pushManager.getSubscription()
+    } catch (e) {
+      // DOMException from pushManager.getSubscription() — expected on iOS Safari when the app is
+      // not installed as a PWA (push requires Home Screen installation on iOS). Treat as "no
+      // subscription" and clean up locally.
+      console.warn('pushManager.getSubscription() failed, clearing local subscription', describeDOMException(e))
+      store.setInstanceData(instanceName, 'pushSubscriptions', null)
+      store.save()
+      return
+    }
 
     if (subscription === null) {
       store.setInstanceData(instanceName, 'pushSubscriptions', null)
@@ -41,13 +52,25 @@ export async function updatePushSubscriptionForInstance (instanceName) {
         await subscription.unsubscribe()
         store.setInstanceData(instanceName, 'pushSubscriptions', null)
         store.save()
+      } else if (e instanceof DOMException) {
+        // pushManager.subscribe() / unsubscribe() can throw on mobile (NotSupportedError on iOS
+        // browser tabs, NotAllowedError when permission revoked, AbortError/InvalidStateError on
+        // transient SW timing issues). All are expected — warn, don't error.
+        console.warn('push subscription sync failed (browser/platform limitation)', describeDOMException(e))
       } else {
-        // 401 (invalid token), network errors, etc. — best-effort background sync; log instead of
-        // silently swallowing (and don't rethrow, so it can't become an uncaught rejection)
-        console.error('failed to sync push subscription', e)
+        // 401 (invalid token), network errors, etc. — best-effort background sync
+        console.warn('failed to sync push subscription', e)
       }
     }
   })
+}
+
+// DOMException serialises as {} with console.error/JSON.stringify (properties are inherited, not own).
+function describeDOMException (e) {
+  if (e instanceof DOMException) {
+    return e.name + (e.message ? ': ' + e.message : '')
+  }
+  return String(e)
 }
 
 // Fully turn off Web Push for an instance: unsubscribe the browser push subscription, delete it
