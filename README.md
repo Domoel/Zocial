@@ -56,7 +56,9 @@ It's fast, fully keyboard-navigable, installable as a PWA, and designed to feel 
 
 ---
 
-## 🔔 Notifications that just work
+## Feature Descriptions
+
+### 🔔 Notifications that just work
 
 Zocial ships a fully redesigned notification system built around **Web Push** — the same technology that powers native app notifications.
 
@@ -71,135 +73,95 @@ A single **"Notify me on this device"** toggle in Settings handles everything: i
 ### In-app notifications
 The Notifications tab is always on by default. Rich, descriptive content — *"Alice boosted your post"*, the first line of a mention — is generated from the live stream, so you see real context, not generic counts.
 
----
-
-## ♿ Accessibility, by design
+### ♿ Accessibility, by design
 
 Zocial continues Enafore's tradition of treating keyboard and screen reader users as first-class citizens — not an afterthought. Every interactive element is reachable by keyboard. Posts carry rich, human-readable aria labels: author, content, privacy level, timestamp, media descriptions, and link preview card titles — navigating with `j`/`k` gives screen readers the full picture.
 
 An optional **Announce link preview descriptions** setting (*Settings → Accessibility*) lets users who want maximum verbosity hear the full card description too. A comprehensive set of keyboard shortcuts covers every common action — reply, boost, favourite, bookmark, quote, translate, open media, reveal content warnings, and more — with a built-in cheatsheet at any time via `h` or `?`.
 
----
-
-## 🎨 A fresh look
+### 🎨 A fresh look
 
 Zocial ships with its own dark theme as the default — carefully considered colours, subtle contrast, and a visual identity that feels at home on modern displays. The focused post in a thread is marked with a delicate accent-coloured ring around the avatar. On mobile, @handles are hidden to let display names breathe.
 
----
-
-## ⚡ A smarter timeline
+### ⚡ A smarter timeline
 
 Timelines tell you more at a glance. Reply, boost, and favourite counts appear as small, muted numbers beside their icons — informative without being loud. They respect your Wellness settings: hide boost counts, hide favourite counts, hide reply counts — all individually controllable.
 
 Post headers work harder too. When a post is a reply, the header shows exactly who it's replying to — inline and consistent with boost headers throughout.
 
----
-
-## 🧵 Thread bundles
+### 🧵 Thread bundles
 
 Self-reply threads are automatically collapsed into a single bundle. The oldest post sits at the top with a `1/N` position counter, middle posts are hidden, and the newest post closes the bundle — keeping your timeline clean without losing context. Only same-author chains are bundled.
 
----
-
-## ⬆️ Scroll to top, always within reach
+### ⬆️ Scroll to top, always within reach
 
 A floating scroll-to-top button appears whenever you've scrolled down in any timeline — sits quietly out of the way until you need it, and takes you back in one tap.
-
----
 
 ## 🔝 Jump to the top of a conversation
 
 Arrive in the middle of a thread via a reply or boost? A floating button takes you back to the start of the conversation. Shows only in thread views, otherwise stays out of the way.
 
----
-
-## 🔇 Filters that warn, not vanish
+### 🔇 Filters that warn, not vanish
 
 Word filters set to *"hide with a warning"* behave as intended: matching posts stay in your timeline behind a collapsible **Filtered** notice you can reveal with a tap, instead of silently disappearing.
 
 ### Quick filter from any post
 The three-dot context menu on every post includes an **Add filter** shortcut — open the word filter dialog without leaving the timeline. Filters apply instantly to all loaded posts, no refresh needed.
 
----
-
-## #️⃣ Hashtags, first-class
+### #️⃣ Hashtags, first-class
 
 Followed hashtags get their own header in the timeline — a subtle tag indicator confirming why a post appears in your feed. Tapping it takes you to the hashtag timeline. A long-press or right-click opens a context menu for follow/unfollow and more. A dedicated section in Settings lets you view and manage all your tag subscriptions in one place.
 
----
-
-## 🔗 Links that stay in the app
+### 🔗 Links that stay in the app
 
 Clicking a link to another Mastodon post or profile no longer kicks you out to a browser tab. Zocial recognises fediverse URLs and opens them inside the app wherever possible, with rich preview cards for links that don't resolve to known profiles or threads.
 
----
-
-## 💬 Quote posts, everywhere
+### 💬 Quote posts, everywhere
 
 Quote any post from any server — no special backend required. Zocial uses a universal URL-in-text approach: the quoted post's URL is appended to your new post, and link preview cards display it inline. Works in every client, against every server.
 
 Reachable from the context menu, the boost button (*Settings → Composer*), or the `q` keyboard shortcut. The composer opens with your cursor at the beginning so you can write your take first.
 
----
-
-## 🌍 Post translation, privacy-first
+### 🌍 Post translation, privacy-first
 
 Translate any post with a tap, via the context menu, or with the `t` keyboard shortcut. Zocial uses [LibreTranslate](https://libretranslate.com) — open-source, no Google dependency. Requests are routed server-side through nginx: no translation API ever called from the browser, no CORS workarounds, no third-party requests from your device.
 
 The target language comes from your browser's language setting. If a post is already in your language, Zocial detects it and skips the request entirely. Admins can point Zocial at their own LibreTranslate instance via `TRANSLATE_API` in `.env`.
 
----
-
-## 🔖 Bookmarks, with personality
+### 🔖 Bookmarks, with personality
 
 The bookmark action lives directly in the reaction bar with a satisfying animation and a persistent indicator — so you always know which posts you've saved.
 
----
-
-## ⏱️ Scheduled posts
+### ⏱️ Scheduled posts
 
 Write now, post later. A clock button in the composer opens a date-and-time picker. A dedicated **Scheduled posts** page (under *Settings → Community*) lists everything in the queue, where you can reschedule or cancel before it's sent.
 
----
-
-## 👤 Profiles at a glance
+### 👤 Profiles at a glance
 
 Every profile shows when the account joined, plus a compact **posting-activity bar** breaking down recent posts into originals, replies, and boosts — a quick read on how someone uses the fediverse before you follow. Hover for the full breakdown with percentages. *(Credits: [phanpy](https://github.com/cheeaun/phanpy))*
 
----
-
-## ✏️ Edit your profile, in-app
+### ✏️ Edit your profile, in-app
 
 Change your display name, bio, up to four metadata fields, avatar, and header image — all without leaving Zocial. Changes save via the standard Mastodon API and appear instantly.
 
----
-
-## 👥 List management
+### 👥 List management
 
 Create and manage lists directly from within Zocial (GoToSocial support included). Add or remove accounts from a list via their profile menu — no detour to the server's web UI.
 
----
-
-## 🗂️ Reply visibility & local-only posts
+### 🗂️ Reply visibility & local-only posts
 
 - **Unlisted replies** — optionally default every reply to unlisted, keeping conversations out of the public timeline (*Settings → Composer*)
 - **Local-only posts** — on supported servers, default new posts to stay on your instance and never federate. The toggle greys out with a tooltip on unsupported instances.
 
----
-
-## 🧭 Navigation that bends to you
+### 🧭 Navigation that bends to you
 
 The navigation bar is fully reorderable — drag on desktop, long-press on mobile. Two independent pin slots let you keep your most-visited pages always one tap away.
 
----
-
-## 📏 Long posts, tamed
+### 📏 Long posts, tamed
 
 Set a character threshold at which long posts collapse with a "show more" toggle — essential on Akkoma instances where post length limits are lifted.
 
----
-
-## 🛠️ Built-in logs
+### 🛠️ Built-in logs
 
 A **Logs** page (*Settings*) captures console output for troubleshooting. Logs survive a reload, can be copied to the clipboard in one tap, and are cleared on logout.
 
