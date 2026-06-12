@@ -97,7 +97,7 @@ Self-reply threads are automatically collapsed into a single bundle. The oldest 
 
 A floating scroll-to-top button appears whenever you've scrolled down in any timeline — sits quietly out of the way until you need it, and takes you back in one tap.
 
-## 🔝 Jump to the top of a conversation
+### 🔝 Jump to the top of a conversation
 
 Arrive in the middle of a thread via a reply or boost? A floating button takes you back to the start of the conversation. Shows only in thread views, otherwise stays out of the way.
 
