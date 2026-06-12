@@ -36,7 +36,10 @@ const persistedState = {
   disableLongAriaLabels: false,
   announceCardDescriptions: false,
   disableNotificationBadge: false,
-  enableDesktopNotifications: false,
+  // Per-instance push-intent flag ({ [instanceName]: true }). Was a single global boolean until
+  // v1.8.4 — see the migration after the store is constructed. Per-instance so enabling/disabling
+  // (or a failure on) push for one account never affects another.
+  enableDesktopNotifications: {},
   // Per-instance flag: have we already shown the one-time "enable OS notifications?" login
   // prompt for this account? Persisted so we ask at most once per account.
   osNotificationPrompted: {},
@@ -142,6 +145,27 @@ export class PinaforeStore extends LocalStorageStore {
 PinaforeStore.prototype.observe = observe
 
 export const store = new PinaforeStore(state)
+
+// Migration: `enableDesktopNotifications` used to be a single global boolean; it is now a
+// per-instance map. Convert a legacy boolean once. A global `true` applied to whichever accounts
+// actually had a push subscription, so seed those; anything else becomes an empty map. After this
+// runs the persisted value is an object, so subsequent loads skip it.
+if (ZOCIAL_IS_BROWSER) {
+  const legacy = store.get().enableDesktopNotifications
+  if (typeof legacy !== 'object' || legacy === null) {
+    const migrated = {}
+    if (legacy === true) {
+      const subs = store.get().pushSubscriptions || {}
+      for (const name of Object.keys(subs)) {
+        if (subs[name]) {
+          migrated[name] = true
+        }
+      }
+    }
+    store.set({ enableDesktopNotifications: migrated })
+    store.save()
+  }
+}
 
 mixins(PinaforeStore)
 computations(store)

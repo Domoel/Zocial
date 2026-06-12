@@ -49,7 +49,7 @@
       // "Push notifications are on" — OS notifications are push-only, so this is true when the
       // user wants push (enableDesktopNotifications intent flag) or a Web Push subscription exists.
       enabled: ({ $enableDesktopNotifications, $pushSubscriptions, instanceName }) => (
-        $enableDesktopNotifications ||
+        !!($enableDesktopNotifications && $enableDesktopNotifications[instanceName]) ||
         !!($pushSubscriptions && $pushSubscriptions[instanceName])
       ),
       pushSupported: ({ $pushNotificationsSupport }) => !!$pushNotificationsSupport,
@@ -60,8 +60,8 @@
         const { instanceName } = this.get()
 
         if (!event.target.checked) {
-          // Turn push off: clear the intent flag and unsubscribe from Web Push.
-          this.store.set({ enableDesktopNotifications: false })
+          // Turn push off for THIS instance: clear its intent flag and unsubscribe from Web Push.
+          this.store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
           this.store.save()
           /* no await */ disablePushForInstance(instanceName)
           return

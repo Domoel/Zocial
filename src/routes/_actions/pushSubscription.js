@@ -19,8 +19,8 @@ export async function updatePushSubscriptionForInstance (instanceName) {
     if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
       const { enableDesktopNotifications } = store.get()
       // Nothing left to reconcile (already cleaned up on a previous load) — avoid a redundant write.
-      if (enableDesktopNotifications || currentPushSubscription) {
-        store.set({ enableDesktopNotifications: false })
+      if ((enableDesktopNotifications && enableDesktopNotifications[instanceName]) || currentPushSubscription) {
+        store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
         if (currentPushSubscription) {
           store.setInstanceData(instanceName, 'pushSubscriptions', null)
           await unsubscribeBrowserPush()
@@ -35,7 +35,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       // silently re-register so the UI stays consistent after a subscription loss (e.g. browser
       // cleared it after a SW update). Only attempt if permission is already granted — we never
       // prompt here.
-      if (canSilentlyReregister()) {
+      if (canSilentlyReregister(instanceName)) {
         try {
           await updateAlerts(instanceName, getSavedAlerts(instanceName))
         } catch (e) {
@@ -64,7 +64,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
     if (subscription === null) {
       // Browser subscription lost — most commonly after a service worker update. If conditions
       // allow, re-register silently with the previously saved alert preferences.
-      if (canSilentlyReregister()) {
+      if (canSilentlyReregister(instanceName)) {
         try {
           await updateAlerts(instanceName, getSavedAlerts(instanceName))
           return
@@ -120,11 +120,11 @@ export async function updatePushSubscriptionForInstance (instanceName) {
 // True when a silent push re-registration attempt is worthwhile: the user has already granted
 // notification permission, push is supported in this browser, and desktop notifications were
 // explicitly enabled by the user.
-function canSilentlyReregister () {
+function canSilentlyReregister (instanceName) {
   const { pushNotificationsSupport, enableDesktopNotifications } = store.get()
   return (
     pushNotificationsSupport &&
-    enableDesktopNotifications &&
+    !!(enableDesktopNotifications && enableDesktopNotifications[instanceName]) &&
     typeof Notification !== 'undefined' &&
     Notification.permission === 'granted'
   )
@@ -182,7 +182,8 @@ export async function disablePushForInstance (instanceName) {
     }
     const { pushFailureCount } = store.get()
     store.setInstanceData(instanceName, 'pushSubscriptions', null)
-    store.set({ enableDesktopNotifications: false, pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
+    store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
+    store.set({ pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
     store.save()
   })
 }
@@ -286,7 +287,8 @@ function withPushFailureCount (current, instanceName, count) {
 async function markPushUnavailable (instanceName) {
   const { pushFailureCount } = store.get()
   store.setInstanceData(instanceName, 'pushSubscriptions', null)
-  store.set({ enableDesktopNotifications: false, pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
+  store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
+  store.set({ pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
   store.save()
   await unsubscribeBrowserPush()
 }
@@ -338,7 +340,7 @@ export async function enableOSNotificationsForInstance (instanceName) {
     // Registration failed — leave the flag off so the toggle reflects reality.
     return { permission, pushError: e }
   }
-  store.set({ enableDesktopNotifications: true })
+  store.setInstanceData(instanceName, 'enableDesktopNotifications', true)
   store.save()
   return { permission, pushError: null }
 }
