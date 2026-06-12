@@ -591,6 +591,13 @@ The `timelines/list/:id` endpoint is assembled per-list **server-side** (heavy o
 
 Together: the long timeout lets the background refresh actually succeed, cache-first makes that wait invisible, and the smaller batch shortens the wait — so list timeouts become rare and, when they do happen, unnoticed.
 
+**How this compares to the other timelines:**
+- **home / notifications** — permanent background stream keeps the cache always warm (`alwaysStreaming`), so `setupTimeline` almost never fetches; effectively instant.
+- **local / federated** — active-only stream + 60 s poll, **net-first**, 20 s timeout, batch 20. The public endpoint is cheap, so a blocking fetch is fast and cache-first/longer-timeout aren't needed (and would add stale-then-swap flicker for no benefit — see the deferred decision in the Design Decisions Log).
+- **list / tag** — same active-only streaming as local/federated, but the endpoint is expensive, so they get the three mitigations above. This is the *only* place cache-first is applied, deliberately scoped to where the slow endpoint makes it pay off.
+
+**No-cache case (first-ever open of a list):** cache-first can't help when there's nothing cached — `prefillCurrentTimelineFromCache` reads an empty DB and no-ops. The network fetch runs and the timeline shows its loading spinner (`LoadingFooter`) for up to the 40 s timeout, then content (or an empty timeline on failure). The longer timeout is **deliberately right here**: with nothing to fall back to, you want to give the slow server the full 40 s to return real content rather than give up at 20 s and show a misleadingly *empty* list. This only happens once per list — every later open has cache and is instant. The lone downside: if the server is genuinely *down* (not just slow), the first open spins up to 40 s before showing empty. (A possible refinement, not implemented: a shorter timeout specifically when no cache exists, to bound the first-load spinner — traded against a higher chance of a premature empty list.)
+
 ---
 
 ## 13. Translation System
