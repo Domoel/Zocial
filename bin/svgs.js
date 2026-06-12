@@ -53,6 +53,7 @@ export default [
   { id: 'fa-search-plus', src: 'src/thirdparty/font-awesome-svg-png/white/svg/search-plus.svg' },
   { id: 'fa-share-square-o', src: 'src/thirdparty/font-awesome-svg-png/white/svg/share-square-o.svg' },
   { id: 'fa-flag', src: 'src/thirdparty/font-awesome-svg-png/white/svg/flag.svg' },
+  { id: 'fa-filter', src: 'src/thirdparty/font-awesome-svg-png/white/svg/filter.svg' },
   { id: 'fa-suitcase', src: 'src/thirdparty/font-awesome-svg-png/white/svg/suitcase.svg' },
   { id: 'fa-bar-chart', src: 'src/thirdparty/font-awesome-svg-png/white/svg/bar-chart.svg' },
   { id: 'fa-clock', src: 'src/thirdparty/font-awesome-svg-png/white/svg/clock-o.svg' },
