@@ -6,6 +6,7 @@ import { goto } from '../../../__sapper__/client.js'
 import { cacheFirstUpdateAfter } from '../_utils/sync.js'
 import { getInstanceInfo, fetchNodeInfo } from '../_api/instance.js'
 import { auth } from '../_api/utils.js'
+import { deleteSubscription } from '../_api/pushSubscription.js'
 import { database } from '../_database/database.js'
 import { importVirtualListStore } from '../_utils/asyncModules/importVirtualListStore.js'
 import { formatIntl } from '../_utils/formatIntl.js'
@@ -59,6 +60,14 @@ export async function logOutOfInstance (instanceName, message) {
     lastContentTypes,
     instanceFollowedHashtags
   } = store.get()
+  // Tell this account's server to stop sending push notifications after logout. The browser push
+  // subscription is shared across all accounts, so we must NOT unsubscribe it here (that would cut
+  // off other logged-in accounts — see otherInstancesWantPush in pushSubscription.js); we only drop
+  // *this* account's subscription record on its backend. Otherwise the server keeps pushing to the
+  // shared endpoint and the service worker would still surface notifications for a logged-out
+  // account. Capture the token before the cleanup loop below removes it from loggedInInstances.
+  const loggedOutAccessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
+  const hadPushSubscription = !!(pushSubscriptions && pushSubscriptions[instanceName])
   loggedInInstancesInOrder.splice(loggedInInstancesInOrder.indexOf(instanceName), 1)
   const newInstance = instanceName === currentInstance ? loggedInInstancesInOrder[0] : currentInstance
   const objectsToClear = [
@@ -118,6 +127,14 @@ export async function logOutOfInstance (instanceName, message) {
   clearLogs()
   const { enableGrayscale } = store.get()
   switchToTheme(instanceThemes[newInstance], enableGrayscale)
+  if (loggedOutAccessToken && hadPushSubscription) {
+    // best-effort: a 404 just means the backend already had no subscription
+    /* no await */ deleteSubscription(instanceName, loggedOutAccessToken).catch(e => {
+      if (e.status !== 404) {
+        console.warn('failed to delete push subscription on logout', e.message || e)
+      }
+    })
+  }
   /* no await */ database.clearDatabaseForInstance(instanceName)
   goto(getSingleInstance() ? '/' : '/settings/instances')
 }
