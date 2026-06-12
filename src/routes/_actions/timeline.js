@@ -324,7 +324,7 @@ export async function setupTimeline () {
   // navigate, but throttle to once per 30 s to avoid redundant requests
   // when the user switches between timelines rapidly.
   const hasFreshCache = timelineItemSummaries && !timelineItemSummariesAreStale
-  const alwaysStreaming = currentTimeline === 'home' || currentTimeline.startsWith('notifications')
+  const alwaysStreaming = currentTimeline === 'home' || (!!currentTimeline && currentTimeline.startsWith('notifications'))
   const lastFetchedAt = store.getForTimeline(currentInstance, currentTimeline, 'lastFetchedAt')
   const fetchedRecently = lastFetchedAt && (Date.now() - lastFetchedAt < 30_000)
   if (!hasFreshCache || (!alwaysStreaming && !fetchedRecently)) {

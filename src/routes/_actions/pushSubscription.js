@@ -171,7 +171,10 @@ export async function disablePushForInstance (instanceName) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 
-    await unsubscribeBrowserPush()
+    // Only tear down the shared browser subscription if no other instance still wants push.
+    if (!otherInstancesWantPush(instanceName)) {
+      await unsubscribeBrowserPush()
+    }
     try {
       await deleteSubscription(instanceName, accessToken)
     } catch (e) {
@@ -256,6 +259,18 @@ function isPermanentPushError (e) {
   return e instanceof DOMException && e.name === 'NotSupportedError'
 }
 
+// True when some OTHER logged-in instance still wants OS push. There is exactly one browser push
+// subscription per origin (one pushManager per service-worker registration) — all instances share
+// it. So before tearing it down for one instance we must check no one else still relies on it,
+// otherwise disabling/ giving up on push for account A would silently kill OS push for B and C until
+// their next app load re-registers it.
+function otherInstancesWantPush (instanceName) {
+  const { enableDesktopNotifications } = store.get()
+  return !!enableDesktopNotifications && Object.keys(enableDesktopNotifications).some(
+    name => name !== instanceName && enableDesktopNotifications[name]
+  )
+}
+
 // Best-effort: unsubscribe the browser's push subscription. Safe to call when there may be none;
 // never throws (callers are tearing push down and have nothing to do on failure).
 async function unsubscribeBrowserPush () {
@@ -290,7 +305,11 @@ async function markPushUnavailable (instanceName) {
   store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
   store.set({ pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
   store.save()
-  await unsubscribeBrowserPush()
+  // Only tear down the shared browser subscription if no other instance still wants push (the flag
+  // for this instance was just cleared above, so it is correctly excluded).
+  if (!otherInstancesWantPush(instanceName)) {
+    await unsubscribeBrowserPush()
+  }
 }
 
 // Record a failed silent re-registration. Returns true if push has now been given up on (caller
