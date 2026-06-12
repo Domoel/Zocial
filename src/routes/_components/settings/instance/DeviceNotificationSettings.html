@@ -40,22 +40,9 @@
 
   export default {
     oncreate () {
-      // Keep the master checkbox in sync with the real push state, reactively (init fires now to
-      // set the initial value). This way it follows along if push is turned off elsewhere while the
-      // page is open — the circuit breaker giving up, or permission being revoked — instead of
-      // showing a stale "on". The permission flow in onMasterChange drives the DOM directly and
-      // doesn't conflict: it only writes `checked`, while this observer reacts to the `enabled`
-      // computed, and both agree on the final value.
-      this._enabledObserver = this.observe('enabled', enabled => {
-        if (this.refs.master) {
-          this.refs.master.checked = enabled
-        }
-      })
-    },
-    ondestroy () {
-      if (this._enabledObserver) {
-        this._enabledObserver.cancel()
-      }
+      // Reconcile the master checkbox with the actual current state for this instance (a push
+      // subscription may already exist from a previous session, or push may already be enabled).
+      this.refs.master.checked = this.get().enabled
     },
     store: () => store,
     computed: {
@@ -73,13 +60,8 @@
         const { instanceName } = this.get()
 
         if (!event.target.checked) {
-          // Turn push off for THIS instance. Clear the intent flag AND the stored subscription
-          // synchronously so the `enabled` computed (and the reactive checkbox) flip to off
-          // immediately — otherwise `enabled` would still be true via the lingering subscription
-          // and the reactive observer would snap the checkbox back on. disablePushForInstance then
-          // does the real browser/backend teardown in the background (and clears the store again).
+          // Turn push off for THIS instance: clear its intent flag and unsubscribe from Web Push.
           this.store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
-          this.store.setInstanceData(instanceName, 'pushSubscriptions', null)
           this.store.save()
           /* no await */ disablePushForInstance(instanceName)
           return
