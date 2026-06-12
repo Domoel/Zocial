@@ -40,7 +40,7 @@ async function updateStatusAndThread (instanceName, accessToken, timelineName, s
   const [status, context] = await Promise.all([
     updateStatus_(instanceName, accessToken, statusId),
     getStatusContext(instanceName, accessToken, statusId).catch((e) => {
-      console.warn(e)
+      console.warn('failed to load thread context:', e.message || e)
       return { ancestors: [], descendants: [] }
     })
   ])
@@ -160,7 +160,9 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
       // errors) is therefore not a code bug — log it as warn so genuine exceptions stay
       // visually distinct as errors.
       if (isNetworkNoiseError(e)) {
-        console.warn(e)
+        // Log the readable message (e.g. "Timed out after 20 seconds") rather than the bare Error,
+        // whose minified .stack is unreadable in the in-app log viewer.
+        console.warn('timeline fetch failed:', e.message || e)
       } else {
         console.error(e)
       }
