@@ -217,11 +217,6 @@
           {'intl.hideUnread'}
         </label>
         <label class="setting-group">
-          <input type="checkbox" id="choice-disable-notification-sound"
-                 bind:checked="$disableNotificationSound" on:change="onChange(event)">
-          {'intl.disableNotificationSound'}
-        </label>
-        <label class="setting-group">
           <input type="checkbox" id="choice-disable-follow-request-count"
                  bind:checked="$disableFollowRequestCount" on:change="onChange(event)">
           {'intl.disableFollowRequestCount'}
@@ -245,6 +240,16 @@
       <h3>{'intl.inAppNotificationsHeading'}</h3>
       <p>{'intl.inAppNotificationsDescription'}</p>
       <NotificationFilterSettings instanceName={$currentInstance} />
+
+      <h3>{'intl.notificationSoundHeading'}</h3>
+      <p>{'intl.notificationSoundDescription'}</p>
+      <form class="ui-settings">
+        <label class="setting-group">
+          <input type="checkbox" id="choice-disable-notification-sound"
+                 bind:checked="$disableNotificationSound" on:change="onChange(event)">
+          {'intl.disableNotificationSound'}
+        </label>
+      </form>
     {/if}
   </div>
 
@@ -314,7 +319,6 @@
           disableReblogCounts,
           disableFavCounts,
           disableNotificationBadge,
-          disableNotificationSound,
           disableRelativeTimestamps,
           disableFollowRequestCount
         } = this.store.get()
@@ -322,7 +326,6 @@
           disableReblogCounts &&
           disableFavCounts &&
           disableNotificationBadge &&
-          disableNotificationSound &&
           disableRelativeTimestamps &&
           disableFollowRequestCount
       },
@@ -333,7 +336,6 @@
           disableReblogCounts: checked,
           disableFavCounts: checked,
           disableNotificationBadge: checked,
-          disableNotificationSound: checked,
           disableRelativeTimestamps: checked,
           disableFollowRequestCount: checked
         })

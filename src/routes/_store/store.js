@@ -68,6 +68,7 @@ const persistedState = {
   pinnedPages: {},
   navTabOrder: {},
   pushSubscriptions: {},
+  lastPushAlerts: {},
   lastPings: {},
   reduceMotion:
     !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches,

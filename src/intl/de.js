@@ -509,6 +509,8 @@ export default {
   deviceNotificationsForegroundOnly: 'Dieser Server unterstützt keine Hintergrund-Benachrichtigungen, daher wirst du nur benachrichtigt, solange Zocial in diesem Tab geöffnet ist.',
   inAppNotificationsHeading: 'In-App-Benachrichtigungen',
   inAppNotificationsDescription: 'Welche Aktivität im Benachrichtigungs-Tab erscheint.',
+  notificationSoundHeading: 'Benachrichtigungston',
+  notificationSoundDescription: 'Einen Ton abspielen, wenn eine neue Benachrichtigung eingeht.',
   osNotificationsPromptTitle: 'Benachrichtigungen auf diesem Gerät aktivieren?',
   osNotificationsPromptText: 'Erhalte Desktop- oder Push-Benachrichtigungen auf diesem Gerät, wenn etwas passiert. Du kannst das jederzeit in den Einstellungen ändern. In-App-Benachrichtigungen bleiben so oder so aktiv.',
   enableNotifications: 'Aktivieren',

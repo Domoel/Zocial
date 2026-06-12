@@ -2,6 +2,7 @@ import { importShowTextConfirmationDialog } from '../_components/dialog/asyncDia
 import { logOutOfInstance } from './instances.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { toast } from '../_components/toast/toast.js'
+import { describeDOMException } from './pushSubscription.js'
 
 // Surface a push-subscription failure consistently across every enable path (per-type toggle,
 // the "Notify me on this device" master toggle, and the post-login prompt).
@@ -23,6 +24,7 @@ export async function handlePushError (instanceName, err) {
       /* no await */ logOutOfInstance(instanceName)
     })
   } else {
-    toast.say(formatIntl('intl.failedToUpdatePush', { error: err.message || '' }))
+    const errorText = err instanceof DOMException ? describeDOMException(err) : (err.message || String(err))
+    toast.say(formatIntl('intl.failedToUpdatePush', { error: errorText }))
   }
 }

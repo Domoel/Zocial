@@ -16,7 +16,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       // prompt here.
       if (canSilentlyReregister()) {
         try {
-          await updateAlerts(instanceName, ALL_PUSH_ALERTS)
+          await updateAlerts(instanceName, getSavedAlerts(instanceName))
         } catch (_) {
           // Re-registration failed silently — foreground notifications still work if
           // enableDesktopNotifications is true, so leave everything else as-is.
@@ -44,7 +44,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       // allow, re-register silently with the previously saved alert preferences.
       if (canSilentlyReregister()) {
         try {
-          await updateAlerts(instanceName, currentPushSubscription.alerts || ALL_PUSH_ALERTS)
+          await updateAlerts(instanceName, getSavedAlerts(instanceName))
           return
         } catch (_) {
           // Fall through to clearing the stored subscription below.
@@ -100,8 +100,14 @@ function canSilentlyReregister () {
   )
 }
 
+// Returns the last saved per-type alert config for an instance, falling back to ALL_PUSH_ALERTS.
+function getSavedAlerts (instanceName) {
+  const { lastPushAlerts } = store.get()
+  return (lastPushAlerts && lastPushAlerts[instanceName]) || ALL_PUSH_ALERTS
+}
+
 // DOMException serialises as {} with console.error/JSON.stringify (properties are inherited, not own).
-function describeDOMException (e) {
+export function describeDOMException (e) {
   if (e instanceof DOMException) {
     return e.name + (e.message ? ': ' + e.message : '')
   }
@@ -165,19 +171,27 @@ export async function updateAlerts (instanceName, alerts) {
       backendSubscription = await postSubscription(instanceName, accessToken, subscription, alerts)
 
       store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
+      savePushAlerts(instanceName, alerts)
       store.save()
     } else {
       try {
         const backendSubscription = await putSubscription(instanceName, accessToken, alerts)
         store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
+        savePushAlerts(instanceName, alerts)
         store.save()
       } catch (e) {
         const backendSubscription = await postSubscription(instanceName, accessToken, subscription, alerts)
         store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
+        savePushAlerts(instanceName, alerts)
         store.save()
       }
     }
   })
+}
+
+function savePushAlerts (instanceName, alerts) {
+  const { lastPushAlerts } = store.get()
+  store.set({ lastPushAlerts: Object.assign({}, lastPushAlerts, { [instanceName]: alerts }) })
 }
 
 // Enable OS-level notifications for an instance: request permission and, when granted, register
