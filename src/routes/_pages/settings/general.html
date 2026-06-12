@@ -243,13 +243,14 @@
 
       <h3>{'intl.notificationSoundHeading'}</h3>
       <p>{'intl.notificationSoundDescription'}</p>
-      <form class="ui-settings">
-        <label class="setting-group">
-          <input type="checkbox" id="choice-disable-notification-sound"
-                 bind:checked="$disableNotificationSound" on:change="onChange(event)">
-          {'intl.disableNotificationSound'}
-        </label>
-      </form>
+      <div class="generic-instance-settings">
+        <form aria-label="{'intl.notificationSounds'}">
+          <input type="checkbox" id="choice-notification-sounds"
+                 ref:notificationSounds
+                 on:change="onNotificationSoundsChange(event)">
+          <label for="choice-notification-sounds">{'intl.notificationSounds'}</label>
+        </form>
+      </div>
     {/if}
   </div>
 
@@ -298,6 +299,11 @@
   export default {
     async oncreate () {
       this.flushChangesToCheckAll()
+      // "Notification Sounds" is the inverse of the stored disableNotificationSound flag, and
+      // defaults to on. Set the checkbox imperatively (Svelte 2 can't two-way-bind an inverse).
+      if (this.refs.notificationSounds) {
+        this.refs.notificationSounds.checked = !this.store.get().disableNotificationSound
+      }
       await fetchTranslationLanguages()
     },
     components: {
@@ -339,6 +345,11 @@
           disableRelativeTimestamps: checked,
           disableFollowRequestCount: checked
         })
+        this.store.save()
+      },
+      onNotificationSoundsChange (event) {
+        // checked = sounds on = disableNotificationSound false
+        this.store.set({ disableNotificationSound: !event.target.checked })
         this.store.save()
       },
       onTranslationLanguageChange (event) {
