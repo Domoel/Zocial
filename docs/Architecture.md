@@ -911,6 +911,27 @@ Complements the options table above with a usage-scenario view. "Multi-account" 
 
 **Should we move to C?** **Recommendation: yes — C together with C+, but low urgency.** **C** fixes weaknesses 1 + 2 for very little code, no infra, and makes the model *simpler* (`otherInstancesWantPush` falls away); it's invisible to single-account users. **C+** additionally fixes weakness 3 (rich notifications for the chosen account). Together they are the **clean, fully client-side end state** — only **B** could ever deliver the second account, and that's a server project you likely don't want to take on for a client PWA. **The only reason to stay on D** is if multi-account-across-different-instances is practically irrelevant for the user base *and* the residual dishonesty (#2) doesn't bother us — then D is "fixed & fine" and C is just cosmetics + cleanup. Honest call: **C + C+ is the right, cheap investment in determinism and an honest, simpler model — but it is not an emergency; D is fine to ship in the meantime.**
 
+#### Target UX plan — C + C+ *(planned, next up; not yet implemented)*
+
+The honesty is the whole point of C, so the user-facing communication is the core of the work. Principle (already how §18 splits responsibilities): **persistent state → inline hint; the transient consequence of an action → toast; an action that takes something away from another account → confirmation dialog.**
+
+**1. Enabling push on an account — the decision logic** (`enableOSNotificationsForInstance` / `DeviceNotificationSettings.onMasterChange`):
+
+- **No other account currently has push** → enable directly, frictionless (request permission → register). No dialog.
+- **Another account (A) currently has push** → show a **confirmation dialog** *before* doing anything (reuse `importShowTextConfirmationDialog`, as the login prompt does): *"OS push is limited to one account per device. Enable for @B and turn it off for @A?"*
+  - **Confirm** → disable push for A (backend `deleteSubscription` + clear A's flag), then **re-key** the shared subscription to B and register, then a **toast**: *"Push moved to @B — @A will no longer notify on this device."*
+  - **Cancel** → do nothing, leave the toggle off for B (revert the checkbox, as the failure paths already do).
+
+**2. Persistent inline hint in Settings** (`DeviceNotificationSettings.html`, an inline note like the existing `device-notifications-note`; this supersedes the current `intl.pushNotificationsNote`): always state the limit when more than one account is logged in — *"OS push is limited to one account per device."* — and, when a **different** account holds push, name it: *"Currently active for @A."* This is the durable truth, visible whenever the user looks, not just at the moment of action.
+
+**3. The displaced account (A).** After B takes over, A's master toggle reflects reality (**off**) and the same inline hint explains why (*"Currently active for @B"*). No toast for A — the user may not be on A's settings at that moment; the persistent hint carries it.
+
+**4. C+ (rich notifications) — no UX.** The service-worker routing fix (resolve `data.access_token` → instance via IndexedDB, replacing the `getKnownInstances().length === 1` enrich gate) only makes the chosen account's OS notification *richer* (deep-links, reblog/favourite actions) when other accounts are also logged in. Invisible to the user; nothing to communicate.
+
+**Model simplification that falls out of C:** because only one account can hold push by construction, the v1.8.5 `otherInstancesWantPush` teardown guard becomes unnecessary — re-keying already tears down/rebuilds the single subscription deliberately. The per-instance `enableDesktopNotifications` map collapses toward "at most one entry true at a time."
+
+**New/changed intl strings** (note the `formatIntl` AST rule — param strings like `{from}`/`{to}`/`{account}` must be wrapped, plain ones must not): a one-account-per-device note, the move-confirmation title + text (`{from}`, `{to}`), the "moved" toast (`{from}`, `{to}`), and the "currently active for {account}" hint. **Touch-points:** `_actions/pushSubscription.js` (re-key flow, drop/relax `otherInstancesWantPush`), `DeviceNotificationSettings.html` (dialog + inline hint + displaced-account state), `service-worker.js` (`access_token` → instance enrich), plus per-account access tokens reachable from the SW via IndexedDB (C+ prerequisite).
+
 ### Dedup: don't pop while the app is in view
 
 With OS notifications now push-only, there's a single dedup point — the **service worker `push` handler**. Before showing any OS notification it checks whether a window client is currently visible:
