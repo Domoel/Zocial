@@ -264,14 +264,22 @@ async function fetchTimelineItemsAndPossiblyFallBack (fresh, isInitialLoad) {
   stop('fetchTimelineItemsAndPossiblyFallBack')
 }
 
-// Timelines whose server endpoint is slow/unreliable (per-list/-tag feed assembly), so we render
-// cached content first and refresh in the background instead of blocking on the network fetch.
+// Cache-first applies to the normal IndexedDB-backed scrollable timelines: on a cold load, render
+// the last-seen items from IndexedDB immediately, then refresh from the network — so the user never
+// stares at a blank spinner while a fetch is in flight (most valuable on slow/mobile connections).
+// It degrades safely: if a timeline has no cache, the prefill simply no-ops.
+//
+// Excluded — these don't go through the normal getTimeline/IDB-timeline path:
+//   - status/* (threads): fetched and merged via fetchThreadFromNetwork with thread-specific sorting
+//   - favorites / bookmarks: paged via Link headers (fetchPagedItems), not in the IDB timeline cache
 function isCacheFirstTimeline (timelineName) {
-  return timelineName.startsWith('list/') || timelineName.startsWith('tag/')
+  return !timelineName.startsWith('status/') &&
+    timelineName !== 'favorites' &&
+    timelineName !== 'bookmarks'
 }
 
-// Render cached items from IndexedDB immediately (marked stale) so a slow list/tag fetch doesn't
-// leave the user staring at a blank screen on a cold load. The caller still runs the network fetch
+// Render cached items from IndexedDB immediately (marked stale) so the network fetch doesn't leave
+// the user staring at a blank screen on a cold load. The caller still runs the network fetch
 // afterwards, which refreshes the content (or silently keeps the cache on failure).
 async function prefillCurrentTimelineFromCache (instanceName, timelineName) {
   try {
@@ -302,10 +310,11 @@ export async function setupTimeline () {
   // (not a refresh of already-displayed content). Captured before the cache-first prefill below
   // populates the store, so the fetch knows to merge directly instead of buffering.
   const isInitialLoad = !timelineItemSummaries
-  // Cache-first for slow timelines (lists/tags): on a cold store, show cached items right away from
-  // IndexedDB so the user isn't blocked on the slow network fetch. We then fall through to the
-  // normal fetch below — which still runs and refreshes the content (the prefilled summaries are
-  // marked stale, so the fetch is never skipped). Fast timelines stay net-first.
+  // Cache-first: on a cold store, show cached items right away from IndexedDB so the user isn't
+  // blocked on the network fetch. We then fall through to the normal fetch below — which still runs
+  // and refreshes the content (the prefilled summaries are marked stale, so the fetch is never
+  // skipped, and isInitialLoad makes that fetch merge directly rather than buffer). See
+  // isCacheFirstTimeline for which timelines this covers.
   if (!timelineItemSummaries && isCacheFirstTimeline(currentTimeline)) {
     await prefillCurrentTimelineFromCache(currentInstance, currentTimeline)
   }
