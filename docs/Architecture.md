@@ -800,8 +800,9 @@ A browser `Notification` created directly by the running page.
 
 - **Trigger:** the streaming `notification` event (`processMessage.js` → `showDesktopNotification(instanceName, payload)`), where the **full notification payload** is available. It is *not* driven by a count delta — that older approach produced generic "N new notifications" text and fired a burst of stale popups when a backgrounded tab unfroze and gap-filled. Firing per live streamed event means one popup per notification, with real content, and **no** popups for catch-up fetches.
 - **Descriptive content:** `notificationContent.js` builds `{ title, body }` per type — e.g. *"Alice / boosted your post"*, the status snippet for mentions — reusing the existing parameter-less intl strings (`rebloggedYou`, `favoritedYou`, …), which `svelte-intl-loader` resolves to plain text at build time (it runs over `.js`/`.ts`, not just `.html`). The actor's avatar is used as the icon.
-- **Sound vs. popup split:** The notification sound always plays (gated only by `disableNotificationSound`). The `Notification()` popup is only shown when the tab is **hidden** AND there is **no active push subscription** (see Dedup below). This means: when the user is actively looking at the app, sound fires but no popup interrupts them; the popup only appears as a last-resort fallback for servers without Web Push support.
-- **Gating:** `enableDesktopNotifications` (persisted) + `Notification.permission === 'granted'` + `document.visibilityState === 'hidden'` + no `currentPushSubscription`.
+- **In-app filter gate (applies to both sound and popup):** Before anything fires, System A checks the **in-app notification filter** (`instanceSettings`, same per-type toggles as the notifications tab) via `isAllowedByInAppFilter`. A type the user hid from the notifications tab makes **no sound and no popup** either — the foreground experience matches the tab and the badge. Types without a toggle (`follow_request`, `admin.*`, `update`, `reaction`) are always allowed, exactly as the tab treats them. This is distinct from the push `alerts` config (System B) — the in-app filter governs the foreground path, push alerts govern the server-side push.
+- **Sound vs. popup split:** The notification sound plays for allowed types (gated only by `disableNotificationSound` on top of the in-app filter). The `Notification()` popup is only shown when the tab is **hidden** AND there is **no active push subscription** (see Dedup below). This means: when the user is actively looking at the app, sound fires but no popup interrupts them; the popup only appears as a last-resort fallback for servers without Web Push support.
+- **Gating:** in-app filter allows the type + (for the popup) `enableDesktopNotifications` (persisted) + `Notification.permission === 'granted'` + `document.visibilityState === 'hidden'` + no `currentPushSubscription`. (Sound is gated only by the in-app filter + `disableNotificationSound`, independent of `enableDesktopNotifications`.)
 - **Fundamental limitation:** the streaming WebSocket is **paused when the tab freezes** (`TimelineStream.js`, Page Lifecycle API). So System A only fires while the tab is alive/foreground, and never when the tab is closed or on a backgrounded mobile PWA. This is why it cannot be the primary system.
 
 ### System B — Web Push
@@ -809,10 +810,12 @@ A browser `Notification` created directly by the running page.
 The first-class system: the server sends a push message, the service worker wakes up and shows the notification **even with the tab closed or on a mobile PWA**.
 
 - **Subscription:** registered with the instance via `_actions/pushSubscription.js` (`updateAlerts`). Mastodon's API doesn't expose the VAPID `applicationServerKey` as a constant, so we subscribe once with a dummy key, POST it, read back the real `server_key`, then re-subscribe with it (Mastodon issue #8785). Per-type alert flags (`follow`/`favourite`/`reblog`/`mention`/`poll`/`status`) are stored in the subscription. `disablePushForInstance` fully unsubscribes (browser + backend + store).
+- **VAPID key rotation:** on each sync, `updatePushSubscriptionForInstance` compares the backend's current `server_key` against the browser subscription's `applicationServerKey` and re-subscribes if they differ. The comparison is byte-for-byte (`binaryKeysEqual`) — an earlier `btoa(arrayBuffer)` form was a silent no-op (every `ArrayBuffer` stringifies to `"[object ArrayBuffer]"`), so a rotated server key was never detected.
 - **Rendering:** `service-worker.js`'s `push` handler builds **rich, type-specific** notifications (`showRichNotification`) — deep-link `data.url` per type, and `reblog`/`favourite` action buttons on mentions handled by the `notificationclick` handler.
 - **Server dependency:** requires server-side Web Push. Mastodon has it; **GoToSocial only since v0.18**; older servers can't do System B at all.
 - **Self-healing subscription (`canSilentlyReregister`):** Browser push subscriptions are occasionally lost without warning — typically after a service worker update or the browser clearing storage. Previously this left the UI in an inconsistent state: the master "Notify me on this device" toggle showed ON (persisted), but all per-type checkboxes showed unchecked (subscription null → early return). On every page load, `updatePushSubscriptionForInstance` (called via `instanceObservers` as an idle task) now detects a null subscription and, when `enableDesktopNotifications === true` + `Notification.permission === 'granted'`, silently re-registers via `updateAlerts` — no Settings visit required. This is gated by `canSilentlyReregister()` to prevent unexpected permission prompts.
 - **Per-type preference preservation (`lastPushAlerts`):** Re-registration previously used `ALL_PUSH_ALERTS`, discarding the user's saved per-type choices. Now `updateAlerts` saves the alert config to `lastPushAlerts[instanceName]` in persisted store after every successful registration. The self-healing path reads back `getSavedAlerts(instanceName)` so the user's configuration is restored exactly.
+- **Permission-revoked reconciliation:** `updatePushSubscriptionForInstance` runs on every page load. If `Notification.permission === 'denied'`, it clears `enableDesktopNotifications` so the master toggle no longer shows "on" while nothing can deliver (System A checks permission; System B won't receive pushes). The browser usually revokes the push subscription too, so the `subscription === null` branch then clears `pushSubscriptions` — and because the flag is now off, `canSilentlyReregister()` correctly does **not** attempt a re-register. End state: master toggle off + the settings "denied" alert (from the `notificationPermission` observer).
 
 ### Dedup: how A and B coexist
 
@@ -1062,9 +1065,31 @@ This section captures significant design decisions, feature choices, and archite
 
 **Rationale:** Before this change, a lost subscription left the UI in an inconsistent state: master toggle ON, all per-type checkboxes unchecked — with no visible indication that push had stopped working. Users had to notice, open Settings, and manually re-enable. The self-healing path runs silently on every page load via `instanceObservers` (idle task), so recovery is invisible and reliable. `lastPushAlerts` ensures the restored subscription matches what the user had configured, not a reset to defaults.
 
-**Tradeoff:** If permission is revoked at the OS level, `canSilentlyReregister()` returns false (Notification.permission !== 'granted') and the store is cleared, correctly disabling push. Silent re-registration only triggers when conditions indicate the user still wants notifications.
+**Tradeoff:** If permission is revoked at the OS level, `canSilentlyReregister()` returns false (`Notification.permission !== 'granted'`), so no re-registration is attempted. On the same load, `updatePushSubscriptionForInstance` also explicitly clears `enableDesktopNotifications` (and the browser-revoked subscription is cleared via the `subscription === null` branch), so the master toggle reflects reality rather than staying "on" while nothing delivers. Silent re-registration only triggers when conditions indicate the user still wants notifications.
 
-**Files:** `_actions/pushSubscription.js` (`canSilentlyReregister`, `getSavedAlerts`, `savePushAlerts`), `_store/store.js` (`lastPushAlerts` persisted key).
+**Files:** `_actions/pushSubscription.js` (`canSilentlyReregister`, `getSavedAlerts`, `savePushAlerts`, permission-denied reconciliation), `_store/store.js` (`lastPushAlerts` persisted key).
+
+---
+
+### [v1.8.2] Foreground notifications (System A) respect the in-app filter
+
+**Decision:** The foreground sound and popup (System A) now check the same per-type in-app notification filter (`instanceSettings`) that governs the notifications tab. A type the user hid from the tab produces no sound and no popup.
+
+**Rationale:** Previously the sound played for every streamed notification regardless of the in-app filter — a user who hid "favourites" from their notifications tab (and badge) still heard a boop on every favourite. That's an inconsistency: the in-app filter is the user's statement of "what I care about in this app," and the foreground cue should honour it. The push `alerts` config (System B) stays deliberately separate — it governs server-side push delivery, a different axis.
+
+**Tradeoff:** Two filters now influence what the user perceives (in-app filter for the foreground path, push alerts for background push). This is intentional — they answer different questions ("what shows in-app" vs. "what the server pushes") — but means a fully-muted foreground still requires unchecking the type in the in-app filter, not just disabling sound.
+
+**Files:** `_actions/showDesktopNotification.js` (`isAllowedByInAppFilter`, `TYPE_TO_FILTER_KEY`) — full mechanics in §18.
+
+---
+
+### [v1.8.2] VAPID key comparison fixed from no-op to byte-for-byte
+
+**Decision:** Replace the `btoa(arrayBuffer)` equality check for detecting a rotated VAPID server key with a real byte-for-byte comparison (`binaryKeysEqual`).
+
+**Rationale:** `btoa()` expects a string; passing an `ArrayBuffer` stringifies it to the constant `"[object ArrayBuffer]"`, so the old comparison was always "equal" and the re-subscribe path never ran. If an instance rotated its VAPID key, existing subscriptions would silently stop receiving pushes with no recovery. The helper normalises `ArrayBuffer`/`TypedArray`/null inputs and compares bytes. Inherited latent bug from the upstream Pinafore code.
+
+**Files:** `_actions/pushSubscription.js` (`binaryKeysEqual`, `updatePushSubscriptionForInstance`).
 
 ---
 
@@ -1110,4 +1135,4 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.7.1** | 2026-06-11 | Reliable unsupported-language detection (zero-confidence signal); expected conditions (network noise, blocked autoplay sound) logged as warnings instead of errors |
 | **1.8.0** | 2026-06-11 | New notification system: Web Push as the primary mechanism (rich, type-specific, works with the tab closed / on a mobile PWA); descriptive event-driven foreground notifications; unified "Notify me on this device" settings with a one-time login prompt and hover explanations. In-app notifications default on, OS notifications default off |
 | **1.8.1** | 2026-06-12 | Two-layer OS-notification dedup: no popup when app tab is visible (sound still plays); service worker skips `showNotification()` when any window client is visible; crash fix for `this.observe` on destroyed `PushNotificationSettings` component |
-| **1.8.2** | 2026-06-12 | Push subscription self-healing (`canSilentlyReregister`): auto-reregisters on page load after silent subscription loss, restoring saved per-type prefs via `lastPushAlerts`; `describeDOMException` export fixes blank DOMException error toasts; "Add word filter" context menu entry on status posts; Notification Sound moved from Wellness to its own section under Notifications |
+| **1.8.2** | 2026-06-12 | Push subscription self-healing (`canSilentlyReregister`): auto-reregisters on page load after silent subscription loss, restoring saved per-type prefs via `lastPushAlerts`; permission-revoked reconciliation clears the master toggle; foreground sound/popup now respect the in-app notification filter; VAPID key-rotation detection fixed (was a no-op); `describeDOMException` export fixes blank DOMException error toasts; "Add word filter" context menu entry on status posts; Notification Sound moved from Wellness to its own section under Notifications |
