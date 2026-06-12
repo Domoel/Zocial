@@ -811,6 +811,8 @@ The first-class system: the server sends a push message, the service worker wake
 - **Subscription:** registered with the instance via `_actions/pushSubscription.js` (`updateAlerts`). Mastodon's API doesn't expose the VAPID `applicationServerKey` as a constant, so we subscribe once with a dummy key, POST it, read back the real `server_key`, then re-subscribe with it (Mastodon issue #8785). Per-type alert flags (`follow`/`favourite`/`reblog`/`mention`/`poll`/`status`) are stored in the subscription. `disablePushForInstance` fully unsubscribes (browser + backend + store).
 - **Rendering:** `service-worker.js`'s `push` handler builds **rich, type-specific** notifications (`showRichNotification`) — deep-link `data.url` per type, and `reblog`/`favourite` action buttons on mentions handled by the `notificationclick` handler.
 - **Server dependency:** requires server-side Web Push. Mastodon has it; **GoToSocial only since v0.18**; older servers can't do System B at all.
+- **Self-healing subscription (`canSilentlyReregister`):** Browser push subscriptions are occasionally lost without warning — typically after a service worker update or the browser clearing storage. Previously this left the UI in an inconsistent state: the master "Notify me on this device" toggle showed ON (persisted), but all per-type checkboxes showed unchecked (subscription null → early return). On every page load, `updatePushSubscriptionForInstance` (called via `instanceObservers` as an idle task) now detects a null subscription and, when `enableDesktopNotifications === true` + `Notification.permission === 'granted'`, silently re-registers via `updateAlerts` — no Settings visit required. This is gated by `canSilentlyReregister()` to prevent unexpected permission prompts.
+- **Per-type preference preservation (`lastPushAlerts`):** Re-registration previously used `ALL_PUSH_ALERTS`, discarding the user's saved per-type choices. Now `updateAlerts` saves the alert config to `lastPushAlerts[instanceName]` in persisted store after every successful registration. The self-healing path reads back `getSavedAlerts(instanceName)` so the user's configuration is restored exactly.
 
 ### Dedup: how A and B coexist
 
@@ -850,6 +852,8 @@ System A is therefore purely the **foreground sound player + last-resort popup f
 
 "Shown in the notifications tab" is the relabelled in-app filter. Both controls carry hover tooltips.
 
+A dedicated **Notification Sound** section sits below In-App Notifications in the Notifications block. It has its own on/off toggle (default on) and is intentionally separate from Wellness — sound is a notification preference, not a wellness tool. `disableNotificationSound` was previously included in the Wellness "Enable All" toggle; removing it makes "Enable All" refer purely to wellness metrics and immediacy settings.
+
 ### Login prompt & defaults
 
 - **In-app notifications: default ON.** OS notifications (A and B): **default OFF.**
@@ -858,7 +862,7 @@ System A is therefore purely the **foreground sound player + last-resort popup f
 
 ### Persistence
 
-All notification settings persist (`persistedState` in `store.js`): `enableDesktopNotifications`, `pushSubscriptions` (also server-backed), `osNotificationPrompted`, `disableNotificationSound`, `disableNotificationBadge`, and the in-app filters in `instanceSettings`.
+All notification settings persist (`persistedState` in `store.js`): `enableDesktopNotifications`, `pushSubscriptions` (also server-backed), `osNotificationPrompted`, `lastPushAlerts` (per-instance alert config, used for self-healing re-registration), `disableNotificationSound`, `disableNotificationBadge`, and the in-app filters in `instanceSettings`.
 
 ### Files
 
@@ -1052,6 +1056,42 @@ This section captures significant design decisions, feature choices, and archite
 
 ---
 
+### [v1.8.2] Push subscription self-healing with per-type preference restoration
+
+**Decision:** When a push subscription is lost silently (SW update, browser storage clear, any DOMException during sync), the system re-registers automatically on the next page load if the user had notifications enabled and permission is still granted. The re-registration uses the last saved per-type alert configuration (`lastPushAlerts[instance]`) rather than always defaulting to all-alerts-on.
+
+**Rationale:** Before this change, a lost subscription left the UI in an inconsistent state: master toggle ON, all per-type checkboxes unchecked — with no visible indication that push had stopped working. Users had to notice, open Settings, and manually re-enable. The self-healing path runs silently on every page load via `instanceObservers` (idle task), so recovery is invisible and reliable. `lastPushAlerts` ensures the restored subscription matches what the user had configured, not a reset to defaults.
+
+**Tradeoff:** If permission is revoked at the OS level, `canSilentlyReregister()` returns false (Notification.permission !== 'granted') and the store is cleared, correctly disabling push. Silent re-registration only triggers when conditions indicate the user still wants notifications.
+
+**Files:** `_actions/pushSubscription.js` (`canSilentlyReregister`, `getSavedAlerts`, `savePushAlerts`), `_store/store.js` (`lastPushAlerts` persisted key).
+
+---
+
+### [v1.8.2] Notification Sound moved from Wellness to Notifications
+
+**Decision:** `disableNotificationSound` was removed from the Wellness "Enable All" toggle and given its own section ("Notification Sound") in the Notifications settings block, directly below "In-App Notifications".
+
+**Rationale:** Sound is a notification delivery preference, not a wellness/digital-health setting. Including it in Wellness "Enable All" semantically conflated two unrelated concerns — a user who wants to reduce social metrics shouldn't automatically silence their notifications. The dedicated section makes the option discoverable in the right context.
+
+**Tradeoff:** Existing users who had enabled all Wellness settings (including sound-off) will keep their saved preference; only the UI placement changed. The `disableNotificationSound` store key and default are unchanged.
+
+**Files:** `_pages/settings/general.html`, `_intl/en-US.js`, `_intl/de.js`.
+
+---
+
+### [v1.8.2] Word filter shortcut in status context menu
+
+**Decision:** Added "Add word filter" as a context menu entry on every status (after mute conversation, before report). Tapping it opens `showWordFilterDialog` pre-populated for the current instance.
+
+**Rationale:** Previously, adding a word filter required navigating to Settings → Filters — a multi-step journey from a timeline. The context menu shortcut makes the action discoverable exactly when the user encounters a post they want to filter. Positioning after mute conversation (same "suppress this content" family) and before report (formal action) matches the natural UX escalation path.
+
+**Implementation note:** All icons used in context menus must be registered in `bin/svgs.js`. The `#fa-filter` icon was added there pointing to `font-awesome-svg-png/white/svg/filter.svg`.
+
+**Files:** `_components/dialog/components/StatusOptionsDialog.html`, `bin/svgs.js`, `_intl/en-US.js`, `_intl/de.js`.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
@@ -1070,3 +1110,4 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.7.1** | 2026-06-11 | Reliable unsupported-language detection (zero-confidence signal); expected conditions (network noise, blocked autoplay sound) logged as warnings instead of errors |
 | **1.8.0** | 2026-06-11 | New notification system: Web Push as the primary mechanism (rich, type-specific, works with the tab closed / on a mobile PWA); descriptive event-driven foreground notifications; unified "Notify me on this device" settings with a one-time login prompt and hover explanations. In-app notifications default on, OS notifications default off |
 | **1.8.1** | 2026-06-12 | Two-layer OS-notification dedup: no popup when app tab is visible (sound still plays); service worker skips `showNotification()` when any window client is visible; crash fix for `this.observe` on destroyed `PushNotificationSettings` component |
+| **1.8.2** | 2026-06-12 | Push subscription self-healing (`canSilentlyReregister`): auto-reregisters on page load after silent subscription loss, restoring saved per-type prefs via `lastPushAlerts`; `describeDOMException` export fixes blank DOMException error toasts; "Add word filter" context menu entry on status posts; Notification Sound moved from Wellness to its own section under Notifications |
