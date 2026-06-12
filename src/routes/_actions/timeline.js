@@ -221,7 +221,7 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
   }
 }
 
-async function fetchTimelineItemsAndPossiblyFallBack (fresh) {
+async function fetchTimelineItemsAndPossiblyFallBack (fresh, isInitialLoad) {
   console.log('fetchTimelineItemsAndPossiblyFallBack')
   mark('fetchTimelineItemsAndPossiblyFallBack')
   const {
@@ -245,9 +245,11 @@ async function fetchTimelineItemsAndPossiblyFallBack (fresh) {
     // route new items through the streaming buffer so Timeline.html can decide whether to
     // insert immediately (user at top) or show a "Show X more" button (user scrolled down).
     // This prevents scroll-position jumps when the 60s poll or a re-navigate brings in new posts.
-    // For initial loads (no existing items) or offline fallback, insert directly as before.
+    // For initial loads (incl. a cache-first prefill, where existingSummaries holds placeholder
+    // cache the user hasn't scrolled into yet) or offline fallback, merge directly instead — there
+    // is no scroll position to protect, and buffering would surface a spurious "Show X more".
     const existingSummaries = store.getForTimeline(currentInstance, currentTimeline, 'timelineItemSummaries')
-    if (fresh && !stale && existingSummaries && existingSummaries.length > 0) {
+    if (fresh && !stale && !isInitialLoad && existingSummaries && existingSummaries.length > 0) {
       await insertUpdatesIntoTimeline(currentInstance, currentTimeline, items)
       // We just refreshed with fresh network data; clear any stale marker (e.g. left by a cache
       // prefill or a previous offline fallback). Otherwise hasFreshCache stays false and the
@@ -296,6 +298,10 @@ export async function setupTimeline () {
     currentInstance
   } = store.get()
   console.log('setupTimeline state', { currentTimeline, timelineItemSummariesAreStale })
+  // True when the store had no summaries for this timeline yet, i.e. this is a cold initial load
+  // (not a refresh of already-displayed content). Captured before the cache-first prefill below
+  // populates the store, so the fetch knows to merge directly instead of buffering.
+  const isInitialLoad = !timelineItemSummaries
   // Cache-first for slow timelines (lists/tags): on a cold store, show cached items right away from
   // IndexedDB so the user isn't blocked on the slow network fetch. We then fall through to the
   // normal fetch below — which still runs and refreshes the content (the prefilled summaries are
@@ -316,7 +322,7 @@ export async function setupTimeline () {
     // Clear stale buffered items before fetching so the "new posts" button
     // doesn't show items that the fresh fetch is about to include directly.
     store.setForCurrentTimeline({ timelineItemSummariesToAdd: [] })
-    await fetchTimelineItemsAndPossiblyFallBack(true)
+    await fetchTimelineItemsAndPossiblyFallBack(true, isInitialLoad)
     store.setForCurrentTimeline({ lastFetchedAt: Date.now() })
   }
   stop('setupTimeline')
