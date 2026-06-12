@@ -867,6 +867,27 @@ A dedicated **Notification Sound** section sits below In-App Notifications in th
   - **`granted`** (same browser, permission survives logout): prompt skipped + flag re-set. The logout dropped the push subscription, but the global `enableDesktopNotifications` is still on, so `updatePushSubscriptionForInstance`'s self-healing path silently re-registers push on load — push comes back automatically, no nag.
   - **`denied`**: prompt skipped; the permission-revoked reconciliation keeps everything off.
 
+### Behaviour summary (UX view)
+
+The settings expose three **independent layers**. Only Push depends on the browser permission (and server support); the other two always work, even when Push is blocked.
+
+| Layer | Needs browser permission? | Default | What it does |
+|---|---|---|---|
+| **In-App Notifications** | no | all on | what shows in the notifications tab + badge |
+| **Notification Sounds** | no | on | plays a sound on a new notification (also gated by the in-app filter — a type hidden from the tab makes no sound) |
+| **Push Notifications** | yes | off | OS popup even when the tab is closed/hidden |
+
+How they behave across the lifecycle:
+
+- **First login:** In-app on, sound on (work immediately). Push off, with a one-time opt-in prompt. *Enable* → permission request → if granted, Push on with all types. *Not now* / dismiss / deny → stays off.
+- **Re-login (same browser)** — determined solely by the browser permission:
+  - `default` (never decided) → like first login: prompt shows again, Push off until opt-in.
+  - `granted` → no prompt (no nag); Push silently re-registers on load (all types) — convenient restore. (The global `enableDesktopNotifications` survives logout, so the self-healing path brings it back.)
+  - `denied` → no prompt; Push stays off with the "blocked" hint.
+- **Browser permission revoked:** on the next load the "Notify me on this device" master toggle flips to **off**, the subscription is cleaned up, and the settings show the "blocked" hint. In-app notifications and sound keep working untouched.
+
+The deliberate compromise: on re-login with permission already `granted`, Push returns automatically rather than re-asking — because the foreground flag is global across accounts and can't be reset per-account on logout. This is convenience, not breakage: the user already granted permission in this browser. Net effect — Push is the only layer that can fail/be blocked, and when it does the user falls back cleanly to in-app + sound, with no toggle ever falsely showing "on".
+
 ### Persistence
 
 All notification settings persist (`persistedState` in `store.js`): `enableDesktopNotifications`, `pushSubscriptions` (also server-backed), `osNotificationPrompted`, `lastPushAlerts` (per-instance alert config, used for self-healing re-registration), `disableNotificationSound`, `disableNotificationBadge`, and the in-app filters in `instanceSettings`.
