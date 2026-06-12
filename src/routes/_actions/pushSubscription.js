@@ -9,6 +9,18 @@ export async function updatePushSubscriptionForInstance (instanceName) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances, currentPushSubscription }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 
+    // OS permission was revoked since we were last enabled. Nothing can deliver an OS notification
+    // anymore (System A checks permission, System B won't receive pushes), so reconcile the stored
+    // flag with reality: clear enableDesktopNotifications so the master toggle no longer shows "on".
+    // The settings UI additionally surfaces a "denied" alert via the notificationPermission observer.
+    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+      const { enableDesktopNotifications } = store.get()
+      if (enableDesktopNotifications) {
+        store.set({ enableDesktopNotifications: false })
+        store.save()
+      }
+    }
+
     if (currentPushSubscription === null) {
       // No stored subscription. If the user had notifications on and push is still available,
       // silently re-register so the UI stays consistent after a subscription loss (e.g. browser
@@ -58,8 +70,12 @@ export async function updatePushSubscriptionForInstance (instanceName) {
     try {
       const backendSubscription = await getSubscription(instanceName, accessToken)
 
-      // Check if applicationServerKey changed (need to get another subscription from the browser)
-      if (btoa(urlBase64ToUint8Array(backendSubscription.server_key).buffer) !== btoa(subscription.options.applicationServerKey)) {
+      // Check if applicationServerKey changed (need to get another subscription from the browser).
+      // Both keys are binary; compare them byte-for-byte. (The old `btoa(arrayBuffer)` comparison
+      // was a no-op — btoa() stringifies any ArrayBuffer to "[object ArrayBuffer]", so the two
+      // sides were always equal and a rotated VAPID key was never picked up.)
+      const serverKey = urlBase64ToUint8Array(backendSubscription.server_key)
+      if (!binaryKeysEqual(serverKey, subscription.options.applicationServerKey)) {
         await subscription.unsubscribe()
         await deleteSubscription(instanceName, accessToken)
         await updateAlerts(instanceName, currentPushSubscription.alerts)
@@ -98,6 +114,26 @@ function canSilentlyReregister () {
     typeof Notification !== 'undefined' &&
     Notification.permission === 'granted'
   )
+}
+
+// Byte-for-byte equality for two VAPID keys. Each argument may be an ArrayBuffer, a TypedArray,
+// or null/undefined (a subscription created without an applicationServerKey). Normalises both to
+// Uint8Array views before comparing, so a Uint8Array and the ArrayBuffer it came from compare equal.
+function binaryKeysEqual (a, b) {
+  if (!a || !b) {
+    return a === b
+  }
+  const ua = a instanceof Uint8Array ? a : new Uint8Array(a)
+  const ub = b instanceof Uint8Array ? b : new Uint8Array(b)
+  if (ua.length !== ub.length) {
+    return false
+  }
+  for (let i = 0; i < ua.length; i++) {
+    if (ua[i] !== ub[i]) {
+      return false
+    }
+  }
+  return true
 }
 
 // Returns the last saved per-type alert config for an instance, falling back to ALL_PUSH_ALERTS.
