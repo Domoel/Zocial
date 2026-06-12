@@ -149,6 +149,11 @@ export default {
         label: muteConversationLabel,
         icon: muteConversationIcon
       },
+      {
+        key: 'wordFilter',
+        label: 'intl.addWordFilter',
+        icon: '#fa-filter'
+      },
       isUser && {
         key: 'edit',
         label: 'intl.edit',
@@ -188,11 +193,6 @@ export default {
         key: 'copy',
         label: 'intl.copyLinkToStatus',
         icon: '#fa-link'
-      },
-      {
-        key: 'wordFilter',
-        label: 'intl.addWordFilter',
-        icon: '#fa-filter'
       }
     ].filter(Boolean))
   },
