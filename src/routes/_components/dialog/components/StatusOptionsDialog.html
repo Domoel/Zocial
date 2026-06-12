@@ -29,6 +29,7 @@ import { setAccountNotified } from '../../../_actions/setAccountNotified.js'
 import { translateStatus } from '../../../_actions/translate.js'
 import { pickEmojiReaction } from '../../../_actions/react.js'
 import { quoteStatus } from '../../../_actions/quote.js'
+import { importShowWordFilterDialog } from '../../dialog/asyncDialogs/importShowWordFilterDialog.js'
 
 export default {
   data: () => ({
@@ -187,6 +188,11 @@ export default {
         key: 'copy',
         label: 'intl.copyLinkToStatus',
         icon: '#fa-link'
+      },
+      {
+        key: 'wordFilter',
+        label: 'intl.addFilter',
+        icon: '#fa-filter'
       }
     ].filter(Boolean))
   },
@@ -234,6 +240,8 @@ export default {
           return this.onReactClicked()
         case 'quote':
           return this.onQuoteClicked()
+        case 'wordFilter':
+          return this.onWordFilterClicked()
       }
     },
     async onDeleteClicked () {
@@ -317,6 +325,12 @@ export default {
       const { status } = this.get()
       this.close()
       quoteStatus(status)
+    },
+    async onWordFilterClicked () {
+      const { currentInstance } = this.store.get()
+      this.close()
+      const showWordFilterDialog = await importShowWordFilterDialog()
+      showWordFilterDialog({ instanceName: currentInstance })
     }
   }
 }
