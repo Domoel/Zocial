@@ -187,20 +187,33 @@ self.addEventListener('push', event => {
         return
       }
 
-      const data = event.data.json()
-      // If there is only once instance, then we know for sure that the push notification came from it
-      const knownInstances = await getKnownInstances()
-      if (knownInstances.length !== 1) {
-        // TODO: Mastodon currently does not tell us which instance the push notification came from.
-        // So we have to guess and currently just choose the first one. We _could_ locally store the instance that
-        // currently has push notifications enabled, but this would only work for one instance at a time.
-        // See: https://github.com/mastodon/mastodon/issues/22183
-        await showSimpleNotification(data)
+      let data
+      try {
+        data = event.data && event.data.json()
+      } catch (_) {
+        data = null
+      }
+      if (!data) {
+        // No or malformed payload. Still show something: silently dropping a userVisibleOnly push
+        // makes the browser show its own generic message and, if repeated, can revoke the push
+        // subscription entirely.
+        await self.registration.showNotification('Zocial', { badge: '/icon-push-badge.png' })
         return
       }
-
-      const origin = basename(knownInstances[0])
+      // We have a valid payload — from here on, guarantee at least a simple notification even if
+      // anything fails (IndexedDB read, the enrich fetch, rich rendering), so a push the server
+      // delivered is never silently dropped.
       try {
+        // If there is only one known instance, we know the push came from it. Mastodon doesn't tell
+        // us which instance a push came from, so with multiple accounts we can't enrich it.
+        // See: https://github.com/mastodon/mastodon/issues/22183
+        const knownInstances = await getKnownInstances()
+        if (knownInstances.length !== 1) {
+          await showSimpleNotification(data)
+          return
+        }
+
+        const origin = basename(knownInstances[0])
         const notification = await get(
           `${origin}/api/v1/notifications/${data.notification_id}`,
           {
@@ -298,6 +311,12 @@ async function showRichNotification (data, notification) {
       })
       break
     }
+    default: {
+      // Unknown/unhandled type (e.g. a newer server notification type like Mastodon 4.6's
+      // collection notifications). Show a generic notification rather than nothing.
+      await showSimpleNotification(data)
+      break
+    }
   }
 }
 
@@ -331,25 +350,30 @@ const updateNotificationWithoutAction = (notification, action) => {
 self.addEventListener('notificationclick', event => {
   event.waitUntil(
     (async () => {
+      const data = event.notification.data || {}
       switch (event.action) {
-        case 'reblog': {
-          const url = `${event.notification.data.instance}/api/v1/statuses/${event.notification.data.status_id}/reblog`
-          await post(url, null, {
-            Authorization: `Bearer ${event.notification.data.access_token}`
-          })
-          await updateNotificationWithoutAction(event.notification, 'reblog')
-          break
-        }
+        // 'reblog' and 'favourite' map directly to the Mastodon status action verb.
+        case 'reblog':
         case 'favourite': {
-          const url = `${event.notification.data.instance}/api/v1/statuses/${event.notification.data.status_id}/favourite`
-          await post(url, null, {
-            Authorization: `Bearer ${event.notification.data.access_token}`
-          })
-          await updateNotificationWithoutAction(event.notification, 'favourite')
+          if (!data.instance || !data.status_id || !data.access_token) {
+            break // notification without action context (e.g. a generic fallback) — nothing to do
+          }
+          try {
+            await post(
+              `${data.instance}/api/v1/statuses/${data.status_id}/${event.action}`,
+              null,
+              { Authorization: `Bearer ${data.access_token}` }
+            )
+            await updateNotificationWithoutAction(event.notification, event.action)
+          } catch (e) {
+            // Offline / token expired / etc. — keep the action button so the user can retry, and
+            // don't let the rejection escape waitUntil.
+            console.error('notification action failed', event.action, e)
+          }
           break
         }
         default: {
-          await self.clients.openWindow(event.notification.data.url)
+          await self.clients.openWindow(data.url || self.location.origin)
           await event.notification.close()
           break
         }
