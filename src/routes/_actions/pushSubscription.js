@@ -10,6 +10,18 @@ export async function updatePushSubscriptionForInstance (instanceName) {
     const accessToken = loggedInInstances[instanceName].access_token
 
     if (currentPushSubscription === null) {
+      // No stored subscription. If the user had notifications on and push is still available,
+      // silently re-register so the UI stays consistent after a subscription loss (e.g. browser
+      // cleared it after a SW update). Only attempt if permission is already granted — we never
+      // prompt here.
+      if (canSilentlyReregister()) {
+        try {
+          await updateAlerts(instanceName, ALL_PUSH_ALERTS)
+        } catch (_) {
+          // Re-registration failed silently — foreground notifications still work if
+          // enableDesktopNotifications is true, so leave everything else as-is.
+        }
+      }
       return
     }
 
@@ -28,6 +40,16 @@ export async function updatePushSubscriptionForInstance (instanceName) {
     }
 
     if (subscription === null) {
+      // Browser subscription lost — most commonly after a service worker update. If conditions
+      // allow, re-register silently with the previously saved alert preferences.
+      if (canSilentlyReregister()) {
+        try {
+          await updateAlerts(instanceName, currentPushSubscription.alerts || ALL_PUSH_ALERTS)
+          return
+        } catch (_) {
+          // Fall through to clearing the stored subscription below.
+        }
+      }
       store.setInstanceData(instanceName, 'pushSubscriptions', null)
       store.save()
       return
@@ -63,6 +85,19 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       }
     }
   })
+}
+
+// True when a silent push re-registration attempt is worthwhile: the user has already granted
+// notification permission, push is supported in this browser, and desktop notifications were
+// explicitly enabled by the user.
+function canSilentlyReregister () {
+  const { pushNotificationsSupport, enableDesktopNotifications } = store.get()
+  return (
+    pushNotificationsSupport &&
+    enableDesktopNotifications &&
+    typeof Notification !== 'undefined' &&
+    Notification.permission === 'granted'
+  )
 }
 
 // DOMException serialises as {} with console.error/JSON.stringify (properties are inherited, not own).
