@@ -6,13 +6,13 @@
     {'intl.notifyOnThisDevice'}
   </label>
 
-  {#if multipleAccounts}
-    <p class="device-notifications-note">{'intl.pushOneAccountPerDevice'}</p>
-  {/if}
-
-  {#if otherPushAccount}
-    {#if !enabled}
-      <p class="device-notifications-note">{activeElsewhereText}</p>
+  {#if !enabled}
+    {#if otherPushAccount}
+      <p>{activeElsewhereText}</p>
+    {:else}
+      {#if multipleAccounts}
+        <p>{'intl.pushOneAccountPerDevice'}</p>
+      {/if}
     {/if}
   {/if}
 
