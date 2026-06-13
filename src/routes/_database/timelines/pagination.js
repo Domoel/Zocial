@@ -84,12 +84,19 @@ async function getStatusThread (instanceName, statusId) {
 export async function getTimeline (instanceName, timeline, maxId, limit) {
   maxId = maxId || null
   limit = limit || TIMELINE_BATCH_SIZE
+  let result
   if (timeline === 'notifications' || timeline === 'notifications/mentions') {
-    return getNotificationTimeline(instanceName, timeline, maxId, limit)
+    result = await getNotificationTimeline(instanceName, timeline, maxId, limit)
   } else if (timeline.startsWith('status/')) {
     const statusId = timeline.split('/').slice(-1)[0]
-    return getStatusThread(instanceName, statusId)
+    result = await getStatusThread(instanceName, statusId)
   } else {
-    return getStatusTimeline(instanceName, timeline, maxId, limit)
+    result = await getStatusTimeline(instanceName, timeline, maxId, limit)
   }
+  // Drop holes left by dangling timeline pointers: a timeline row can outlive its
+  // status/notification body — e.g. the body's put() failed structured-clone in insertion.ts
+  // (caught and skipped there) while the pointer was still written, or a cleanup/schema race.
+  // fetchStatus/fetchNotification then call back with undefined, and returning those would
+  // crash timelineItemToSummary (item.id) downstream and blank the timeline.
+  return result.filter(Boolean)
 }

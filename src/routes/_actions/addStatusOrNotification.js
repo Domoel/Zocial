@@ -31,8 +31,6 @@ export async function insertUpdatesIntoTimeline (instanceName, timelineName, upd
     concat(itemSummariesToAdd, updates.map(item => timelineItemToSummary(item, instanceName)))
   )
   if (!isEqual(itemSummariesToAdd, newItemSummariesToAdd)) {
-    console.log('adding ', (newItemSummariesToAdd.length - itemSummariesToAdd.length),
-      'items to timelineItemSummariesToAdd for timeline', timelineName)
     store.setForTimeline(instanceName, timelineName, { timelineItemSummariesToAdd: newItemSummariesToAdd })
   }
 }
@@ -73,8 +71,6 @@ async function insertUpdatesIntoThreads (instanceName, updates) {
     }
     const newItemSummariesToAdd = uniqById(concat(itemSummariesToAdd, validUpdates.map(item => timelineItemToSummary(item, instanceName))))
     if (!isEqual(itemSummariesToAdd, newItemSummariesToAdd)) {
-      console.log('adding ', (newItemSummariesToAdd.length - itemSummariesToAdd.length),
-        'items to timelineItemSummariesToAdd for thread', timelineName)
       store.setForTimeline(instanceName, timelineName, { timelineItemSummariesToAdd: newItemSummariesToAdd })
     }
   }
@@ -108,7 +104,6 @@ export function addStatusOrNotification (instanceName, timelineName, newStatusOr
 }
 
 export async function addStatusesOrNotifications (instanceName, timelineName, newStatusesOrNotifications) {
-  console.log('addStatusesOrNotifications', Date.now())
   let freshUpdates = store.getForTimeline(instanceName, timelineName, 'freshUpdates') || []
   freshUpdates = concat(newStatusesOrNotifications, freshUpdates)
   freshUpdates = uniqById(freshUpdates)
