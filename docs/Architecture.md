@@ -1362,6 +1362,18 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ---
 
+### [v1.8.11] OAuth `state` (CSRF protection) on the login flow
+
+**Decision:** Add the OAuth `state` parameter (RFC 6749 §10.12) to the authorization-code login flow: generate a random `crypto.getRandomValues` token before redirecting to the instance's `/oauth/authorize`, persist it (`currentRegisteredInstanceState`, alongside the other `currentRegisteredInstance*` fields so it survives the full-page redirect), and verify it against the callback's `state` query param **before** exchanging the code. A missing/mismatched state is refused.
+
+**Rationale:** `state` is the standard CSRF defence for the auth-code flow — it ties a callback to a login the user actually started, blocking forged/replayed callbacks. It was simply absent. Defence-in-depth on top of the existing partial mitigation (dynamic per-instance app registration already binds the code exchange to the user's own `client_secret`, so classic login-CSRF was already hard), and it brings the flow in line with the OAuth spec at near-zero cost.
+
+**Tradeoff / scope:** an in-flight login spanning the deploy (redirected before, returns after) fails state validation once and must be restarted — a one-time, self-correcting transient. Does not address the accepted architectural limitations (tokens in `localStorage`; single-use `?code=` lingering in the URL on a failed callback). Login is critical and the dev env has no runtime, so this needs manual testing (new login, existing accounts, denied/aborted login).
+
+**Files:** `_store/store.js` (persisted `currentRegisteredInstanceState`), `_api/oauth.js` (`generateAuthLink` takes `state`), `_actions/addInstance.js` (generate before redirect, verify in `handleOauthCode`, clear on success), `_pages/settings/instances/add.html` (pass the callback `state`).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
