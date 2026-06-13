@@ -10,6 +10,7 @@ import { focusRingObservers } from './focusRingObservers.js'
 import { leftRightFocusObservers } from './leftRightFocusObservers.js'
 import { bottomNavObservers } from './bottomNavObservers.js'
 import { reduceMotionObservers } from './reduceMotionObservers.js'
+import { pushTokenObservers } from './pushTokenObservers.js'
 
 export function observers (store) {
   onlineObservers(store)
@@ -24,4 +25,5 @@ export function observers (store) {
   bottomNavObservers(store)
   setupLoggedInObservers(store)
   reduceMotionObservers(store)
+  pushTokenObservers(store)
 }

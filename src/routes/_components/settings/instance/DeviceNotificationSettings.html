@@ -6,6 +6,16 @@
     {'intl.notifyOnThisDevice'}
   </label>
 
+  {#if multipleAccounts}
+    <p class="device-notifications-note">{'intl.pushOneAccountPerDevice'}</p>
+  {/if}
+
+  {#if otherPushAccount}
+    {#if !enabled}
+      <p class="device-notifications-note">{activeElsewhereText}</p>
+    {/if}
+  {/if}
+
   {#if permissionDenied}
     <p role="alert">{'intl.deniedPush'}</p>
   {/if}
@@ -35,8 +45,11 @@
   import GenericInstanceSettingsStyle from './GenericInstanceSettingsStyle.html'
   import PushNotificationSettings from './PushNotificationSettings.html'
   import { store } from '../../../_store/store.js'
-  import { enableOSNotificationsForInstance, disablePushForInstance } from '../../../_actions/pushSubscription.js'
+  import { enableOSNotificationsForInstance, disablePushForInstance, otherPushInstances } from '../../../_actions/pushSubscription.js'
   import { handlePushError } from '../../../_actions/handlePushError.js'
+  import { importShowTextConfirmationDialog } from '../../../_components/dialog/asyncDialogs/importShowTextConfirmationDialog.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
+  import { toast } from '../../../_components/toast/toast.js'
 
   export default {
     oncreate () {
@@ -53,7 +66,25 @@
         !!($pushSubscriptions && $pushSubscriptions[instanceName])
       ),
       pushSupported: ({ $pushNotificationsSupport }) => !!$pushNotificationsSupport,
-      permissionDenied: ({ $notificationPermission }) => $notificationPermission === 'denied'
+      permissionDenied: ({ $notificationPermission }) => $notificationPermission === 'denied',
+      // OS push is limited to one account per device (one VAPID-keyed subscription per origin) — show
+      // the explanatory note only when there's more than one account where a switch could happen.
+      multipleAccounts: ({ $loggedInInstancesInOrder }) => !!$loggedInInstancesInOrder && $loggedInInstancesInOrder.length > 1,
+      // The other (currently logged-in) account that holds push — single-account model → at most
+      // one, or null. The intent flag survives logout, so a logged-out account is excluded.
+      otherPushAccount: ({ $enableDesktopNotifications, $loggedInInstances, instanceName }) => {
+        if (!$enableDesktopNotifications) {
+          return null
+        }
+        const others = Object.keys($enableDesktopNotifications).filter(
+          name => name !== instanceName && $enableDesktopNotifications[name] &&
+            $loggedInInstances && $loggedInInstances[name]
+        )
+        return others.length ? others[0] : null
+      },
+      activeElsewhereText: ({ otherPushAccount }) => (
+        otherPushAccount ? formatIntl('intl.pushActiveForOtherAccount', { account: otherPushAccount }) : ''
+      )
     },
     methods: {
       async onMasterChange (event) {
@@ -67,9 +98,39 @@
           return
         }
 
-        // Turning on requires notification permission. Revert the checkbox until we know it
-        // was actually granted; enableOSNotificationsForInstance handles permission + push.
+        // Turning on. Revert the checkbox until we actually succeed — permission may be denied, push
+        // may fail, or the user may cancel the switch dialog below.
         event.target.checked = false
+
+        // Single-account model: if another account currently holds push, confirm before re-keying
+        // the one shared browser subscription to this account.
+        const others = otherPushInstances(instanceName)
+        if (others.length) {
+          const showTextConfirmationDialog = await importShowTextConfirmationDialog()
+          showTextConfirmationDialog({
+            title: 'intl.pushSwitchTitle',
+            text: formatIntl('intl.pushSwitchText', { from: others[0], to: instanceName }),
+            positiveText: 'intl.pushSwitchConfirm',
+            negativeText: 'intl.cancel'
+          }).on('positive', () => {
+            /* no await */ this.switchPushToThisAccount(instanceName, others)
+          })
+          return
+        }
+
+        await this.enablePushForThisAccount(instanceName, null)
+      },
+
+      async switchPushToThisAccount (instanceName, others) {
+        // Disable the previous push account(s) first (backend unsubscribe + clear flag), then re-key
+        // the shared subscription to this account.
+        for (const other of others) {
+          await disablePushForInstance(other)
+        }
+        await this.enablePushForThisAccount(instanceName, others[0])
+      },
+
+      async enablePushForThisAccount (instanceName, displaced) {
         let result
         try {
           result = await enableOSNotificationsForInstance(instanceName)
@@ -102,7 +163,12 @@
           return
         }
 
-        event.target.checked = true
+        if (this.refs.master) {
+          this.refs.master.checked = true
+        }
+        if (displaced) {
+          /* no await */ toast.say(formatIntl('intl.pushMovedToast', { from: displaced, to: instanceName }))
+        }
       }
     },
     components: {

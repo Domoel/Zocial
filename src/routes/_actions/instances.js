@@ -61,11 +61,11 @@ export async function logOutOfInstance (instanceName, message) {
     instanceFollowedHashtags
   } = store.get()
   // Tell this account's server to stop sending push notifications after logout. The browser push
-  // subscription is shared across all accounts, so we must NOT unsubscribe it here (that would cut
-  // off other logged-in accounts — see otherInstancesWantPush in pushSubscription.js); we only drop
-  // *this* account's subscription record on its backend. Otherwise the server keeps pushing to the
-  // shared endpoint and the service worker would still surface notifications for a logged-out
-  // account. Capture the token before the cleanup loop below removes it from loggedInInstances.
+  // subscription is a single shared per-origin object, so we must NOT unsubscribe it here (another
+  // account may be the current push account); we only drop *this* account's subscription record on
+  // its backend. Otherwise the server keeps pushing to the shared endpoint and the service worker
+  // would still surface notifications for a logged-out account. Capture the token before the cleanup
+  // loop below removes it from loggedInInstances.
   const loggedOutAccessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
   const hadPushSubscription = !!(pushSubscriptions && pushSubscriptions[instanceName])
   loggedInInstancesInOrder.splice(loggedInInstancesInOrder.indexOf(instanceName), 1)

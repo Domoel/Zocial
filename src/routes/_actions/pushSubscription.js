@@ -171,10 +171,11 @@ export async function disablePushForInstance (instanceName) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 
-    // Only tear down the shared browser subscription if no other instance still wants push.
-    if (!otherInstancesWantPush(instanceName)) {
-      await unsubscribeBrowserPush()
-    }
+    // Under the single-account model only one instance ever holds push, so tearing down the shared
+    // browser subscription here is always safe (no other account relies on it). On a re-key the
+    // caller disables the previous account first, then enables the new one — see
+    // DeviceNotificationSettings.onMasterChange.
+    await unsubscribeBrowserPush()
     try {
       await deleteSubscription(instanceName, accessToken)
     } catch (e) {
@@ -259,15 +260,20 @@ function isPermanentPushError (e) {
   return e instanceof DOMException && e.name === 'NotSupportedError'
 }
 
-// True when some OTHER logged-in instance still wants OS push. There is exactly one browser push
-// subscription per origin (one pushManager per service-worker registration) — all instances share
-// it. So before tearing it down for one instance we must check no one else still relies on it,
-// otherwise disabling/ giving up on push for account A would silently kill OS push for B and C until
-// their next app load re-registers it.
-function otherInstancesWantPush (instanceName) {
-  const { enableDesktopNotifications } = store.get()
-  return !!enableDesktopNotifications && Object.keys(enableDesktopNotifications).some(
-    name => name !== instanceName && enableDesktopNotifications[name]
+// The instances (other than `instanceName`) that currently hold OS push. Under the single-account
+// model this is at most one, but it is returned as a list so a legacy multi-enabled state (from the
+// previous per-instance model) still converges: the enable flow disables all of them before
+// re-keying the shared subscription to the newly chosen account. Empty when no other account has it.
+export function otherPushInstances (instanceName) {
+  const { enableDesktopNotifications, loggedInInstances } = store.get()
+  if (!enableDesktopNotifications) {
+    return []
+  }
+  // Only currently-logged-in accounts count: the intent flag deliberately survives logout, so a
+  // logged-out account could still carry it — it must not appear as the active push account.
+  return Object.keys(enableDesktopNotifications).filter(
+    name => name !== instanceName && enableDesktopNotifications[name] &&
+      loggedInInstances && loggedInInstances[name]
   )
 }
 
@@ -305,11 +311,9 @@ async function markPushUnavailable (instanceName) {
   store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
   store.set({ pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
   store.save()
-  // Only tear down the shared browser subscription if no other instance still wants push (the flag
-  // for this instance was just cleared above, so it is correctly excluded).
-  if (!otherInstancesWantPush(instanceName)) {
-    await unsubscribeBrowserPush()
-  }
+  // Single-account model: only this instance holds push, so tearing down the shared browser
+  // subscription is always safe.
+  await unsubscribeBrowserPush()
 }
 
 // Record a failed silent re-registration. Returns true if push has now been given up on (caller

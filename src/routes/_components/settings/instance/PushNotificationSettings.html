@@ -3,8 +3,6 @@
     <p>{'intl.browserDoesNotSupportPush'}</p>
   {:elseif $notificationPermission === "denied"}
     <p role="alert">{'intl.deniedPush'}</p>
-  {:elseif $loggedInInstancesInOrder.length > 1}
-    <p>{'intl.pushNotificationsNote'}</p>
   {/if}
   <form id="push-notification-settings"
         disabled="{!pushNotificationsSupport}"

@@ -9,7 +9,7 @@ import {
   closeKeyValIDBConnection
 } from './routes/_database/webShare.js'
 import { getLastTheme } from './routes/_database/theme.js'
-import { getKnownInstances } from './routes/_database/knownInstances.js'
+import { getInstanceForPushToken } from './routes/_database/pushTokenInstance.js'
 import { basename } from './routes/_api/utils.js'
 import { canonicalStatusUrl } from './routes/_utils/canonicalStatusUrl.js'
 
@@ -204,16 +204,18 @@ self.addEventListener('push', event => {
       // anything fails (IndexedDB read, the enrich fetch, rich rendering), so a push the server
       // delivered is never silently dropped.
       try {
-        // If there is only one known instance, we know the push came from it. Mastodon doesn't tell
-        // us which instance a push came from, so with multiple accounts we can't enrich it.
-        // See: https://github.com/mastodon/mastodon/issues/22183
-        const knownInstances = await getKnownInstances()
-        if (knownInstances.length !== 1) {
+        // Mastodon's push payload carries the subscription's access_token but not which instance it
+        // belongs to (mastodon#22183). Resolve the instance from the flat token→instance lookup the
+        // app keeps in IndexedDB (C+ routing), so we can enrich for any number of logged-in accounts.
+        // On a miss (e.g. a stale token after logout) fall back to a bare notification — never drop
+        // the push. The whole flow stays inside event.waitUntil's try/catch above.
+        const instanceName = await getInstanceForPushToken(data.access_token)
+        if (!instanceName) {
           await showSimpleNotification(data)
           return
         }
 
-        const origin = basename(knownInstances[0])
+        const origin = basename(instanceName)
         const notification = await get(
           `${origin}/api/v1/notifications/${data.notification_id}`,
           {
