@@ -1374,20 +1374,20 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ---
 
-### [v1.9.0] Manage follows directly from the Follows list
+### [v1.9.0] Manage follows directly from the Follows / Followers lists
 
-**Decision:** Add a profile-style **follow/unfollow button + "⋯" options menu** to each row of the **Follows** list (not the Followers list — that only shows who follows you, nothing to act on). Implemented as an opt-in `manageFollow` mode on the shared `AccountSearchResult`, driven by `AccountsListPage` (`manageFollows` / `assumeFollowing`).
+**Decision:** Add a profile-style **follow/unfollow button + "⋯" options menu** to each row of the **Follows** *and* **Followers** lists. Implemented as an opt-in `manageFollow` mode on the shared `AccountSearchResult`, driven by `AccountsListPage` (`manageFollows` / `assumeFollowing`). The **Followers** list enables follow-back: it sets `manageFollows` **without** `assumeFollowing`, so each button reflects the real relationship ("Follow" for not-yet-followed, "Unfollow" for mutuals) rather than assuming you follow your followers.
 
 **Key UX choice — unfollow does NOT remove the row.** Clicking "Unfollow" flips the button to "Follow" in place and leaves the row visible; the account only disappears on the next visit (a fresh fetch). This lets a misclick be corrected immediately instead of the entry vanishing. Conversely, the list is *not* live-pruned — it reflects the server state at load time.
 
 **Rationale & details:**
-- The button reflects the **real** relationship (batch-fetched via `getRelationships`, one request per page), so it's also correct on *someone else's* Follows list (where you may not follow everyone). On your **own** list (`assumeFollowing`, i.e. `accountId === currentVerifyCredentials.id`) each row is optimistically seeded `following: true` so it shows "Unfollow" instantly with no "Follow"→"Unfollow" flash.
+- The button reflects the **real** relationship (batch-fetched via `getRelationships`, one request per page), so it's also correct on *someone else's* lists (where you may not follow everyone) and on the Followers list (mix of follow-back + mutuals). On your **own Follows** list only (`assumeFollowing`, i.e. `accountId === currentVerifyCredentials.id`) each row is optimistically seeded `following: true` so it shows "Unfollow" instantly with no "Follow"→"Unfollow" flash; the Followers list deliberately does **not** seed (a brief default-"Follow" until relationships load is acceptable there).
 - The "⋯" menu reuses the profile's `showAccountProfileOptionsDialog(account, relationship, verifyCredentials)` for identical behaviour; the relationship handed in reflects any local follow toggle.
 - The row is a link, so both controls `preventDefault()` + `stopPropagation()` (mirroring the existing icon-action path) to avoid navigating. Own-account rows never show the controls.
 
 **Scope:** existing `AccountSearchResult` callers (search, blocked/muted/requests icon-actions, reblogs/favorites) are unaffected — the follow controls render only under `manageFollow`, and relationships are fetched only under `manageFollows`. No new i18n strings (reuses the profile's follow/unfollow/options labels).
 
-**Files:** `_api/relationships.js` (`getRelationships` batch), `_components/search/AccountSearchResult.html` (`manageFollow` button + menu), `_components/AccountsListPage.html` (`manageFollows`/`assumeFollowing`, relationship prime/seed), `_pages/accounts/[accountId]/follows.html` (enable, own-list detection).
+**Files:** `_api/relationships.js` (`getRelationships` batch), `_components/search/AccountSearchResult.html` (`manageFollow` button + menu), `_components/AccountsListPage.html` (`manageFollows`/`assumeFollowing`, relationship prime/seed), `_pages/accounts/[accountId]/follows.html` (enable + own-list `assumeFollowing`) and `followers.html` (enable, no seed — follow-back).
 
 ---
 

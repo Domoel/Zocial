@@ -1,6 +1,9 @@
 <ScrollToTopButton thresholdSelector=".dynamic-page-banner" label="{'intl.scrollToTop'}" />
 <DynamicPageBanner title="{'intl.followers'}" />
-<AccountsListPage {accountsFetcher} {expectedCount} />
+<!-- manageFollows enables the follow/unfollow button + "⋯" menu on each row (follow-back). NO
+     assumeFollowing here: you don't necessarily follow your followers, so each button reflects the
+     real relationship (fetched), not an assumed "Unfollow". -->
+<AccountsListPage {accountsFetcher} manageFollows={true} {expectedCount} />
 <script>
   import { getFollowers } from '../../../_api/followsAndFollowers.js'
   import AccountsListPage from '../../../_components/AccountsListPage.html'
