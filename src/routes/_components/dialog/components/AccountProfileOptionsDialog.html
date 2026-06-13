@@ -15,7 +15,8 @@ import { show } from '../helpers/showDialog.js'
 import { close } from '../helpers/closeDialog.js'
 import { backfill } from '../../../_actions/backfill.js'
 import { setAccountBlocked } from '../../../_actions/block.js'
-import { setAccountFollowed } from '../../../_actions/follow.js'
+import { setAccountFollowed, removeAccountFromFollowers } from '../../../_actions/follow.js'
+import { importShowTextConfirmationDialog } from '../asyncDialogs/importShowTextConfirmationDialog.js'
 import { setShowReblogs } from '../../../_actions/setShowReblogs.js'
 import { setDomainBlocked } from '../../../_actions/setDomainBlocked.js'
 import { copyText } from '../../../_actions/copyText.js'
@@ -41,6 +42,7 @@ export default {
     muting: ({ relationship }) => relationship && relationship.muting,
     blocking: ({ relationship }) => relationship && relationship.blocking,
     notifying: ({ relationship }) => relationship && relationship.notifying,
+    followedBy: ({ relationship }) => relationship && relationship.followed_by,
     followLabel: ({ following, followRequested, account, username }) => {
       if (typeof following === 'undefined' || !account) {
         return ''
@@ -88,7 +90,8 @@ export default {
       blockLabel, blocking, blockIcon, muteLabel, muteIcon,
       followLabel, followIcon, following, followRequested,
       accountId, verifyCredentialsId, username, isUser, showReblogsLabel,
-      domain, blockDomainLabel, reportLabel, notifying, $lists
+      domain, blockDomainLabel, reportLabel, notifying, followedBy,
+      $supportsRemoveFromFollowers, $lists
     }) => ([
       !isUser && {
         key: 'mention',
@@ -119,6 +122,11 @@ export default {
         key: 'backfill',
         label: 'intl.backfill',
         icon: '#fa-clock'
+      },
+      !isUser && followedBy && $supportsRemoveFromFollowers && {
+        key: 'removeFollower',
+        label: formatIntl('intl.removeFollowerAccount', { account: `@${username}` }),
+        icon: '#fa-times'
       },
       !isUser && {
         key: 'block',
@@ -165,6 +173,8 @@ export default {
           return this.onManageListsClicked()
         case 'backfill':
           return this.onBackfillClicked()
+        case 'removeFollower':
+          return this.onRemoveFollowerClicked()
         case 'block':
           return this.onBlockClicked()
         case 'mute':
@@ -215,6 +225,32 @@ export default {
       const { account } = this.get()
       this.close()
       await backfill(account)
+    },
+    async onRemoveFollowerClicked () {
+      // Confirm first: unlike block/mute, the actor can't undo this — only the removed person can
+      // (by following again). Open a confirmation dialog instead of acting immediately.
+      const { account } = this.get()
+      const showTextConfirmationDialog = await importShowTextConfirmationDialog()
+      this.close()
+      // Wait for the closing dialog's popstate before opening the next one (same race fix as
+      // onManageListsClicked), otherwise the confirm dialog can self-close.
+      await new Promise(resolve => {
+        const done = () => {
+          window.removeEventListener('popstate', done)
+          clearTimeout(fallback)
+          resolve()
+        }
+        const fallback = setTimeout(done, 300)
+        window.addEventListener('popstate', done, { once: true })
+      })
+      showTextConfirmationDialog({
+        title: 'intl.removeFollowerTitle',
+        text: formatIntl('intl.removeFollowerText', { account: `@${account.acct}` }),
+        positiveText: 'intl.removeFollowerConfirm',
+        negativeText: 'intl.cancel'
+      }).on('positive', () => {
+        /* no await */ removeAccountFromFollowers(account.id)
+      })
     },
     async onBlockClicked () {
       const { accountId, blocking } = this.get()

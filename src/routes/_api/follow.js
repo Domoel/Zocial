@@ -10,3 +10,10 @@ export async function unfollowAccount (instanceName, accessToken, accountId) {
   const url = `${basename(instanceName)}/api/v1/accounts/${accountId}/unfollow`
   return post(url, null, auth(accessToken), { timeout: WRITE_TIMEOUT })
 }
+
+// Remove the account from *your* followers (Mastodon 3.5+). Not implemented by every backend —
+// callers treat a 404/501 as "not supported". Returns the updated relationship (followed_by:false).
+export async function removeFromFollowers (instanceName, accessToken, accountId) {
+  const url = `${basename(instanceName)}/api/v1/accounts/${accountId}/remove_from_followers`
+  return post(url, null, auth(accessToken), { timeout: WRITE_TIMEOUT })
+}
