@@ -23,6 +23,14 @@
     margin: 20px 0 10px;
   }
 
+  /* Explanatory text under a settings heading — smaller and de-emphasized so descriptions read
+     as descriptions instead of blending in with option labels. Applied via class="settings-description". */
+  :global(.settings .free-text .settings-description) {
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: var(--deemphasized-text-color);
+  }
+
   @media (max-width: 767px) {
     .settings {
       margin: 20px 10px;

@@ -179,8 +179,8 @@
   <h2 id="section-wellness">{'intl.wellness'}</h2>
 
   <form class="ui-settings">
-    <p>{'intl.wellnessDescription'}</p>
-    <p>{@html 'intl.wellnessFooter'}</p>
+    <p class="settings-description">{'intl.wellnessDescription'}</p>
+    <p class="settings-description">{@html 'intl.wellnessFooter'}</p>
 
     <label class="setting-group">
       <input type="checkbox" id="choice-check-all"
@@ -234,15 +234,15 @@
   <div class="ui-settings notifications-block">
     {#if $isUserLoggedIn}
       <h3>{'intl.osNotificationsHeading'}</h3>
-      <p>{'intl.osNotificationsDescription'}</p>
+      <p class="settings-description">{'intl.osNotificationsDescription'}</p>
       <DeviceNotificationSettings instanceName={$currentInstance} />
 
       <h3>{'intl.inAppNotificationsHeading'}</h3>
-      <p>{'intl.inAppNotificationsDescription'}</p>
+      <p class="settings-description">{'intl.inAppNotificationsDescription'}</p>
       <NotificationFilterSettings instanceName={$currentInstance} />
 
       <h3>{'intl.notificationSoundHeading'}</h3>
-      <p>{'intl.notificationSoundDescription'}</p>
+      <p class="settings-description">{'intl.notificationSoundDescription'}</p>
       <div class="generic-instance-settings">
         <form aria-label="{'intl.notificationSounds'}">
           <input type="checkbox" id="choice-notification-sounds"

@@ -2,7 +2,7 @@
   <h1>{'intl.instances'}</h1>
 
   {#if $isUserLoggedIn}
-    <p>{'intl.instancesYouveLoggedInTo'}</p>
+    <p class="settings-description">{'intl.instancesYouveLoggedInTo'}</p>
     <RadioGroup id="instance-switch" label="{'intl.switchToInstance'}" length={numInstances}>
       <SettingsList label="{'intl.instances'}">
         {#each instanceStates as instance}

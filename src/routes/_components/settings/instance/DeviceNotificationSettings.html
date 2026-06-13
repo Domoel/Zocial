@@ -4,15 +4,14 @@
            id="device-notifications-master"
            on:change="onMasterChange(event)">
     {'intl.notifyOnThisDevice'}
+    {#if multipleAccounts}
+      <Tooltip text="{'intl.pushOneAccountTrigger'}" tooltipText="{'intl.pushOneAccountPerDevice'}" />
+    {/if}
   </label>
 
-  {#if !enabled}
-    {#if otherPushAccount}
-      <p>{activeElsewhereText}</p>
-    {:else}
-      {#if multipleAccounts}
-        <p>{'intl.pushOneAccountPerDevice'}</p>
-      {/if}
+  {#if otherPushAccount}
+    {#if !enabled}
+      <p class="settings-description">{activeElsewhereText}</p>
     {/if}
   {/if}
 
@@ -44,6 +43,7 @@
 <script>
   import GenericInstanceSettingsStyle from './GenericInstanceSettingsStyle.html'
   import PushNotificationSettings from './PushNotificationSettings.html'
+  import Tooltip from '../../../_components/Tooltip.html'
   import { store } from '../../../_store/store.js'
   import { enableOSNotificationsForInstance, disablePushForInstance, otherPushInstances } from '../../../_actions/pushSubscription.js'
   import { handlePushError } from '../../../_actions/handlePushError.js'
@@ -173,7 +173,8 @@
     },
     components: {
       GenericInstanceSettingsStyle,
-      PushNotificationSettings
+      PushNotificationSettings,
+      Tooltip
     }
   }
 </script>
