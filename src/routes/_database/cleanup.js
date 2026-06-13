@@ -99,7 +99,6 @@ function cleanupRelationships (relationshipsStore, cutoff) {
 }
 
 export async function cleanup (instanceName) {
-  console.log('cleanup', instanceName)
   mark(`cleanup:${instanceName}`)
   const db = await getDatabase(instanceName)
   const storeNames = [
@@ -139,7 +138,6 @@ function doCleanup (instanceName) {
 }
 
 async function scheduledCleanup () {
-  console.log('scheduledCleanup')
   const knownInstances = await getKnownInstances()
   for (const instance of knownInstances) {
     doCleanup(instance)

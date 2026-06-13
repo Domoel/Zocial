@@ -199,13 +199,6 @@ export async function insertTimelineItems(
   timeline: string,
   timelineItems: any[],
 ) {
-  console.log(
-    'insertTimelineItems',
-    instanceName,
-    timeline,
-    timelineItems.length,
-    'items',
-  )
   /* no await */ scheduleCleanup()
   if (timeline === 'notifications' || timeline === 'notifications/mentions') {
     return insertTimelineNotifications(instanceName, timeline, timelineItems)

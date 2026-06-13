@@ -5,7 +5,12 @@ import { clearAllCaches } from './cache.js'
 import { lifecycle } from '../_utils/lifecycle.ts'
 
 const openReqs: Record<string, IDBOpenDBRequest> = {}
-const databaseCache: Record<string, IDBDatabase> = {}
+// Cache the in-flight open *promise* (not the resolved DB) so that concurrent
+// first-time callers — which is the norm on a cold load, where many inserts and
+// lookups fire in parallel — share a single open request instead of each
+// opening (and leaking) its own connection. A leaked connection would also
+// later block deleteDatabase() on logout.
+const databaseCache: Record<string, Promise<IDBDatabase>> = {}
 
 function createDatabase(instanceName: string) {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -36,13 +41,24 @@ function createDatabase(instanceName: string) {
   })
 }
 
-export async function getDatabase(instanceName: string) {
+export function getDatabase(instanceName: string): Promise<IDBDatabase> {
   if (!instanceName) {
-    throw new Error('instanceName is undefined in getDatabase()')
+    return Promise.reject(
+      new Error('instanceName is undefined in getDatabase()'),
+    )
   }
   if (!databaseCache[instanceName]) {
-    databaseCache[instanceName] = await createDatabase(instanceName)
-    await addKnownInstance(instanceName)
+    databaseCache[instanceName] = createDatabase(instanceName).then(
+      async (db) => {
+        await addKnownInstance(instanceName)
+        return db
+      },
+    )
+    // Don't cache a rejected promise — otherwise a single open failure would
+    // make the instance permanently unusable until a full reload.
+    databaseCache[instanceName].catch(() => {
+      delete databaseCache[instanceName]
+    })
   }
   return databaseCache[instanceName]!
 }
@@ -112,7 +128,6 @@ if (ZOCIAL_IS_BROWSER) {
       // page is frozen, close IDB connections
       Object.keys(openReqs).forEach((instanceName) => {
         closeDatabase(instanceName)
-        console.log('closed instance DBs')
       })
     }
   })
