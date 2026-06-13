@@ -3,7 +3,7 @@
 import { escapeRegExp } from './escapeRegExp.js'
 
 export const createRegexFromFilters = filters => {
-  return new RegExp(filters.map(filter => {
+  const expressions = filters.map(filter => {
     let expr = escapeRegExp(filter.phrase)
 
     if (filter.whole_word) {
@@ -17,5 +17,12 @@ export const createRegexFromFilters = filters => {
     }
 
     return expr
-  }).join('|'), 'i')
+  }).filter(Boolean) // drop empty phrases — an empty alternative (`foo|`) makes the regex match
+  // *everything*, which would silently hide the entire timeline.
+
+  if (!expressions.length) {
+    return /(?!)/ // never matches
+  }
+
+  return new RegExp(expressions.join('|'), 'i')
 }

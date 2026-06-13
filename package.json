@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "version": "1.8.12",
+  "version": "1.8.13",
   "scripts": {
     "lint": "standard && standard --plugin html 'src/routes/**/*.html' && tsc && prettier -c 'src/**/*.ts'",
     "lint-fix": "standard --fix && standard --fix --plugin html 'src/routes/**/*.html' && prettier -w 'src/**/*.ts'",

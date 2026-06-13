@@ -25,7 +25,6 @@ export function wordFilterObservers () {
 
     // don't force an update/recalc if nothing changed
     if (!isEqual(store.get().unexpiredInstanceFilters, unexpiredInstanceFilters)) {
-      console.log('updated unexpiredInstanceFilters', unexpiredInstanceFilters)
       store.set({ unexpiredInstanceFilters })
     }
   }
@@ -41,7 +40,6 @@ export function wordFilterObservers () {
   })
 
   store.observe('unexpiredInstanceFilterRegexes', async unexpiredInstanceFilterRegexes => {
-    console.log('unexpiredInstanceFilterRegexes changed, recomputing filterContexts')
     mark('update timeline item summary filter contexts')
     // Whenever the filters change, we need to re-compute the filterContexts on the TimelineSummaries.
     // This is a bit of an odd design, but we do it for perf. See timelineItemToSummary.ts for details.
@@ -62,7 +60,6 @@ export function wordFilterObservers () {
         ...(Object.values(timelinesToSummaries).flat()),
         ...(Object.values(timelinesToSummariesToAdd).flat())
       ]
-      console.log(`Attempting to update filters for ${summariesToUpdate.length} item summaries`)
       await Promise.all(summariesToUpdate.map(async summary => {
         try {
           const isNotification = summary.type
@@ -86,7 +83,6 @@ export function wordFilterObservers () {
     // may have changed. But we need to make sure that the filterContexts are updated in the store
     // So just force an update here.
     if (somethingChanged) {
-      console.log('Word filters changed, forcing an update')
       // eslint-disable-next-line camelcase
       const { timelineData_timelineItemSummaries, timelineData_timelineItemSummariesToAdd } = store.get()
       // eslint-disable-next-line camelcase
