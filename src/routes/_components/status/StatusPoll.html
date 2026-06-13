@@ -296,10 +296,14 @@
       pollId: ({ originalStatus }) => originalStatus.poll.id,
       poll: ({ originalStatus, $polls, pollId }) => $polls[pollId] || originalStatus.poll,
       options: ({ poll, originalStatusEmojis, $autoplayGifs, votersOrVotesCount }) => (
-        poll.options.map(({ title, votes_count: optionsVotesCount }, index) => ({
+        // `own_votes` (and `options`) can be absent/null depending on the source — seen on both
+        // Mastodon and GoToSocial: remote polls, streamed `status.update` payloads, and cache-first
+        // renders from IndexedDB may not carry `own_votes`. Guard both — a throw here is a computed
+        // that blanks the whole timeline (Svelte-2 footgun), since polls render inside the virtual list.
+        (poll.options || []).map(({ title, votes_count: optionsVotesCount }, index) => ({
           title: emojifyText(escapeHtml(title), originalStatusEmojis, $autoplayGifs),
           share: votersOrVotesCount ? Math.round(optionsVotesCount / votersOrVotesCount * 100) : 0,
-          ownVote: poll.own_votes.includes(index)
+          ownVote: (poll.own_votes || []).includes(index)
         }))
       ),
       votersCount: ({ poll }) => poll.voters_count,
