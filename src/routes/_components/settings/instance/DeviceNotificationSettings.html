@@ -3,9 +3,15 @@
     <input type="checkbox" ref:master
            id="device-notifications-master"
            on:change="onMasterChange(event)">
-    {'intl.notifyOnThisDevice'}
     {#if multipleAccounts}
-      <Tooltip text="{'intl.pushOneAccountTrigger'}" tooltipText="{'intl.pushOneAccountPerDevice'}" />
+      {'intl.notifyOnThisDevicePre'}
+      <Tooltip
+        text="{'intl.notifyOnThisDeviceTrigger'}"
+        tooltipText="{'intl.pushOneAccountPerDevice'}"
+      />
+      {'intl.notifyOnThisDevicePost'}
+    {:else}
+      {'intl.notifyOnThisDevice'}
     {/if}
   </label>
 
