@@ -100,6 +100,40 @@ async function fetchTimelineItemsFromNetwork (instanceName, accessToken, timelin
     return items
   }
 }
+// Whether an automatic retry is worthwhile, read *before* the caller's catch marks the timeline
+// stale. We retry when the screen is blank (no summaries) OR when the shown content is already
+// stale (a cache-first prefill, or a previous failed fetch). We deliberately do NOT retry over
+// fresh, visible content — that stays untouched and only the 60s poll re-fetches it later.
+// A retry is purely another fetch(): no page reload. Its result is held behind "Show X more"
+// when the user has scrolled, or merged at the top on an initial load — never a scroll jump.
+function shouldRetryTimelineFetch (instanceName, timelineName) {
+  const summaries = store.getForTimeline(instanceName, timelineName, 'timelineItemSummaries')
+  if (!summaries || !summaries.length) {
+    return true // blank screen — nothing to show
+  }
+  return !!store.getForTimeline(instanceName, timelineName, 'timelineItemSummariesAreStale')
+}
+
+async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken, timelineName, lastTimelineItemId) {
+  const isSlowTimeline = timelineName.startsWith('list/') || timelineName.startsWith('tag/')
+  try {
+    return await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
+  } catch (e) {
+    // List/tag timelines are assembled per-list/-tag server-side; the *first* cold request
+    // frequently times out while the backend warms up (esp. GoToSocial), and a manual page
+    // refresh then succeeds. Do that refresh automatically — once — for transient network
+    // errors (timeout / failed fetch, no HTTP status) when the user is on a blank or stale
+    // view, so they recover in seconds instead of waiting for the 60s poll. If the retry also
+    // fails, the caller's catch handles the graceful fallback (empty/cached list, no toast).
+    const isTransient = isNetworkNoiseError(e) && !e.status
+    if (isSlowTimeline && isTransient && shouldRetryTimelineFetch(instanceName, timelineName)) {
+      console.warn('slow-timeline fetch failed, retrying once:', e.message || e)
+      return fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
+    }
+    throw e
+  }
+}
+
 async function addPagedTimelineItems (instanceName, timelineName, items) {
   console.log('addPagedTimelineItems, length:', items.length)
   mark('addPagedTimelineItemSummaries')
@@ -152,8 +186,7 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
     stale = true
   } else {
     try {
-      console.log('fetchTimelineItemsFromNetwork')
-      items = await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, itemId)
+      items = await fetchTimelineItemsFromNetworkWithRetry(instanceName, accessToken, timelineName, itemId)
       // DB write is for offline caching only — render immediately without waiting for it.
       /* no await */ storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
     } catch (e) {
