@@ -1006,6 +1006,18 @@ All these notification-state keys are now **per-instance** maps (`enableDesktopN
 
 `_actions/showDesktopNotification.js` (foreground sound only — legacy name), `_actions/stream/processMessage.js`, `_actions/pushSubscription.js` (registration, self-healing, circuit breaker), `_actions/promptForOSNotifications.js`, `_store/observers/notificationObservers.js` (favicon only now), `_components/settings/instance/DeviceNotificationSettings.html` + `PushNotificationSettings.html` + `NotificationFilterSettings.html`, `service-worker.js` (push / notificationclick). (`notificationContent.js` was removed with the foreground popup.)
 
+### History: the inherited system (pre-1.8.0)
+
+For context on *why* the current design looks the way it does — the system Zocial inherited from Enafore/Pinafore (state at the commit before the 1.8.0 rework). It already had the same three layers, but wired very differently: two of the three OS-facing behaviours lived together in **one count-driven observer**.
+
+- **Foreground popup + sound + favicon — all in `notificationObservers.js`**, driven by the store counter `numberOfNotifications`. When the counter *rose*: play `boop.mp3` (unless `disableNotificationSound`); if `enableDesktopNotifications` (a **single global boolean**) + `Notification.permission === 'granted'`, raise a **generic** `new Notification('Zocial', { body: '3 new notifications' })` (no actor, no content — just the delta count; click focused the window); set the alert favicon from `hasNotifications`. This was "System A" — the open tab raising its own OS popup. Being **counter-delta-driven**, a gap-fill after a reconnect could fire a **burst**, and the text was uninformative.
+- **Web Push ("System B")** already existed (Pinafore heritage): `_actions/pushSubscription.js` + `_api/pushSubscription.js` + the SW push handler + `PushNotificationSettings.html` per-type toggles — but governed by the same **global** `enableDesktopNotifications` boolean.
+- **In-app filter** (`NotificationFilterSettings.html`) — the per-type tab/badge filter (unchanged since).
+- **Master toggle** lived directly in `_pages/settings/general.html` as a plain checkbox bound to `$enableDesktopNotifications`; its `onDesktopNotificationsChange` requested permission and set the global boolean. There was **no `DeviceNotificationSettings.html`** (introduced in the rework) and **no separate sound section** — `disableNotificationSound` sat in the **Wellness** block.
+- **Unrelated namesake:** `_actions/setAccountNotified.js` + `_api/notify.js` are the per-account "🔔 notify me when this person posts" feature (Mastodon `follow` with `notify: true`) — nothing to do with OS notifications; just be aware "notification" means two different things in the codebase.
+
+**Why it was reworked.** The single global boolean gated System A and loosely coupled to push → conflation (and, once self-healing was added, the multi-account bugs fixed in 1.8.4). System A's popup was generic and counter-driven (bursts, no content, duplicated push). Two OS mechanisms (A popup + B push) under fuzzy control meant the toggle could read "on" while nothing worked, or both could fire. And sound wasn't its own setting. The rework (1.8.0→1.8.5) split the three layers cleanly, made OS notifications **push-only**, gave sound its own descriptive event-driven trigger + section, and made `enableDesktopNotifications` a **per-instance** push-intent flag with honest failure handling.
+
 ---
 
 ## 19. Log System
