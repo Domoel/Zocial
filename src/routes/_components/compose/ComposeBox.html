@@ -197,6 +197,7 @@
   import { postStatus, insertHandleForReply, setReplySpoiler, setReplyVisibility, applyDefaultLocalOnly } from '../../_actions/compose.js'
   import { classname } from '../../_utils/classname.js'
   import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
+  import { toast } from '../toast/toast.js'
   import IconButton from '../IconButton.html'
 
   export default {
@@ -329,16 +330,20 @@
         const mediaFocalPoints = media.map(_ => [_.focusX, _.focusY])
         const inReplyTo = inReplyToId || ((realm === 'home' || realm === 'dialog') ? null : realm)
 
-        if (overLimit || (!text && !media.length)) {
-          return // do nothing if invalid
-        }
-
         const hasPoll = poll && poll.options && poll.options.length
-        if (hasPoll) {
-          // validate poll
-          if (poll.options.length < 2 || !poll.options.every(Boolean)) {
-            return
-          }
+
+        if (overLimit) {
+          return // the length gauge already shows this, and the button is disabled when over limit
+        }
+        if (!text && !media.length && !hasPoll) {
+          // Nothing to post — give feedback instead of a silent dead click (the Toot button is not
+          // disabled for this case). Poll-only posts are valid, hence the !hasPoll.
+          /* no await */ toast.say('intl.cannotPostEmpty')
+          return
+        }
+        if (hasPoll && (poll.options.length < 2 || !poll.options.every(Boolean))) {
+          /* no await */ toast.say('intl.pollNeedsTwoOptions')
+          return
         }
 
         // convert internal poll format to the format Mastodon's REST API uses

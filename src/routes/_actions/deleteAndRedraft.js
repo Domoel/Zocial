@@ -5,15 +5,25 @@ import { store } from '../_store/store.js'
 import { database } from '../_database/database.js'
 
 export async function deleteAndRedraft (status) {
-  const deleteStatusPromise = doDeleteStatus(status.id)
+  // Do everything that can fail BEFORE the destructive delete: load the compose dialog component
+  // and resolve the reply handle. Otherwise, if redraft setup threw after the delete, the post
+  // would be gone with no dialog to recover it. After the delete below, only synchronous store
+  // writes + opening the already-loaded dialog remain.
   const dialogPromise = importShowComposeDialog()
-  const deletedStatus = await deleteStatusPromise
   let inReplyToHandle = null
   if (status.in_reply_to_id) {
-    const { currentInstance } = store.get()
-    const replyingTo = await database.getStatus(currentInstance, status.in_reply_to_id)
-    if (replyingTo) inReplyToHandle = '@' + replyingTo.account.acct
+    try {
+      const { currentInstance } = store.get()
+      const replyingTo = await database.getStatus(currentInstance, status.in_reply_to_id)
+      if (replyingTo) inReplyToHandle = '@' + replyingTo.account.acct
+    } catch (e) {
+      // Enrichment only — never block (or, post-delete, lose) the redraft over a reply-handle lookup.
+      console.warn('redraft: failed to resolve reply handle', (e && e.message) || e)
+    }
   }
+  const showComposeDialog = await dialogPromise
+
+  const deletedStatus = await doDeleteStatus(status.id)
   store.clearComposeData('dialog')
   store.setComposeData('dialog', {
     text: (deletedStatus.akkoma && deletedStatus.akkoma.source && deletedStatus.akkoma.source.content) || deletedStatus.text || statusHtmlToPlainText(status.content, status.mentions),
@@ -37,6 +47,5 @@ export async function deleteAndRedraft (status) {
     localOnly: status.local_only,
     quoteHandle: status.quote && '@' + status.quote.account.acct
   })
-  const showComposeDialog = await dialogPromise
   showComposeDialog()
 }

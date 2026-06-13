@@ -605,6 +605,8 @@ export default {
   unableToBookmark: 'Не удалось добавить в закладки: {error}',
   unableToUnbookmark: 'Не удалось удалить из закладок: {error}',
   cannotPostOffline: 'Вы не можете публиковать записи в офлайн-режиме',
+  cannotPostEmpty: 'Напишите что-нибудь или добавьте медиа перед публикацией.',
+  pollNeedsTwoOptions: 'Добавьте в опрос хотя бы два непустых варианта.',
   unableToPost: 'Не удалось опубликовать запись: {error}',
   statusDeleted: 'Запись удалена',
   unableToDelete: 'Не удалось удалить запись: {error}',

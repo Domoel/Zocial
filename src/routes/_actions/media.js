@@ -38,11 +38,18 @@ export async function doMediaUpload (realm, file) {
 
 export function deleteMedia (realm, i) {
   const composeMedia = store.getComposeData(realm, 'media')
+  const removed = composeMedia[i]
   composeMedia.splice(i, 1)
 
   store.setComposeData(realm, {
     media: composeMedia
   })
+  // Drop the cached blob for the removed attachment so it doesn't orphan in IndexedDB (only
+  // postStatus cleaned these up before). Safe if there was no cached file (e.g. redrafted media) —
+  // the delete is a no-op then.
+  if (removed && removed.data && removed.data.id) {
+    scheduleIdleTask(() => database.deleteCachedMediaFile(removed.data.id))
+  }
   if (!composeMedia.length) {
     const contentWarningShown = store.getComposeData(realm, 'contentWarningShown')
     const contentWarning = store.getComposeData(realm, 'contentWarning')

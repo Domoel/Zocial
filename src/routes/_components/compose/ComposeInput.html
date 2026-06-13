@@ -69,8 +69,6 @@
   import { throttleTimer } from '../../_utils/throttleTimer.js'
   import { isWebKit } from '../../_utils/userAgent/isWebKit.js'
 
-  const updateComposeTextInStore = throttleTimer(scheduleIdleTask)
-
   export default {
     oncreate () {
       this.setupSyncFromStore()
@@ -129,6 +127,9 @@
       },
       setupSyncToStore () {
         const { realm } = this.get()
+        // Per-instance throttle: a module-level shared one let a second compose box (e.g. the home
+        // sticky box + an open dialog) overwrite another's pending text save ("latest wins").
+        const updateComposeTextInStore = throttleTimer(scheduleIdleTask)
         this.observe('rawText', rawText => {
           updateComposeTextInStore(() => {
             mark('updateComposeTextInStore')

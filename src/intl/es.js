@@ -650,6 +650,8 @@ export default {
   unableToBookmark: 'No se puede poner marcador: {error}',
   unableToUnbookmark: 'No se puede quitar marcador: {error}',
   cannotPostOffline: 'No puedes publicar mientras estás sin conexión',
+  cannotPostEmpty: 'Escribe algo o añade contenido multimedia antes de publicar.',
+  pollNeedsTwoOptions: 'Dale a tu encuesta al menos dos opciones no vacías.',
   unableToPost: 'No se puede publicar el toot: {error}',
   statusDeleted: 'Toot borrado',
   unableToDelete: 'No se puede borrar el toot: {error}',

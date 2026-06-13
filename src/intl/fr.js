@@ -625,6 +625,8 @@ export default {
   unableToBookmark: "Impossible d'ajouter aux signets: {error}",
   unableToUnbookmark: "Impossible d'enlever des signets: {error}",
   cannotPostOffline: 'Vous ne pouvez pas poueter car vous êtes hors connexion',
+  cannotPostEmpty: 'Écrivez quelque chose ou ajoutez un média avant de publier.',
+  pollNeedsTwoOptions: 'Donnez à votre sondage au moins deux options non vides.',
   unableToPost: 'Impossible de poueter: {error}',
   statusDeleted: 'Pouet supprimé',
   unableToDelete: 'Impossible de supprimer: {error}',

@@ -49,11 +49,17 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
   try {
     await Promise.all(mediaMetadata.map(async ({ description, focalPoint }, i) => {
       description = description || ''
-      focalPoint = focalPoint || [0, 0]
+      focalPoint = (focalPoint || [0, 0]).slice() // copy so we don't mutate stored focal-point data
       focalPoint[0] = focalPoint[0] || 0
       focalPoint[1] = focalPoint[1] || 0
       if (description || focalPoint[0] || focalPoint[1]) {
-        return putMediaMetadata(currentInstance, accessToken, mediaIds[i], description, focalPoint)
+        // A failed metadata update (description / focal point) must not abort the whole post — the
+        // media is already uploaded. Log it and post anyway.
+        try {
+          await putMediaMetadata(currentInstance, accessToken, mediaIds[i], description, focalPoint)
+        } catch (e) {
+          console.warn('failed to update media metadata; posting anyway', (e && e.message) || e)
+        }
       }
     }))
     if (editId) {
