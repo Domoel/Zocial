@@ -31,6 +31,8 @@ A beautifully refined fediverse client — built for the edges of the Mastodon e
 
 <br>
 
+<img width="1176" height="auto" alt="preview" src="https://ztfr.eu/wp-content/uploads/2026/06/Zocial.avif" />
+
 ## ✨ What is Zocial?
 
 Zocial is a fork of [Enafore](https://github.com/enafore/enafore), itself born from the legendary Pinafore. Where Enafore focuses on broad compatibility, Zocial goes further — polishing rough edges, adding quality-of-life features, and tuning the experience for servers running **GoToSocial**, **Akkoma**, **glitch-soc**, **Iceshrimp**, and more.
