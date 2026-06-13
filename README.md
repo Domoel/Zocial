@@ -235,7 +235,7 @@ Zocial routes translation requests through the nginx container so no credentials
 
 ## 🛟 Support
 
-See the [user guide](docs/User-Guide.md) for general usage and the [admin guide](docs/Admin-Guide.md) if your instance has trouble connecting.
+See the [user guide](docs/User-Guide.md) for general usage and the [admin guide](docs/Admin-Guide.md) if your instance has trouble connecting. If you want to understand the underlying archtecture and the decision rationale behind it, just check out the [Architecture.md](docs/archtecture.md)
 
 For further support or to participate in development, join the [Zeitfresser Matrix Community](https://ztfr.eu/matrix) or the [Development & Support Channel](https://look.ztfr.eu/#/#support:ztfr.eu).
 
