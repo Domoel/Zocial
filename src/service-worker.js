@@ -215,16 +215,16 @@ self.addEventListener('push', event => {
           return
         }
 
-        const origin = basename(instanceName)
+        const instanceOrigin = basename(instanceName)
         const notification = await get(
-          `${origin}/api/v1/notifications/${data.notification_id}`,
+          `${instanceOrigin}/api/v1/notifications/${data.notification_id}`,
           {
             Authorization: `Bearer ${data.access_token}`
           },
           { timeout: 2000 }
         )
 
-        await showRichNotification(data, notification)
+        await showRichNotification(data, notification, instanceOrigin)
       } catch (e) {
         await showSimpleNotification(data)
       }
@@ -244,7 +244,7 @@ async function showSimpleNotification (data) {
   })
 }
 
-async function showRichNotification (data, notification) {
+async function showRichNotification (data, notification, instanceOrigin) {
   const { icon, body } = data
   const tag = notification.id
   const { origin } = self.location
@@ -304,7 +304,10 @@ async function showRichNotification (data, notification) {
         body,
         tag,
         data: {
-          instance: new URL(data.icon).origin,
+          // Use the instance API origin resolved from the push token (C+), NOT the avatar URL's
+          // origin — avatars often live on a separate media/CDN domain, which would send the
+          // reblog/favourite POST below (in notificationclick) to the wrong host.
+          instance: instanceOrigin,
           status_id: notification.status.id,
           access_token: data.access_token,
           url: origin + canonicalStatusUrl(notification.status)
