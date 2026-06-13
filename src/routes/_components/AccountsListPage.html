@@ -19,9 +19,20 @@
         {loadingMore ? 'intl.loading' : 'intl.loadMore'}
       </button>
     {/if}
+  {:else}
+    <!-- Loaded but nothing to show. A genuinely empty result, or a backend that doesn't expose
+         this list (e.g. GoToSocial returns an empty social graph for accounts other than your
+         own). Show a message instead of a blank page so it's clear the page isn't broken. -->
+    <p class="accounts-empty">{'intl.nothingToShow'}</p>
   {/if}
 </div>
 <style>
+  .accounts-empty {
+    padding: 30px 10px;
+    text-align: center;
+    font-size: 1.1em;
+    color: var(--deemphasized-text-color);
+  }
   .accounts-page {
     padding: 20px 20px;
     position: relative;

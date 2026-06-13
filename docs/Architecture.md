@@ -1391,6 +1391,16 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ---
 
+### [v1.9.0] Empty account lists show a message (and the GoToSocial social-graph limitation)
+
+**Decision:** `AccountsListPage` now renders an explicit "Nothing to show" message when a list loads empty, instead of a blank page. Applies to every account list (follows, followers, blocked, muted, requests, favourites, reblogs, reactions).
+
+**Context — why followers/follows of *other* profiles look empty (user-reported):** the page was blank, not broken. The client path is correct (`GET /api/v1/accounts/:id/followers` / `:id/following`, empty array handled). The empty result is a **GoToSocial backend behaviour**: GtS only exposes the follower/following collections for the **requesting user's own** account and returns an **empty array for any other account**, by design (social-graph privacy), regardless of that account's visibility settings. On Mastodon these lists populate normally (subject to the target's "hide social graph" setting). So this is not fixable client-side — but a blank page wrongly looked like a bug; the empty-state message makes the state legible.
+
+**Files:** `_components/AccountsListPage.html` (empty-state branch + `.accounts-empty`). No new i18n (reuses `intl.nothingToShow`).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
