@@ -751,6 +751,8 @@ Enable this to also include the description text below the title.`,
   loadMore: 'Load more',
   showCountMore: 'Show {count} more',
   nothingToShow: 'Nothing to show.',
+  couldNotLoadAccounts: "Couldn't load this list. Check your connection and try again.",
+  accountListUnavailable: "This list isn't available here — the account may keep it private, or your server doesn't have it.",
   // status thread page
   statusThreadPage: 'Thread page',
   status: 'Post',

@@ -612,6 +612,8 @@ export default {
   loadMore: 'Charger plus',
   showCountMore: 'Afficher {count} de plus',
   nothingToShow: 'Rien à afficher.',
+  couldNotLoadAccounts: 'Impossible de charger cette liste. Vérifiez votre connexion et réessayez.',
+  accountListUnavailable: "Cette liste n'est pas disponible ici — le compte la garde peut-être privée, ou votre serveur ne la possède pas.",
   // status thread page
   statusThreadPage: 'Page de discussion',
   status: 'Pouet',

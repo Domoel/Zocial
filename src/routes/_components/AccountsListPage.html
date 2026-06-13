@@ -20,10 +20,13 @@
       </button>
     {/if}
   {:else}
-    <!-- Loaded but nothing to show. A genuinely empty result, or a backend that doesn't expose
-         this list (e.g. GoToSocial returns an empty social graph for accounts other than your
-         own). Show a message instead of a blank page so it's clear the page isn't broken. -->
-    <p class="accounts-empty">{'intl.nothingToShow'}</p>
+    <!-- Loaded but nothing to show — explain WHY instead of a blank page:
+         - fetch failed                          → couldNotLoadAccounts
+         - the account reports a count > 0 but we got nothing → the list is private, or this
+           server doesn't have it (e.g. a remote account's graph, or GoToSocial restricting
+           other accounts' followers/following) → accountListUnavailable
+         - otherwise genuinely empty             → nothingToShow -->
+    <p class="accounts-empty">{emptyMessage}</p>
   {/if}
 </div>
 <style>
@@ -84,6 +87,7 @@
       try {
         await this.refreshAccounts()
       } catch (e) {
+        this.set({ errored: true })
         /* no await */ toast.say(formatIntl('intl.error', { error: (e.message || '') }))
       } finally {
         this.set({ loading: false })
@@ -102,11 +106,27 @@
       // assumeFollowing: seed each row as "following" before the real relationships load, so the
       // own Follows list shows "Unfollow" instantly with no flash. Only correct for your own list.
       assumeFollowing: false,
-      relationships: {}
+      relationships: {},
+      // true once a fetch failed, so the empty state can say "couldn't load" vs "nothing here".
+      errored: false,
+      // optional: the account's reported follower/following count (followers/follows pages). When
+      // it's > 0 but the list came back empty, the list is private or not held by this server.
+      expectedCount: null
     }),
     computed: {
       hasMore: ({ paginated, nextMaxId }) => paginated && !!nextMaxId,
-      verifyCredentials: ({ $currentVerifyCredentials }) => $currentVerifyCredentials
+      verifyCredentials: ({ $currentVerifyCredentials }) => $currentVerifyCredentials,
+      // Resolved by the {:else} (empty) branch only; returns a literal `intl.*` key so the
+      // svelte-intl-loader translates it at build time.
+      emptyMessage: ({ errored, expectedCount }) => {
+        if (errored) {
+          return 'intl.couldNotLoadAccounts'
+        }
+        if (expectedCount && expectedCount > 0) {
+          return 'intl.accountListUnavailable'
+        }
+        return 'intl.nothingToShow'
+      }
     },
     store: () => store,
     components: {
@@ -122,10 +142,10 @@
         const { accountsFetcher } = this.get()
         const result = await accountsFetcher()
         if (Array.isArray(result)) {
-          this.set({ accounts: result, paginated: false, nextMaxId: null })
+          this.set({ accounts: result, paginated: false, nextMaxId: null, errored: false })
           this.primeRelationships(result)
         } else {
-          this.set({ accounts: result.accounts, paginated: true, nextMaxId: result.nextMaxId })
+          this.set({ accounts: result.accounts, paginated: true, nextMaxId: result.nextMaxId, errored: false })
           this.primeRelationships(result.accounts)
         }
       },

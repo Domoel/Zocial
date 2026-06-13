@@ -1,6 +1,6 @@
 <ScrollToTopButton thresholdSelector=".dynamic-page-banner" label="{'intl.scrollToTop'}" />
 <DynamicPageBanner title="{'intl.follows'}" />
-<AccountsListPage {accountsFetcher} manageFollows={true} assumeFollowing={isOwnList} />
+<AccountsListPage {accountsFetcher} manageFollows={true} assumeFollowing={isOwnList} {expectedCount} />
 <script>
   import { getFollows } from '../../../_api/followsAndFollowers.js'
   import AccountsListPage from '../../../_components/AccountsListPage.html'
@@ -14,6 +14,11 @@
       // Only the *own* Follows list can assume everyone is followed (so it shows "Unfollow" with no
       // flash). On someone else's Follows list the real relationships drive each button instead.
       isOwnList: ({ $currentVerifyCredentials, accountId }) => !!($currentVerifyCredentials && $currentVerifyCredentials.id === accountId),
+      // The viewed account's following count — drives the "list unavailable" vs "nothing here"
+      // empty message. Only trust it when the loaded profile matches this page's account.
+      expectedCount: ({ $currentAccountProfile, accountId }) => (
+        ($currentAccountProfile && $currentAccountProfile.id === accountId) ? $currentAccountProfile.following_count : null
+      ),
       accountsFetcher: ({ $currentInstance, $accessToken, accountId }) => (maxId) => getFollows($currentInstance, $accessToken, accountId, maxId)
     },
     store: () => store,

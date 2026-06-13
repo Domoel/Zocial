@@ -1391,13 +1391,16 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ---
 
-### [v1.9.0] Empty account lists show a message (and the GoToSocial social-graph limitation)
+### [v1.9.0] Graded empty-state for account lists (legible "why is this empty?")
 
-**Decision:** `AccountsListPage` now renders an explicit "Nothing to show" message when a list loads empty, instead of a blank page. Applies to every account list (follows, followers, blocked, muted, requests, favourites, reblogs, reactions).
+**Decision:** `AccountsListPage` no longer renders a **blank page** when a list comes back empty — it shows a reason. Three cases (computed `emptyMessage`, returning a literal `intl.*` key so the loader translates it):
+- **fetch failed** → `couldNotLoadAccounts` ("Couldn't load … try again").
+- **the account reports a count > 0 but the list is empty** → `accountListUnavailable` ("This list isn't available here — the account may keep it private, or your server doesn't have it"). The followers/follows pages pass the viewed account's `followers_count` / `following_count` as `expectedCount` (guarded by `currentAccountProfile.id === accountId` so a stale profile can't mislead).
+- **genuinely empty** → `nothingToShow`.
 
-**Context — why followers/follows of *other* profiles look empty (user-reported):** the page was blank, not broken. The client path is correct (`GET /api/v1/accounts/:id/followers` / `:id/following`, empty array handled). The empty result is a **GoToSocial backend behaviour**: GtS only exposes the follower/following collections for the **requesting user's own** account and returns an **empty array for any other account**, by design (social-graph privacy), regardless of that account's visibility settings. On Mastodon these lists populate normally (subject to the target's "hide social graph" setting). So this is not fixable client-side — but a blank page wrongly looked like a bug; the empty-state message makes the state legible.
+**Context — why followers/follows of *other* profiles can look empty (user-reported):** the page was blank, not broken; the client path is correct (`GET /api/v1/accounts/:id/followers` / `:id/following`, empty array handled). A legitimately empty result has several causes, which is why the **count comparison** is the reliable signal rather than guessing one cause: (a) **remote accounts** — your instance doesn't hold a remote account's full social graph, so it returns few/none (confirmed: Mastodon returns the list fine for a *local* account); (b) the account **hides its social graph** (Mastodon setting); (c) **GoToSocial** only exposes followers/following for your *own* account and returns empty for others by design. **Explicit "this profile blocks you" is intentionally NOT detectable** — `blocked_by` isn't reliably exposed by the API — so it falls under the honest "not available" message rather than a false claim.
 
-**Files:** `_components/AccountsListPage.html` (empty-state branch + `.accounts-empty`). No new i18n (reuses `intl.nothingToShow`).
+**Files:** `_components/AccountsListPage.html` (`errored`/`expectedCount`, `emptyMessage`, `.accounts-empty`), `_pages/accounts/[accountId]/{follows,followers}.html` (`expectedCount`), `intl/*` (`couldNotLoadAccounts`, `accountListUnavailable`, all 5 languages).
 
 ---
 

@@ -1,6 +1,6 @@
 <ScrollToTopButton thresholdSelector=".dynamic-page-banner" label="{'intl.scrollToTop'}" />
 <DynamicPageBanner title="{'intl.followers'}" />
-<AccountsListPage {accountsFetcher} />
+<AccountsListPage {accountsFetcher} {expectedCount} />
 <script>
   import { getFollowers } from '../../../_api/followsAndFollowers.js'
   import AccountsListPage from '../../../_components/AccountsListPage.html'
@@ -11,6 +11,11 @@
   export default {
     computed: {
       accountId: ({ params }) => params.accountId,
+      // The viewed account's follower count — drives the "list unavailable" vs "nothing here"
+      // empty message. Only trust it when the loaded profile matches this page's account.
+      expectedCount: ({ $currentAccountProfile, accountId }) => (
+        ($currentAccountProfile && $currentAccountProfile.id === accountId) ? $currentAccountProfile.followers_count : null
+      ),
       accountsFetcher: ({ $currentInstance, $accessToken, accountId }) => (maxId) => getFollowers($currentInstance, $accessToken, accountId, maxId)
     },
     store: () => store,
