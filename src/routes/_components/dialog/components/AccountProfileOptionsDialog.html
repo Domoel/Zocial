@@ -90,8 +90,7 @@ export default {
       blockLabel, blocking, blockIcon, muteLabel, muteIcon,
       followLabel, followIcon, following, followRequested,
       accountId, verifyCredentialsId, username, isUser, showReblogsLabel,
-      domain, blockDomainLabel, reportLabel, notifying, followedBy,
-      $supportsRemoveFromFollowers, $lists
+      domain, blockDomainLabel, reportLabel, notifying, followedBy, $lists
     }) => ([
       !isUser && {
         key: 'mention',
@@ -123,7 +122,10 @@ export default {
         label: 'intl.backfill',
         icon: '#fa-clock'
       },
-      !isUser && followedBy && $supportsRemoveFromFollowers && {
+      // Shown for anyone who follows you. We deliberately do NOT pre-detect backend support
+      // (no Fediverse capability flag exists, and a software allowlist isn't maintainable) — the
+      // action degrades to a clear "not supported" toast on 404/501 instead.
+      !isUser && followedBy && {
         key: 'removeFollower',
         label: formatIntl('intl.removeFollowerAccount', { account: `@${username}` }),
         icon: '#fa-times'

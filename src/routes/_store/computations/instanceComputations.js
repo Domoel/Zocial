@@ -196,28 +196,6 @@ export function instanceComputations (store) {
   )
 
   store.compute(
-    'supportsRemoveFromFollowers',
-    ['currentInstanceInfo'],
-    (currentInstanceInfo) => {
-      // POST /api/v1/accounts/:id/remove_from_followers exists on Mastodon (and forks that keep the
-      // "mastodon" software name, e.g. glitch-soc) since 3.5.0, and on Hometown. Confirmed absent on
-      // GoToSocial (404). Gate on the authoritative nodeInfo software name rather than version-
-      // sniffing, and hide for anything unknown — so the "Remove from followers" menu item never
-      // appears where it can't work. (A 404/501 safety-net toast in the action covers a detection gap.)
-      if (
-        !currentInstanceInfo ||
-        typeof currentInstanceInfo.nodeInfo !== 'object' ||
-        currentInstanceInfo.nodeInfo === null
-      ) {
-        return false // no nodeInfo yet → don't show until we know the backend
-      }
-      const software = currentInstanceInfo.nodeInfo.software
-      const name = (software && typeof software.name === 'string') ? software.name.toLowerCase() : null
-      return name === 'mastodon' || name === 'hometown'
-    }
-  )
-
-  store.compute(
     'accessToken',
     ['currentInstanceData'],
     (currentInstanceData) =>
