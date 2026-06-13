@@ -491,7 +491,6 @@ export default {
   // Push notifications
   browserDoesNotSupportPush: 'Votre navigateur ne soutient pas les notifications push.',
   deniedPush: 'Vous avez désactivé les notifications push.',
-  pushNotificationsNote: 'Veuillez noter que les notifications push ne peuvent être activées que pour une instance à la fois.',
   pushSettings: 'Paramètres de notifications push',
   newFollowers: 'Suivants nouveaux',
   reblogs: 'Partages',

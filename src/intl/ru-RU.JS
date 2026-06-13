@@ -464,7 +464,6 @@ export default {
   // Push notifications
   browserDoesNotSupportPush: 'Ваш браузер не поддерживает push-уведомления.',
   deniedPush: 'Вы запретили показывать уведомления.',
-  pushNotificationsNote: 'Обратите внимание, что вы можете получать push-уведомления только для одного инстанса за раз.',
   pushSettings: 'Настройки push-уведомлений',
   newFollowers: 'Новые подписчики',
   reblogs: 'Продвижения',

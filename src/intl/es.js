@@ -503,7 +503,6 @@ export default {
   // Push notifications
   browserDoesNotSupportPush: 'Tu navegador no admite notificaciones Push.',
   deniedPush: 'Has denegado el permiso para mostrar notificaciones.',
-  pushNotificationsNote: 'Observa que solo puedes recibir notificaciones Push para una instancia al mismo tiempo.',
   pushSettings: 'Opciones para notificaciones Push',
   newFollowers: 'Nuevos seguidores',
   reblogs: 'Reenvíos',

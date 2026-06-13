@@ -607,7 +607,6 @@ Enable this to also include the description text below the title.`,
   // Push notifications
   browserDoesNotSupportPush: "Your browser doesn't support push notifications.",
   deniedPush: 'You have denied permission to show notifications.',
-  pushNotificationsNote: 'Note that you can only have push notifications for one instance at a time.',
   pushSettings: 'Push notification settings',
   newFollowers: 'New followers',
   reblogs: 'Boosts',

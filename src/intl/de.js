@@ -567,7 +567,6 @@ export default {
   // Push notifications
   browserDoesNotSupportPush: 'Dein Browser unterstützt keine Push-Benachrichtigungen.',
   deniedPush: 'Du hast es abgelehnt, Push-Benachrichtigungen anzuzeigen.',
-  pushNotificationsNote: 'Beachte, dass Du nur für jeweils eine Instanz Push-Benachrichtigungen anzeigen lassen kannst.',
   pushSettings: 'Einstellungen für Push-Benachrichtigungen',
   newFollowers: 'Neue Folgende',
   reblogs: 'Boosts',
