@@ -293,7 +293,6 @@
         const { aboutToPostStatus } = this.get()
         const { postingStatus } = this.store.get()
         if (aboutToPostStatus || postingStatus) { // do nothing if the user rapidly taps the Ctrl-Enter key
-          console.log('ignored post command', { aboutToPostStatus, postingStatus })
           return
         }
         // The reason we add a scheduleIdleTask delay here is because we also use scheduleIdleTask

@@ -56,12 +56,20 @@
   import { importShowTextConfirmationDialog } from '../../../_components/dialog/asyncDialogs/importShowTextConfirmationDialog.js'
   import { formatIntl } from '../../../_utils/formatIntl.js'
   import { toast } from '../../../_components/toast/toast.js'
+  import { observe } from 'svelte-extras'
 
   export default {
     oncreate () {
-      // Reconcile the master checkbox with the actual current state for this instance (a push
-      // subscription may already exist from a previous session, or push may already be enabled).
-      this.refs.master.checked = this.get().enabled
+      // Keep the master checkbox in sync with the actual push state for this instance — not only on
+      // mount (a subscription may already exist from a previous session) but also if it changes
+      // underneath us, e.g. push is silently given up after repeated re-registration failures
+      // (markPushUnavailable). onMasterChange drives `enabled` via the store, so this also reflects
+      // its optimistic revert / success. Observing the component computed auto-cleans on destroy.
+      this.observe('enabled', enabled => {
+        if (this.refs.master) {
+          this.refs.master.checked = enabled
+        }
+      })
     },
     store: () => store,
     computed: {
@@ -93,6 +101,7 @@
       )
     },
     methods: {
+      observe,
       async onMasterChange (event) {
         const { instanceName } = this.get()
 

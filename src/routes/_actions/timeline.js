@@ -18,9 +18,7 @@ import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.j
 import li from 'li'
 
 async function storeFreshTimelineItemsInDatabase (instanceName, timelineName, items) {
-  console.log('storeFreshTimelineItemsInDatabase start', timelineName)
   await database.insertTimelineItems(instanceName, timelineName, items)
-  console.log('storeFreshTimelineItemsInDatabase inserted', timelineName)
 }
 
 async function updateStatus_ (instanceName, accessToken, statusId) {
@@ -135,7 +133,6 @@ async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken
 }
 
 async function addPagedTimelineItems (instanceName, timelineName, items) {
-  console.log('addPagedTimelineItems, length:', items.length)
   mark('addPagedTimelineItemSummaries')
   const newSummaries = items.map(item => timelineItemToSummary(item, instanceName))
   await addPagedTimelineItemSummaries(instanceName, timelineName, newSummaries)
@@ -163,13 +160,11 @@ export async function addPagedTimelineItemSummaries (instanceName, timelineName,
 
 async function fetchPagedItems (instanceName, accessToken, timelineName) {
   const { timelineNextPageId } = store.get()
-  console.log('saved timelineNextPageId', timelineNextPageId)
   const { items, headers } = await getTimeline(instanceName, accessToken, timelineName, timelineNextPageId, null, TIMELINE_BATCH_SIZE)
   const linkHeader = headers.get('Link')
   const parsedLinkHeader = li.parse(linkHeader)
   const nextUrl = parsedLinkHeader && parsedLinkHeader.next
   const nextId = nextUrl && (new URL(nextUrl)).searchParams.get('max_id')
-  console.log('new timelineNextPageId', nextId)
   store.setForTimeline(instanceName, timelineName, { timelineNextPageId: nextId })
   await storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
   await addPagedTimelineItems(instanceName, timelineName, items)
@@ -224,7 +219,6 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
 }
 
 async function addTimelineItems (instanceName, timelineName, items, stale) {
-  console.log('addTimelineItems, length:', items.length)
   mark('addTimelineItemSummaries')
   const newSummaries = items.map(item => timelineItemToSummary(item, instanceName))
   addTimelineItemSummaries(instanceName, timelineName, newSummaries, stale)
@@ -255,7 +249,6 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
 }
 
 async function fetchTimelineItemsAndPossiblyFallBack (fresh, isInitialLoad) {
-  console.log('fetchTimelineItemsAndPossiblyFallBack')
   mark('fetchTimelineItemsAndPossiblyFallBack')
   const {
     currentTimeline,
@@ -326,7 +319,6 @@ async function prefillCurrentTimelineFromCache (instanceName, timelineName) {
 }
 
 export async function setupTimeline () {
-  console.log('setupTimeline')
   mark('setupTimeline')
   // If we don't have any item summaries, or if the current item summaries are stale
   // (i.e. via offline mode), then we need to re-fetch
@@ -338,7 +330,6 @@ export async function setupTimeline () {
     currentTimeline,
     currentInstance
   } = store.get()
-  console.log('setupTimeline state', { currentTimeline, timelineItemSummariesAreStale })
   // True when the store had no summaries for this timeline yet, i.e. this is a cold initial load
   // (not a refresh of already-displayed content). Captured before the cache-first prefill below
   // populates the store, so the fetch knows to merge directly instead of buffering.
@@ -371,10 +362,8 @@ export async function setupTimeline () {
 }
 
 export async function fetchMoreItemsAtBottomOfTimeline (instanceName, timelineName) {
-  console.log('setting runningUpdate: true')
   store.setForTimeline(instanceName, timelineName, { runningUpdate: true })
   await fetchTimelineItemsAndPossiblyFallBack()
-  console.log('setting runningUpdate: false')
   store.setForTimeline(instanceName, timelineName, { runningUpdate: false })
 }
 

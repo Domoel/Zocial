@@ -94,7 +94,6 @@ export class TimelineStream {
     if (this._closed) {
       return
     }
-    console.log('websocket readyState', this._ws && this._ws.readyState)
     if (!this._ws) {
       this._setupWebSocket()
     } else if (this._ws.readyState !== WebSocketClient.OPEN) {
@@ -107,30 +106,24 @@ export class TimelineStream {
   _onStateChange (event) {
     // pause websocket polling while the page is frozen; restore it on unfreeze or re-activation
     if (event.newState === 'frozen') {
-      console.log('frozen')
       this._pause()
     } else if (event.oldState === 'frozen' || event.newState === 'active') {
-      console.log(event.oldState === 'frozen' ? 'unfrozen' : 'active')
       this._ensureConnected()
     }
   }
 
   _onOnline () {
-    console.log('online')
     this._ensureConnected()
   }
 
   _onOffline () {
-    console.log('offline')
     this._pause() // in testing, it seems to work better to stop polling when we get this event
   }
 
   _onForcedOnlineStateChange (online) {
     if (online) {
-      console.log('online forced')
       this._ensureConnected()
     } else {
-      console.log('offline forced')
       this._pause()
     }
   }
