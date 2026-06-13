@@ -248,6 +248,67 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
   }
 }
 
+// Drop an account's already-cached posts from one in-memory timeline: the summaries + the "show
+// more" buffer carry `accountId` on each summary; freshUpdates holds raw statuses (account on
+// `.account.id`), so filter that shape too. The timeline merge is union-only and never unmerges, so
+// without this their old posts would linger until age-based cleanup.
+function purgeAccountFromTimelineInMemory (instanceName, timelineName, accountId) {
+  for (const key of ['timelineItemSummaries', 'timelineItemSummariesToAdd']) {
+    const arr = store.getForTimeline(instanceName, timelineName, key)
+    if (arr && arr.length) {
+      const filtered = arr.filter(summary => summary.accountId !== accountId)
+      if (filtered.length !== arr.length) {
+        store.setForTimeline(instanceName, timelineName, { [key]: filtered })
+      }
+    }
+  }
+  const fresh = store.getForTimeline(instanceName, timelineName, 'freshUpdates')
+  if (fresh && fresh.length) {
+    const filtered = fresh.filter(item => !(item.account && item.account.id === accountId))
+    if (filtered.length !== fresh.length) {
+      store.setForTimeline(instanceName, timelineName, { freshUpdates: filtered })
+    }
+  }
+}
+
+// Unfollow: purge the account from the HOME timeline only (in-memory + IndexedDB). Home is the feed
+// where "do I follow them" decides inclusion; local/federated show everyone regardless, and list
+// membership is independent of following.
+export async function removeAccountFromHomeTimeline (instanceName, accountId) {
+  if (!accountId) {
+    return
+  }
+  purgeAccountFromTimelineInMemory(instanceName, 'home', accountId)
+  try {
+    await database.deleteTimelineItemsForAccount(instanceName, 'home', accountId)
+  } catch (e) {
+    console.warn('failed to purge account posts from home timeline cache', (e && e.message) || e)
+  }
+}
+
+// Block: nothing from this account anywhere — purge EVERY cached timeline (home/local/federated/
+// tag/list/account + open threads), in-memory and from IndexedDB.
+export async function removeAccountFromAllTimelines (instanceName, accountId) {
+  if (!accountId) {
+    return
+  }
+  const timelineNames = new Set()
+  for (const key of ['timelineItemSummaries', 'timelineItemSummariesToAdd', 'freshUpdates']) {
+    for (const name of Object.keys(store.getAllTimelineData(instanceName, key))) {
+      timelineNames.add(name)
+    }
+  }
+  for (const timelineName of timelineNames) {
+    purgeAccountFromTimelineInMemory(instanceName, timelineName, accountId)
+  }
+  try {
+    // null timeline → all status timelines at once
+    await database.deleteTimelineItemsForAccount(instanceName, null, accountId)
+  } catch (e) {
+    console.warn('failed to purge account posts from timeline caches', (e && e.message) || e)
+  }
+}
+
 async function fetchTimelineItemsAndPossiblyFallBack (fresh, isInitialLoad) {
   mark('fetchTimelineItemsAndPossiblyFallBack')
   const {

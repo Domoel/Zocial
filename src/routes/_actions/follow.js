@@ -4,6 +4,7 @@ import { toast } from '../_components/toast/toast.js'
 import { updateLocalRelationship } from './accounts.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { emit } from '../_utils/eventBus.ts'
+import { removeAccountFromHomeTimeline } from './timeline.js'
 
 export async function setAccountFollowed (accountId, follow, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -15,6 +16,11 @@ export async function setAccountFollowed (accountId, follow, toastOnSuccess) {
       relationship = await unfollowAccount(currentInstance, accessToken, accountId)
     }
     await updateLocalRelationship(currentInstance, accountId, relationship)
+    if (!follow) {
+      // Unfollow: purge their already-cached posts from the home timeline (the server unmerges them
+      // server-side, but our union-only cache would otherwise keep the old ones around).
+      /* no await */ removeAccountFromHomeTimeline(currentInstance, accountId)
+    }
     if (toastOnSuccess) {
       /* no await */ toast.say(follow ? 'intl.followedAccount' : 'intl.unfollowedAccount')
     }

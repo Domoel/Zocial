@@ -1420,6 +1420,24 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
+### [v1.9.2] Purge an account's cached posts from home on unfollow/block
+
+**Decision:** Remove that account's already-cached posts from the timeline cache — both the in-memory summaries/buffer (vanish immediately, no refresh) and the IndexedDB timeline pointers (so a cache-first cold load doesn't resurrect them). **Scope differs by action:** **unfollow → HOME only**; **block → ALL cached status timelines** (home/local/federated/tag/list/account + open threads), because block means "nothing from them anywhere" while unfollow only affects your home feed.
+
+**Why (user-reported):** the timeline cache is **union-only** — `addTimelineItemSummaries` merges and never unmerges, so even a fresh network fetch (which the server returns *without* the unfollowed/blocked account, since it unmerges / hides server-side) gets merged back over the stale cache. The account's old posts therefore lingered until age-based cleanup, contrary to the user's (and the server's) expectation. Not intentional — a side effect of the merge-only model.
+
+**Design choices:**
+- **Unfollow = home only.** That's the feed where "do I follow them" decides inclusion; local/federated show everyone regardless, and list membership is independent of follow. **Block = everywhere:** `removeAccountFromAllTimelines` enumerates the instance's cached timelines via `getAllTimelineData` and filters each; the DB purge passes `timeline = null` to iterate the whole `status_timelines` store.
+- **Pointers, not bodies.** `deleteTimelineItemsForAccount` removes only the `status_timelines` entries; status bodies stay (they may be referenced by threads/notifications and age out via cleanup).
+- **`ACCOUNT_ID` match handles boosts correctly.** The stored timeline-entry status is the wrapper, whose `ACCOUNT_ID` is the *booster*; so this drops the account's own posts + their boosts, while keeping boosts of their content made by accounts you still follow (different `ACCOUNT_ID`). The in-memory filter uses the summary's `accountId` (same semantics); `freshUpdates` holds raw statuses so it's filtered on `account.id`.
+- Fired fire-and-forget after `updateLocalRelationship`; unblock/refollow don't purge (nothing to remove, and content won't return anyway).
+
+**Known scope limit:** thread *bodies* in the separate `threads` store and old *notifications* from a blocked account aren't purged (they refetch/hide server-side on next load, and blocked threads' in-memory `status/*` summaries are already filtered) — a possible follow-up if it matters.
+
+**Files:** `_database/timelines/deletion.js` (`deleteTimelineItemsForAccount`, optional `timeline` → all status timelines), `_actions/timeline.js` (`purgeAccountFromTimelineInMemory`, `removeAccountFromHomeTimeline`, `removeAccountFromAllTimelines`), `_actions/follow.js` (home purge on unfollow), `_actions/block.js` (all-timelines purge on block).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1453,6 +1471,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.8.14** | 2026-06-13 | Branch-wide review sweep: the OS-notifications master checkbox now stays in sync with the actual push state via a reactive `observe` (was set only on mount, could go stale after a silent push give-up). Removed remaining debug logging from the timeline, streaming, and compose paths |
 | **1.9.0** | 2026-06-13 | **Consolidated release.** Bundles the new notification system (rich Web Push, honest single-account model C + C+, in-app notifications + sound, full i18n) with a full code-review hardening pass across nine neuralgic subsystems (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters). Security: OAuth `state` CSRF protection on login. New: manage follows (follow/unfollow + "⋯" menu) directly from the Follows list, a scroll-to-top button on the follows/followers lists, and graded empty-state messages for account lists (legible "why is this empty?"). Correctness fixes incl. timeline-read crash from dangling pointers, IndexedDB connection leak, empty-filter catch-all, and list/tag cold-load auto-retry. See the §22 Code Review Log for the per-area outcomes |
 | **1.9.1** | 2026-06-13 | "Remove from followers" (Mastodon `remove_from_followers`) in the account "⋯" menu — shown for anyone who follows you, with a confirmation dialog (only the removed person can undo it). Backends without the endpoint show a clear "not supported" toast on use (deliberate show-then-toast rather than an unmaintainable capability allowlist — see §20) |
+| **1.9.2** | 2026-06-14 | Unfollow now purges that account's already-cached posts from the **home** timeline, and block purges them from **all** cached timelines (home/local/federated/tag/list/account) — in-memory and from IndexedDB — instead of letting them linger until age-cleanup (the timeline cache is union-only and never unmerged). Boosts of their content by accounts you still follow are kept |
 
 ---
 
