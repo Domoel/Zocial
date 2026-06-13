@@ -94,8 +94,9 @@
     async oncreate () {
       const params = new URLSearchParams(location.search)
       const code = params.get('code')
+      const state = params.get('state')
       if (code) {
-        await handleOauthCode(code)
+        await handleOauthCode(code, state)
       } else {
         this.store.set({ instanceNameInSearch: '' })
         this.set({

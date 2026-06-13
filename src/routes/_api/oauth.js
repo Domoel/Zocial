@@ -14,12 +14,13 @@ export function registerApplication (instanceName, redirectUri) {
   }, null, { timeout: WRITE_TIMEOUT })
 }
 
-export function generateAuthLink (instanceName, clientId, redirectUri) {
+export function generateAuthLink (instanceName, clientId, redirectUri, state) {
   const params = paramsString({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: SCOPES
+    scope: SCOPES,
+    state
   })
   return `${basename(instanceName)}/oauth/authorize?${params}`
 }

@@ -14,6 +14,10 @@ const persistedState = {
   currentInstance: null,
   currentRegisteredInstanceName: undefined,
   currentRegisteredInstance: undefined,
+  // OAuth CSRF token: generated before redirecting to the instance's authorize endpoint and
+  // verified against the `state` query param on the callback. Persisted so it survives the
+  // full-page redirect round-trip. See _actions/addInstance.js.
+  currentRegisteredInstanceState: undefined,
   // we disable scrollbars by default on iOS
   disableCustomScrollbars:
     ZOCIAL_IS_BROWSER && /iP(?:hone|ad|od)/.test(navigator.userAgent),

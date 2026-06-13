@@ -121,7 +121,10 @@ export async function logOutOfInstance (instanceName, message) {
   store.clearAutosuggestDataForInstance(instanceName)
   store.save()
   const { virtualListStore } = await importVirtualListStore()
-  virtualListStore.clearRealmByPrefix(currentInstance + '/') // TODO: this is a hacky way to clear the vlist cache
+  // Realms are keyed `<instance>/<timeline>` (see Timeline.html), so clear the realms of the
+  // instance being logged out — not currentInstance, which only coincides when you log out the
+  // active account. Logging out a background account previously cleared the wrong cache.
+  virtualListStore.clearRealmByPrefix(instanceName + '/') // TODO: this is a hacky way to clear the vlist cache
   toast.say(message)
   // wipe captured logs (incl. the persisted copy) so nothing is left behind on logout
   clearLogs()

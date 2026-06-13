@@ -24,6 +24,14 @@ function getRedirectUri () {
   return `${location.origin}/settings/instances/add`
 }
 
+// Random, unguessable OAuth state token (RFC 6749 §10.12) used to tie the authorize redirect
+// to its callback, so a forged/replayed callback that we didn't initiate is rejected.
+function generateOauthState () {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
+
 async function redirectToOauth () {
   let { instanceNameInSearch, loggedInInstances } = store.get()
   instanceNameInSearch = instanceNameInSearch.replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase()
@@ -43,15 +51,18 @@ async function redirectToOauth () {
     }
   }
   const instanceData = await registrationPromise
+  const oauthState = generateOauthState()
   store.set({
     currentRegisteredInstanceName: instanceNameInSearch,
-    currentRegisteredInstance: instanceData
+    currentRegisteredInstance: instanceData,
+    currentRegisteredInstanceState: oauthState
   })
   store.save()
   const oauthUrl = generateAuthLink(
     instanceNameInSearch,
     instanceData.client_id,
-    redirectUri
+    redirectUri,
+    oauthState
   )
   // setTimeout to allow the browser to *actually* save the localStorage data (fixes Safari bug apparently)
   setTimeout(() => {
@@ -100,6 +111,7 @@ async function registerNewInstance (code) {
     instanceNameInSearch: '',
     currentRegisteredInstanceName: null,
     currentRegisteredInstance: null,
+    currentRegisteredInstanceState: null,
     loggedInInstances,
     currentInstance: currentRegisteredInstanceName,
     loggedInInstancesInOrder,
@@ -114,9 +126,16 @@ async function registerNewInstance (code) {
   goto('/')
 }
 
-export async function handleOauthCode (code) {
+export async function handleOauthCode (code, state) {
   try {
     store.set({ logInToInstanceLoading: true })
+    // CSRF protection: the state returned by the instance must match the one we generated and
+    // saved before redirecting. A missing/mismatched state means this callback wasn't started by
+    // our own login flow (or was replayed/forged) — refuse it before exchanging the code.
+    const { currentRegisteredInstanceState } = store.get()
+    if (!currentRegisteredInstanceState || state !== currentRegisteredInstanceState) {
+      throw createKnownError('Invalid OAuth state — please start the login again')
+    }
     await registerNewInstance(code)
   } catch (err) {
     store.set({ logInToInstanceError: `${err.message || err.name}. Failed to connect to instance.` })
