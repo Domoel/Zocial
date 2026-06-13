@@ -17,7 +17,6 @@ class VirtualListStore extends RealmStore {
     }
     for (const key of realms.getAllKeys()) {
       if (key.startsWith(prefix)) {
-        console.log('deleted realm', key)
         realms.delete(key)
       }
     }

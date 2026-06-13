@@ -30,17 +30,14 @@
       const scrollContainer = getScrollContainer()
       if (scrollTop > 0) {
         this.observe('allVisibleItemsHaveHeight', allVisibleItemsHaveHeight => {
-          console.log('allVisibleItemsHaveHeight', allVisibleItemsHaveHeight)
           const { initializedScrollTop } = this.get()
           if (!initializedScrollTop && allVisibleItemsHaveHeight) {
             this.set({ initializedScrollTop: true })
             requestAnimationFrame(() => {
               mark('set scrollTop')
-              console.log('forcing scroll top to ', scrollTop)
               scrollContainer.scrollTop = scrollTop
               stop('set scrollTop')
               doubleRAF(() => {
-                console.log('initialized VirtualList (1)')
                 this.fire('initialized')
               })
             })
@@ -50,7 +47,6 @@
         this.fire('noNeedToScroll')
         this.observe('allVisibleItemsHaveHeight', allVisibleItemsHaveHeight => {
           if (allVisibleItemsHaveHeight) {
-            console.log('initialized VirtualList (2)')
             this.fire('initialized')
           }
         })
@@ -83,6 +79,10 @@
       },
       teardownScroll () {
         removeScrollListener(this.scrollListener)
+        // Cancel any pending trailing invocation so it can't fire after
+        // ondestroy() has reset currentRealm to null (which would write
+        // scrollTop/scrollHeight into a stale/null realm).
+        this.scrollListener.cancel()
       },
       setupFullscreen () {
         this.onFullscreenChange = this.onFullscreenChange.bind(this)
@@ -102,7 +102,6 @@
       },
       onFullscreenChange () {
         mark('onFullscreenChange')
-        console.log('is fullscreen? ', isFullscreen())
         this.set({ fullscreen: isFullscreen() })
         stop('onFullscreenChange')
       },
