@@ -106,7 +106,14 @@
       } finally {
         this.set({ loading: false })
       }
-      on('refreshAccountsList', this, () => this.refreshAccounts())
+      on('refreshAccountsList', this, () => {
+        // A failed refresh (e.g. transient network blip) shouldn't become an uncaught rejection;
+        // mark errored so the empty/error state can explain it. Network noise stays warn-level.
+        this.refreshAccounts().catch(e => {
+          this.set({ errored: true })
+          console.warn('failed to refresh accounts list:', (e && e.message) || e)
+        })
+      })
     },
     data: () => ({
       loading: true,

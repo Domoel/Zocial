@@ -5,6 +5,7 @@ import { updateLocalRelationship } from './accounts.js'
 import { emit } from '../_utils/eventBus.ts'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { removeAccountFromAllTimelines } from './timeline.js'
+import { isNetworkNoiseError } from '../_utils/isNetworkError.js'
 
 export async function setAccountBlocked (accountId, block, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -31,7 +32,13 @@ export async function setAccountBlocked (accountId, block, toastOnSuccess) {
     }
     emit('refreshAccountsList')
   } catch (e) {
-    console.error(e)
+    // Transient network failures are infrastructure noise, not bugs — log as warn so they don't
+    // show as a red error; the user still gets a toast.
+    if (isNetworkNoiseError(e)) {
+      console.warn(`${block ? 'block' : 'unblock'} failed:`, (e.message || e))
+    } else {
+      console.error(e)
+    }
     /* no await */ toast.say(block
       ? formatIntl('intl.unableToBlock', { block: !!block, error: (e.message || '') })
       : formatIntl('intl.unableToUnblock', { error: (e.message || '') })
