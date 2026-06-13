@@ -1,3 +1,4 @@
+<ScrollToTopButton thresholdSelector=".dynamic-page-banner" label="{'intl.scrollToTop'}" />
 <DynamicPageBanner title="{'intl.followers'}" />
 <AccountsListPage {accountsFetcher} />
 <script>
@@ -5,6 +6,7 @@
   import AccountsListPage from '../../../_components/AccountsListPage.html'
   import { store } from '../../../_store/store.js'
   import DynamicPageBanner from '../../../_components/DynamicPageBanner.html'
+  import ScrollToTopButton from '../../../_components/timeline/ScrollToTopButton.html'
 
   export default {
     computed: {
@@ -14,7 +16,8 @@
     store: () => store,
     components: {
       AccountsListPage,
-      DynamicPageBanner
+      DynamicPageBanner,
+      ScrollToTopButton
     }
   }
 </script>
