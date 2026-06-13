@@ -713,6 +713,7 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   nothingToShow: 'Nichts zum anzeigen.',
   couldNotLoadAccounts: 'Diese Liste konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.',
   accountListUnavailable: 'Diese Liste ist hier nicht verfügbar – das Profil hält sie evtl. privat, oder dein Server kennt sie nicht.',
+  accountListPartial: 'Zeige {shown} von {total} – den Rest liefert dein Server nicht.',
   // status thread page
   statusThreadPage: 'Seite für Tröt-Unterhaltung',
   status: 'Tröt',

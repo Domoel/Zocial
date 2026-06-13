@@ -594,6 +594,7 @@ export default {
   nothingToShow: 'Нечего показывать.',
   couldNotLoadAccounts: 'Не удалось загрузить список. Проверьте соединение и попробуйте снова.',
   accountListUnavailable: 'Этот список здесь недоступен — аккаунт может скрывать его, или у вашего сервера его нет.',
+  accountListPartial: 'Показано {shown} из {total} — остальное ваш сервер не предоставляет.',
   // status thread page
   statusThreadPage: 'Страница треда записи',
   status: 'Запись',

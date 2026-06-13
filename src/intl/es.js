@@ -639,6 +639,7 @@ export default {
   nothingToShow: 'Nada para mostrar.',
   couldNotLoadAccounts: 'No se pudo cargar esta lista. Comprueba tu conexión e inténtalo de nuevo.',
   accountListUnavailable: 'Esta lista no está disponible aquí: la cuenta puede mantenerla privada, o tu servidor no la tiene.',
+  accountListPartial: 'Mostrando {shown} de {total}: tu servidor no proporciona el resto.',
   // status thread page
   statusThreadPage: 'Página de hilo de toots',
   status: 'Toot',

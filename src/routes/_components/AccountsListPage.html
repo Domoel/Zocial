@@ -19,6 +19,13 @@
         {loadingMore ? 'intl.loading' : 'intl.loadMore'}
       </button>
     {/if}
+    {#if partialNotice}
+      <!-- The account reports more entries than we received, and the server offered no "next"
+           page (no Link header). Common on followers/follows of remote profiles, or backends that
+           don't expose the full social graph. There's no cursor to load more, so be honest about
+           it rather than silently showing a truncated list with no "Load more". -->
+      <p class="accounts-partial">{partialNotice}</p>
+    {/if}
   {:else}
     <!-- Loaded but nothing to show — explain WHY instead of a blank page:
          - fetch failed                          → couldNotLoadAccounts
@@ -34,6 +41,13 @@
     padding: 30px 10px;
     text-align: center;
     font-size: 1.1em;
+    color: var(--deemphasized-text-color);
+  }
+  .accounts-partial {
+    margin-top: 15px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.9em;
     color: var(--deemphasized-text-color);
   }
   .accounts-page {
@@ -126,6 +140,15 @@
           return 'intl.accountListUnavailable'
         }
         return 'intl.nothingToShow'
+      },
+      // Shown under a non-empty list that can't be paged further (no "next" from the server) yet
+      // the account's reported count is higher — so the user knows the rest exists but isn't
+      // available, instead of wondering why there's no "Load more".
+      partialNotice: ({ accounts, hasMore, expectedCount }) => {
+        if (hasMore || !accounts || !accounts.length || !expectedCount || expectedCount <= accounts.length) {
+          return ''
+        }
+        return formatIntl('intl.accountListPartial', { shown: accounts.length, total: expectedCount })
       }
     },
     store: () => store,
