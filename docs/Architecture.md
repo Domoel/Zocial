@@ -1376,7 +1376,7 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ## 21. Version History
 
-Brief changelog for understanding when features and architectural choices were introduced. Full release notes: https://git.ztfr.eu/Dome/Zocial/releases
+Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
 
 | Version | Date | Highlights |
 |---|---|---|
