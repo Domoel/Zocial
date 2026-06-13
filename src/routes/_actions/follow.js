@@ -38,10 +38,12 @@ export async function removeAccountFromFollowers (accountId) {
     emit('refreshAccountsList')
     /* no await */ toast.say('intl.removedFollower')
   } catch (e) {
-    console.error(e)
     if (e && (e.status === 404 || e.status === 501)) {
+      // Expected on backends that don't implement the endpoint — the toast informs the user, so
+      // this is not an error and must NOT be logged as one (it would show as a red ⛔ in the logs).
       /* no await */ toast.say('intl.removeFromFollowersNotSupported')
     } else {
+      console.error(e)
       /* no await */ toast.say(formatIntl('intl.error', { error: (e.message || '') }))
     }
   }
