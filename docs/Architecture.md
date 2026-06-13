@@ -1434,6 +1434,10 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 **Known scope limit:** thread *bodies* in the separate `threads` store and old *notifications* from a blocked account aren't purged (they refetch/hide server-side on next load, and blocked threads' in-memory `status/*` summaries are already filtered) — a possible follow-up if it matters.
 
+**Reverse-direction behaviour (intended, documented):**
+- **Unblock does NOT auto-restore.** Since block *deleted* the cached posts (in-memory + IDB pointers), restoring requires a network refetch — so the unblocked account reappears on the next timeline refresh (navigation / 60 s poll / streaming / reload), not the instant the block is lifted. We deliberately do **not** auto-refresh on unblock: the gain is small (unblock is rare) and a forced refresh would surface via the standard path anyway (direct at the top, "Show X more" when scrolled — never a mid-scroll jump). Reload/navigation brings them back.
+- **Refollow is treated like a fresh follow, not a restore.** We purge on unfollow and never re-add on follow, and the deleted home pointers mean cache-first can't resurrect the old entries. After a refollow the account's *recent* posts reappear only via the server's home backfill on the next fetch — exactly as when following someone new. This is the correct/expected behaviour (no stale pre-unfollow history snaps back).
+
 **Files:** `_database/timelines/deletion.js` (`deleteTimelineItemsForAccount`, optional `timeline` → all status timelines), `_actions/timeline.js` (`purgeAccountFromTimelineInMemory`, `removeAccountFromHomeTimeline`, `removeAccountFromAllTimelines`), `_actions/follow.js` (home purge on unfollow), `_actions/block.js` (all-timelines purge on block).
 
 ---
