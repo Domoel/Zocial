@@ -12,8 +12,7 @@ import {
   THREADS_STORE
 } from '../constants.js'
 import {
-  createThreadKeyRange,
-  createTimelineKeyRange
+  createThreadKeyRange
 } from '../keys.js'
 import { deleteAll } from '../utils.js'
 
@@ -85,30 +84,40 @@ export async function deleteStatusesAndNotifications (instanceName, statusIds, n
   })
 }
 
+// A status-timeline store key is `<timelineName>\u0000<reverseId>`. These match the timelines where
+// *being followed* gates inclusion — the home feed and lists — and exclude local/federated/tag/
+// account/thread feeds (which show posts regardless of whether you follow the author).
+function isHomeOrListKey (key) {
+  return typeof key === 'string' && (key.startsWith('home\u0000') || key.startsWith('list/'))
+}
+
 // Remove a given account's entries from the cached status timelines after unfollow/block, so their
-// already-cached posts don't linger (the timeline merge is union-only and never unmerges). Pass a
-// `timeline` ('home') to limit it to one feed (unfollow), or null/undefined to purge **all** status
-// timelines (block — nothing from them anywhere). Only the timeline *pointers* are removed; status
-// bodies stay (they may be referenced by threads/notifications and age out via cleanup). For a boost
-// the stored wrapper's ACCOUNT_ID is the booster, so this drops the account's own posts + their
-// boosts, and keeps boosts of their content made by accounts you still follow (different ACCOUNT_ID).
-export async function deleteTimelineItemsForAccount (instanceName, timeline, accountId) {
+// already-cached posts don't linger (the timeline merge is union-only and never unmerges). With
+// `{ homeAndListsOnly: true }` only the follow-gated feeds (home + every list, loaded or not) are
+// touched (unfollow); otherwise ALL status timelines are purged (block — nothing from them anywhere).
+// Only the timeline *pointers* are removed; status bodies stay (they may be referenced by threads/
+// notifications and age out via cleanup). For a boost the stored wrapper's ACCOUNT_ID is the booster,
+// so this drops the account's own posts + their boosts, and keeps boosts of their content made by
+// accounts you still follow (different ACCOUNT_ID).
+export async function deleteTimelineItemsForAccount (instanceName, accountId, { homeAndListsOnly = false } = {}) {
   if (!accountId) {
     return
   }
   const db = await getDatabase(instanceName)
   await dbPromise(db, [STATUS_TIMELINES_STORE, STATUSES_STORE], 'readwrite', (stores) => {
     const [statusTimelinesStore, statusesStore] = stores
-    const cursorReq = timeline
-      ? statusTimelinesStore.openCursor(createTimelineKeyRange(timeline))
-      : statusTimelinesStore.openCursor() // all status timelines
-    cursorReq.onsuccess = e => {
+    statusTimelinesStore.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (!cursor) {
         return
       }
-      const statusId = cursor.value
       const timelineKey = cursor.key
+      // Skip out-of-scope feeds cheaply (no status lookup) when limited to home + lists.
+      if (homeAndListsOnly && !isHomeOrListKey(timelineKey)) {
+        cursor.continue()
+        return
+      }
+      const statusId = cursor.value
       statusesStore.get(statusId).onsuccess = ev => {
         const status = ev.target.result
         if (status && status[ACCOUNT_ID] === accountId) {

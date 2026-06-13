@@ -278,9 +278,8 @@ export async function removeAccountFromFollowGatedTimelines (instanceName, accou
   if (!accountId) {
     return
   }
-  // home + every list: from loaded in-memory timelines, and from the known list set so even
-  // unloaded lists' IDB pointers get purged. Per-timeline (not whole-store) so we don't touch
-  // local/federated/tag/account.
+  // in-memory: home + every loaded list (unloaded lists hold no in-memory data, so they need no
+  // in-memory pass — the IDB purge below covers their cached pointers).
   const timelineNames = new Set(['home'])
   for (const key of ['timelineItemSummaries', 'timelineItemSummariesToAdd', 'freshUpdates']) {
     for (const name of Object.keys(store.getAllTimelineData(instanceName, key))) {
@@ -289,22 +288,15 @@ export async function removeAccountFromFollowGatedTimelines (instanceName, accou
       }
     }
   }
-  const instanceLists = store.get().instanceLists
-  for (const list of (instanceLists && instanceLists[instanceName]) || []) {
-    if (list && list.id) {
-      timelineNames.add('list/' + list.id)
-    }
-  }
-  // in-memory first (instant UI), then IndexedDB pointers (so cache-first doesn't resurrect them).
   for (const timelineName of timelineNames) {
     purgeAccountFromTimelineInMemory(instanceName, timelineName, accountId)
   }
-  for (const timelineName of timelineNames) {
-    try {
-      await database.deleteTimelineItemsForAccount(instanceName, timelineName, accountId)
-    } catch (e) {
-      console.warn('failed to purge account posts from ' + timelineName + ' cache', (e && e.message) || e)
-    }
+  // IndexedDB: purge home + ALL list pointers (loaded or not, this session or a previous one) via
+  // the home/lists key filter — no dependency on the (non-persisted) instanceLists being populated.
+  try {
+    await database.deleteTimelineItemsForAccount(instanceName, accountId, { homeAndListsOnly: true })
+  } catch (e) {
+    console.warn('failed to purge account posts from follow-gated timeline caches', (e && e.message) || e)
   }
 }
 
@@ -324,8 +316,8 @@ export async function removeAccountFromAllTimelines (instanceName, accountId) {
     purgeAccountFromTimelineInMemory(instanceName, timelineName, accountId)
   }
   try {
-    // null timeline → all status timelines at once
-    await database.deleteTimelineItemsForAccount(instanceName, null, accountId)
+    // no options → purge ALL status timelines
+    await database.deleteTimelineItemsForAccount(instanceName, accountId)
   } catch (e) {
     console.warn('failed to purge account posts from timeline caches', (e && e.message) || e)
   }
