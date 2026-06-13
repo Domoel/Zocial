@@ -15,7 +15,16 @@ export function processMessage (instanceName, timelineName, message) {
   }
   mark('processMessage')
   if (['update', 'notification', 'conversation', 'status.update'].includes(event)) {
-    payload = JSON.parse(payload) // only these payloads are JSON-encoded for some reason
+    // These payloads are double-JSON-encoded by Mastodon. Guard the parse so a single malformed
+    // frame can't throw out of the websocket onmessage handler (safeParse on the outer message
+    // does NOT cover this — it still throws on invalid JSON).
+    try {
+      payload = JSON.parse(payload)
+    } catch (e) {
+      console.warn('ignoring message with unparseable payload', event, (e && e.message) || e)
+      stop('processMessage')
+      return
+    }
   }
 
   switch (event) {

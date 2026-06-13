@@ -83,33 +83,41 @@ export class TimelineStream {
     this._closeWebSocket()
   }
 
-  _unpause () {
+  // Resume/restore the connection without redundant churn:
+  //  - no socket (we were paused/closed) -> create a fresh one
+  //  - have a socket that isn't open     -> reset the backoff and reconnect it
+  //  - already open                      -> no-op
+  // Replaces the old _unpause()+_tryToReconnect() pair, which on unfreeze/online fired *both*
+  // (recreating the socket and then immediately resetting it), and tore down a perfectly open
+  // socket on a spurious "online" event.
+  _ensureConnected () {
     if (this._closed) {
       return
     }
-    this._closeWebSocket()
-    this._setupWebSocket()
+    console.log('websocket readyState', this._ws && this._ws.readyState)
+    if (!this._ws) {
+      this._setupWebSocket()
+    } else if (this._ws.readyState !== WebSocketClient.OPEN) {
+      // reset the backoff counter so fresh notifications come in faster
+      this._ws.reset()
+      this._ws.reconnect()
+    }
   }
 
   _onStateChange (event) {
-    // when the page enters or exits a frozen state, pause or resume websocket polling
-    if (event.newState === 'frozen') { // page is frozen
+    // pause websocket polling while the page is frozen; restore it on unfreeze or re-activation
+    if (event.newState === 'frozen') {
       console.log('frozen')
       this._pause()
-    } else if (event.oldState === 'frozen') { // page is unfrozen
-      console.log('unfrozen')
-      this._unpause()
-    }
-    if (event.newState === 'active') { // page is reopened from a background tab
-      console.log('active')
-      this._tryToReconnect()
+    } else if (event.oldState === 'frozen' || event.newState === 'active') {
+      console.log(event.oldState === 'frozen' ? 'unfrozen' : 'active')
+      this._ensureConnected()
     }
   }
 
   _onOnline () {
     console.log('online')
-    this._unpause() // if we're not paused, then this is a no-op
-    this._tryToReconnect() // to be safe, try to reset and reconnect
+    this._ensureConnected()
   }
 
   _onOffline () {
@@ -120,20 +128,10 @@ export class TimelineStream {
   _onForcedOnlineStateChange (online) {
     if (online) {
       console.log('online forced')
-      this._unpause()
+      this._ensureConnected()
     } else {
       console.log('offline forced')
       this._pause()
-    }
-  }
-
-  _tryToReconnect () {
-    console.log('websocket readyState', this._ws && this._ws.readyState)
-    if (this._ws && this._ws.readyState !== WebSocketClient.OPEN) {
-      // if a websocket connection is not currently open, then reset the
-      // backoff counter to ensure that fresh notifications come in faster
-      this._ws.reset()
-      this._ws.reconnect()
     }
   }
 }
