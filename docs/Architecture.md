@@ -1374,6 +1374,23 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ---
 
+### [v1.9.0] Manage follows directly from the Follows list
+
+**Decision:** Add a profile-style **follow/unfollow button + "⋯" options menu** to each row of the **Follows** list (not the Followers list — that only shows who follows you, nothing to act on). Implemented as an opt-in `manageFollow` mode on the shared `AccountSearchResult`, driven by `AccountsListPage` (`manageFollows` / `assumeFollowing`).
+
+**Key UX choice — unfollow does NOT remove the row.** Clicking "Unfollow" flips the button to "Follow" in place and leaves the row visible; the account only disappears on the next visit (a fresh fetch). This lets a misclick be corrected immediately instead of the entry vanishing. Conversely, the list is *not* live-pruned — it reflects the server state at load time.
+
+**Rationale & details:**
+- The button reflects the **real** relationship (batch-fetched via `getRelationships`, one request per page), so it's also correct on *someone else's* Follows list (where you may not follow everyone). On your **own** list (`assumeFollowing`, i.e. `accountId === currentVerifyCredentials.id`) each row is optimistically seeded `following: true` so it shows "Unfollow" instantly with no "Follow"→"Unfollow" flash.
+- The "⋯" menu reuses the profile's `showAccountProfileOptionsDialog(account, relationship, verifyCredentials)` for identical behaviour; the relationship handed in reflects any local follow toggle.
+- The row is a link, so both controls `preventDefault()` + `stopPropagation()` (mirroring the existing icon-action path) to avoid navigating. Own-account rows never show the controls.
+
+**Scope:** existing `AccountSearchResult` callers (search, blocked/muted/requests icon-actions, reblogs/favorites) are unaffected — the follow controls render only under `manageFollow`, and relationships are fetched only under `manageFollows`. No new i18n strings (reuses the profile's follow/unfollow/options labels).
+
+**Files:** `_api/relationships.js` (`getRelationships` batch), `_components/search/AccountSearchResult.html` (`manageFollow` button + menu), `_components/AccountsListPage.html` (`manageFollows`/`assumeFollowing`, relationship prime/seed), `_pages/accounts/[accountId]/follows.html` (enable, own-list detection).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1405,7 +1422,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.8.12** | 2026-06-13 | Service worker review: push `mention` notifications now derive the instance API origin from the push-token lookup (C+) instead of the avatar URL — the reblog/favourite action buttons posted to the wrong host on instances whose avatars live on a separate media/CDN domain |
 | **1.8.13** | 2026-06-13 | Word-filter review: an empty filter phrase no longer builds a catch-all regex that silently hid the entire timeline (`createRegexFromFilters` drops empty expressions, falling back to a never-matching regex). Removed per-filter-change debug logging |
 | **1.8.14** | 2026-06-13 | Branch-wide review sweep: the OS-notifications master checkbox now stays in sync with the actual push state via a reactive `observe` (was set only on mount, could go stale after a silent push give-up). Removed remaining debug logging from the timeline, streaming, and compose paths |
-| **1.9.0** | 2026-06-13 | **Consolidated release.** Bundles the new notification system (rich Web Push, honest single-account model C + C+, in-app notifications + sound, full i18n) with a full code-review hardening pass across nine neuralgic subsystems (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters). Security: OAuth `state` CSRF protection on login. Correctness fixes incl. timeline-read crash from dangling pointers, IndexedDB connection leak, empty-filter catch-all, and list/tag cold-load auto-retry. See the §22 Code Review Log for the per-area outcomes |
+| **1.9.0** | 2026-06-13 | **Consolidated release.** Bundles the new notification system (rich Web Push, honest single-account model C + C+, in-app notifications + sound, full i18n) with a full code-review hardening pass across nine neuralgic subsystems (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters). Security: OAuth `state` CSRF protection on login. New: manage follows (follow/unfollow + "⋯" menu) directly from the Follows list. Correctness fixes incl. timeline-read crash from dangling pointers, IndexedDB connection leak, empty-filter catch-all, and list/tag cold-load auto-retry. See the §22 Code Review Log for the per-area outcomes |
 
 ---
 

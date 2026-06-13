@@ -7,6 +7,9 @@
         <AccountSearchResult
           {account}
           actions={accountActions}
+          manageFollow={manageFollows}
+          relationship={relationships[account.id]}
+          {verifyCredentials}
           on:click="onClickAction(event)"
         />
       {/each}
@@ -61,6 +64,7 @@
   import { toast } from './toast/toast.js'
   import { on } from '../_utils/eventBus.ts'
   import { formatIntl } from '../_utils/formatIntl.js'
+  import { getRelationships } from '../_api/relationships.js'
 
   // Fetchers may return either a plain array (no pagination) or { accounts, nextMaxId }
   // (paginated, "load more"). This keeps older callers working unchanged.
@@ -81,10 +85,17 @@
       accounts: [],
       nextMaxId: null,
       paginated: false,
-      accountActions: undefined
+      accountActions: undefined,
+      // manageFollows: render a follow/unfollow button + "⋯" menu per row (Follows list).
+      manageFollows: false,
+      // assumeFollowing: seed each row as "following" before the real relationships load, so the
+      // own Follows list shows "Unfollow" instantly with no flash. Only correct for your own list.
+      assumeFollowing: false,
+      relationships: {}
     }),
     computed: {
-      hasMore: ({ paginated, nextMaxId }) => paginated && !!nextMaxId
+      hasMore: ({ paginated, nextMaxId }) => paginated && !!nextMaxId,
+      verifyCredentials: ({ $currentVerifyCredentials }) => $currentVerifyCredentials
     },
     store: () => store,
     components: {
@@ -101,9 +112,39 @@
         const result = await accountsFetcher()
         if (Array.isArray(result)) {
           this.set({ accounts: result, paginated: false, nextMaxId: null })
+          this.primeRelationships(result)
         } else {
           this.set({ accounts: result.accounts, paginated: true, nextMaxId: result.nextMaxId })
+          this.primeRelationships(result.accounts)
         }
+      },
+      // For the manageable Follows list, get each row's relationship so the follow button + "⋯"
+      // menu are accurate. On your own list we optimistically seed "following: true" first (no
+      // flash of "Follow"), then refine with the real relationships for an accurate options menu.
+      primeRelationships (accts) {
+        const { manageFollows, assumeFollowing } = this.get()
+        if (!manageFollows || !accts || !accts.length) {
+          return
+        }
+        if (assumeFollowing) {
+          const seeded = Object.assign({}, this.get().relationships)
+          for (const a of accts) {
+            if (!seeded[a.id]) {
+              seeded[a.id] = { id: a.id, following: true }
+            }
+          }
+          this.set({ relationships: seeded })
+        }
+        const { currentInstance, accessToken } = this.store.get()
+        getRelationships(currentInstance, accessToken, accts.map(a => a.id))
+          .then(rels => {
+            const map = Object.assign({}, this.get().relationships)
+            for (const r of rels) {
+              map[r.id] = r
+            }
+            this.set({ relationships: map })
+          })
+          .catch(e => console.warn('failed to load relationships for accounts list', (e && e.message) || e))
       },
       async loadMore () {
         const { accountsFetcher, accounts, nextMaxId, loadingMore } = this.get()
@@ -116,6 +157,7 @@
           const more = Array.isArray(result) ? result : result.accounts
           const newMaxId = Array.isArray(result) ? null : result.nextMaxId
           this.set({ accounts: accounts.concat(more), nextMaxId: newMaxId, loadingMore: false })
+          this.primeRelationships(more)
         } catch (e) {
           this.set({ loadingMore: false })
           /* no await */ toast.say(formatIntl('intl.error', { error: (e.message || '') }))

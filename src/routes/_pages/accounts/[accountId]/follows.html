@@ -1,5 +1,5 @@
 <DynamicPageBanner title="{'intl.follows'}" />
-<AccountsListPage {accountsFetcher} />
+<AccountsListPage {accountsFetcher} manageFollows={true} assumeFollowing={isOwnList} />
 <script>
   import { getFollows } from '../../../_api/followsAndFollowers.js'
   import AccountsListPage from '../../../_components/AccountsListPage.html'
@@ -9,6 +9,9 @@
   export default {
     computed: {
       accountId: ({ params }) => params.accountId,
+      // Only the *own* Follows list can assume everyone is followed (so it shows "Unfollow" with no
+      // flash). On someone else's Follows list the real relationships drive each button instead.
+      isOwnList: ({ $currentVerifyCredentials, accountId }) => !!($currentVerifyCredentials && $currentVerifyCredentials.id === accountId),
       accountsFetcher: ({ $currentInstance, $accessToken, accountId }) => (maxId) => getFollows($currentInstance, $accessToken, accountId, maxId)
     },
     store: () => store,

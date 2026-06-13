@@ -9,7 +9,21 @@
     <div class="search-result-account-username">
       {'@' + account.acct}
     </div>
-    {#if actions && actions.length}
+    {#if showFollowControls}
+      <div class="search-result-account-buttons account-follow-controls">
+        <button class="account-follow-button" on:click="onFollowButtonClick(event)">
+          {followLabel}
+        </button>
+        <IconButton
+          className="account-follow-more-options-button"
+          label="{'intl.moreOptions'}"
+          href="#fa-ellipsis-v"
+          muted="true"
+          on:click="onMoreOptionsClick(event)"
+        />
+      </div>
+    {/if}
+    {#if !manageFollow && actions && actions.length}
       <div class="search-result-account-buttons">
         {#each actions as action}
           <IconButton
@@ -60,12 +74,36 @@
   :global(.search-result-account-buttons .icon-button:last-child) {
     margin-inline-end: 0;
   }
+  /* Follow/unfollow + "⋯" controls — mirror the profile's AccountProfileFollow look */
+  .account-follow-controls {
+    gap: 5px;
+    align-items: center;
+  }
+  .account-follow-button {
+    padding: 5px 12px;
+    font-size: 1em;
+    box-sizing: border-box;
+    height: 36px;
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  :global(.icon-button.icon-button.account-follow-more-options-button) {
+    border: 1px solid var(--button-border);
+    padding-inline: 6px;
+    height: 36px;
+    box-sizing: border-box;
+  }
   @media (max-width: 767px) {
     .search-result-account {
       grid-column-gap: 10px;
     }
     :global(.search-result-account-buttons .icon-button) {
       margin-inline-end: 10px;
+    }
+    .account-follow-button {
+      min-width: 84px;
     }
   }
 </style>
@@ -74,11 +112,45 @@
   import SearchResult from './SearchResult.html'
   import IconButton from '../IconButton.html'
   import AccountDisplayName from '../profile/AccountDisplayName.html'
+  import { store } from '../../_store/store.js'
+  import { setAccountFollowed } from '../../_actions/follow.js'
+  import { importShowAccountProfileOptionsDialog } from '../dialog/asyncDialogs/importShowAccountProfileOptionsDialog.js'
 
   export default {
     data: () => ({
-      actions: undefined
+      actions: undefined,
+      // manageFollow: render the profile-style follow/unfollow button + "⋯" menu (Follows list).
+      manageFollow: false,
+      relationship: undefined,
+      verifyCredentials: undefined,
+      // local override so an unfollow flips the button to "Follow" without removing the row;
+      // undefined = derive from the relationship prop.
+      localFollowing: undefined,
+      busy: false
     }),
+    store: () => store,
+    computed: {
+      // Only manageable rows for other accounts (never your own; never in the Followers list,
+      // which doesn't pass manageFollow).
+      showFollowControls: ({ manageFollow, account, verifyCredentials }) => !!(
+        manageFollow && account && verifyCredentials && account.id !== verifyCredentials.id
+      ),
+      following: ({ localFollowing, relationship }) => (
+        localFollowing !== undefined ? localFollowing : !!(relationship && relationship.following)
+      ),
+      requested: ({ localFollowing, relationship }) => (
+        localFollowing !== undefined ? false : !!(relationship && relationship.requested)
+      ),
+      followLabel: ({ busy, following, requested }) => {
+        if (busy) {
+          return (following || requested) ? 'intl.unfollowingLabel' : 'intl.requestingLabel'
+        }
+        if (requested) {
+          return 'intl.unrequestLabel'
+        }
+        return following ? 'intl.unfollowLabel' : 'intl.followLabel'
+      }
+    },
     methods: {
       onButtonClick (event, action, accountId) {
         event.preventDefault()
@@ -87,6 +159,29 @@
           action,
           accountId
         })
+      },
+      async onFollowButtonClick (event) {
+        event.preventDefault()
+        event.stopPropagation()
+        const { account, busy, following, requested } = this.get()
+        if (busy) {
+          return
+        }
+        const newFollowing = !(following || requested)
+        this.set({ busy: true })
+        // setAccountFollowed handles its own errors/toast and updates the stored relationship;
+        // optimistically flip the local state so the row stays put with the toggled label.
+        await setAccountFollowed(account.id, newFollowing)
+        this.set({ localFollowing: newFollowing, busy: false })
+      },
+      async onMoreOptionsClick (event) {
+        event.preventDefault()
+        event.stopPropagation()
+        const { account, relationship, verifyCredentials, following } = this.get()
+        // Reflect any local follow toggle in the relationship handed to the options dialog.
+        const effectiveRelationship = Object.assign({ id: account.id }, relationship, { following })
+        const showAccountProfileOptionsDialog = await importShowAccountProfileOptionsDialog()
+        showAccountProfileOptionsDialog(account, effectiveRelationship, verifyCredentials)
       }
     },
     components: {
