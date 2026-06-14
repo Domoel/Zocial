@@ -135,33 +135,35 @@ export default {
     <li><kbd>s</kbd> oder <kbd>/</kbd> zum Suchen</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> zur Startseite gehen</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> zu den Benachrichtigungen gehen</li>
-    <li><kbd>g</kbd> + <kbd>l</kbd> zur lokalen zeitleiste gehen</li>
-    <li><kbd>g</kbd> + <kbd>t</kbd> zur föderierten Zeitleiste gehen</li>
+    <li><kbd>g</kbd> + <kbd>l</kbd> zur lokalen Zeitleiste gehen</li>
     <li><kbd>g</kbd> + <kbd>b</kbd> zur Bubble-Zeitleiste gehen</li>
+    <li><kbd>g</kbd> + <kbd>t</kbd> zur föderierten Zeitleiste gehen</li>
     <li><kbd>g</kbd> + <kbd>c</kbd> zur Community-Seite gehen</li>
     <li><kbd>g</kbd> + <kbd>d</kbd> zur Seite mit Direktnachrichten gehen</li>
+    <li><kbd>g</kbd> + <kbd>i</kbd> zur Instanzen-Seite gehen</li>
     <li><kbd>h</kbd> oder <kbd>?</kbd> zum Umschalten des Hilfe-Dialogs</li>
     <li><kbd>Rückschritttaste</kbd> zurückgehen, Dialogfelder schließen</li>
   `,
   timelineHotkeys: `
     <li><kbd>j</kbd> oder <kbd>↓</kbd> nächsten Tröt ansteuern</li>
-    <li><kbd>k</kbd> oder <kbd>↑</kbd> den vorherigen Tröt ansteuern</li>
+    <li><kbd>k</kbd> oder <kbd>↑</kbd> vorherigen Tröt ansteuern</li>
     <li><kbd>.</kbd> neue Tröts anzeigen und nach oben scrollen</li>
     <li><kbd>o</kbd> Tröt öffnen</li>
-    <li><kbd>e</kbd> eigene Beiträge bearbeiten</li>
-    <li><kbd>q</kbd> einen Beitrag zitieren, falls unterstützt</li>
-    <li><kbd>Escape</kbd> Antwort schließen</li>
     <li><kbd>f</kbd> Tröt favorisieren</li>
     <li><kbd>b</kbd> Tröt boosten</li>
     <li><kbd>r</kbd> auf Tröt antworten</li>
+    <li><kbd>e</kbd> eigene Beiträge bearbeiten</li>
+    <li><kbd>q</kbd> einen Beitrag zitieren, falls unterstützt</li>
+    <li><kbd>Escape</kbd> Antwort schließen</li>
+    <li><kbd>a</kbd> mit Lesezeichen versehen</li>
     <li><kbd>i</kbd> Bilder, Videos oder Audio öffnen</li>
     <li><kbd>y</kbd> sensible Medieninhalte zeigen oder verbergen</li>
     <li><kbd>m</kbd> den Verfasser erwähnen</li>
     <li><kbd>p</kbd> das Profil des Verfassers öffnen</li>
     <li><kbd>l</kbd> den Link der Karte in einem neuen Tab öffnen</li>
-    <li><kbd>l</kbd> den Link des aktuellen Tröts in einem neuen Tab öffnen</li>
     <li><kbd>x</kbd> den Text hinter der Inhaltswarnung anzeigen oder verbergen</li>
-    <li><kbd>z</kbd> den Text hinter der Inhaltswarnung für alle in dieser Unterhaltung anzeigen oder verbergen</li>
+    <li><kbd>z</kbd> alle Inhaltswarnungen in einer Unterhaltung anzeigen oder verbergen</li>
+    <li><kbd>t</kbd> einen Beitrag übersetzen</li>
   `,
   mediaHotkeys: `
     <li><kbd>←</kbd> / <kbd>→</kbd> zum nächsten oder vorherigen Inhalt gehen</li>
@@ -633,7 +635,12 @@ export default {
   pollYouCreatedEnded: 'Eine von Dir erstellte Umfrage ist beendet',
   pollYouVotedEnded: 'Eine Umfrage, an der Du teilgenommen hast, ist beendet',
   reblogged: 'geboostet',
-  startedThread: 'hat einen Thread begonnen',
+  // Präsens-Verben nur für den Beitrags-Header ("{account} boostet/antwortet an {target}").
+  // Getrennt von `reblogged` (Bestätigungs-Ansage „Geboostet") und `replyToLower`
+  // (Substantiv im Boost-einer-Antwort-Fall „boostet Antwort an …").
+  boostsAction: 'boostet',
+  repliesTo: 'antwortet an',
+  startedThread: 'beginnt einen Thread',
   showSensitiveMedia: 'Sensible Inhalte zeigen',
   hideSensitiveMedia: 'Sensible Inhalte verbergen',
   clickToShowSensitive: 'Sensible Inhalte. Klicke zum Anzeigen.',
@@ -799,5 +806,96 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   // Snackbar UI
   updateAvailable: 'Update der App verfügbar',
   // Details
-  statusEdited: 'Edited'
+  statusEdited: 'Bearbeitet',
+
+  // --- Vervollständigung 2026-06-15: zuvor fehlende Keys (fielen auf Englisch zurück) ---
+  // Übersetzung
+  translationBrowserDefault: 'Browser-Standard',
+  translationLanguageUnavailable: 'Sprachliste nicht verfügbar – Übersetzungssprache folgt dem Browser-Standard',
+  translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
+  translateRateLimit: 'Du hast das Limit für Übersetzungen erreicht',
+  translateUnsupportedLanguage: 'Diese Sprache wird derzeit nicht unterstützt',
+  alreadyInTargetLanguage: 'Beitrag ist bereits in deiner Sprache',
+  translating: 'Wird übersetzt...',
+  hideTranslation: 'Übersetzung ausblenden',
+  // Beitrag / Zitate
+  quoteStatus: 'Beitrag zitieren',
+  rebloggedByAccount: '{account} hat {original} geboostet',
+  // Profil-Statistik
+  postingStatsOriginalTitle: '{count, plural, one {# Originalbeitrag} other {# Originalbeiträge}} ({percent})',
+  postingStatsRepliesTitle: '{count, plural, one {# Antwort} other {# Antworten}} ({percent})',
+  postingStatsBoostsTitle: '{count, plural, one {# Boost} other {# Boosts}} ({percent})',
+  // Follow / Abonnements
+  requestingLabel: 'Wird angefragt...',
+  subscribedAccount: 'Konto abonniert',
+  unsubscribedAccount: 'Konto nicht mehr abonniert',
+  unableToUnsubscribe: 'Abbestellen fehlgeschlagen: {error}',
+  subscriptions: 'Abonnierte Beiträge',
+  // Logs
+  clearLogs: 'Logs löschen',
+  clearLogsConfirm: 'Alle Logs löschen? Dies kann nicht rückgängig gemacht werden.',
+  logsCleared: 'Logs gelöscht',
+  // Thread / Einstellungen
+  threadPollingStart: 'Antworten automatisch aktualisieren (alle 30 s)',
+  threadPollingStop: 'Automatische Aktualisierung stoppen',
+  disableNotificationSound: 'Benachrichtigungstöne deaktivieren',
+  immediacy: 'Unmittelbarkeit',
+  composer: 'Verfassen',
+  filterNotificationsTextSingle: 'Kontoeinstellungen',
+  // Aktions-Texte im Beitrags-Header
+  moved: 'umgezogen nach',
+  bite: 'hat dich gebissen',
+  posted: 'gepostet',
+  favorited: 'favorisiert',
+  reactionCountsHidden: 'Reaktionsanzahl ausgeblendet',
+  // Themes (Eigennamen, wie die übrigen nicht übersetzt)
+  themeTangerine: 'Tangerine',
+  themeCohostLight: 'Cohost Light',
+  // Wortfilter
+  wordFilters: 'Wortfilter',
+  noFilters: 'Du hast keine Wortfilter.',
+  wordOrPhrase: 'Wort oder Ausdruck',
+  contexts: 'Kontexte',
+  addFilter: 'Filter hinzufügen',
+  addWordFilter: 'Wortfilter hinzufügen',
+  editFilter: 'Filter bearbeiten',
+  filterHome: 'Startseite und Listen',
+  filterNotifications: 'Benachrichtigungen',
+  filterPublic: 'Öffentliche Zeitleisten',
+  filterThread: 'Unterhaltungen',
+  filterAccount: 'Profile',
+  filterUnknown: 'Unbekannt',
+  expireAfter: 'Ablaufen nach',
+  whereToFilter: 'Wo filtern',
+  irreversible: 'Unwiderruflich',
+  wholeWord: 'Ganzes Wort',
+  save: 'Speichern',
+  updatedFilter: 'Filter aktualisiert',
+  createdFilter: 'Filter erstellt',
+  failedToModifyFilter: 'Filter konnte nicht geändert werden: {error}',
+  dropFiltersNotSupported: 'Dieser Server unterstützt keine unwiderruflichen (verwerfenden) Filter. Lass „Unwiderruflich“ deaktiviert, um passende Beiträge stattdessen hinter einer Warnung zu verbergen.',
+  deletedFilter: 'Filter gelöscht',
+  required: 'Erforderlich',
+  // Dialog- / Menü-Titel (aria)
+  profileOptions: 'Profiloptionen',
+  statusOptions: 'Beitragsoptionen',
+  copyLink: 'Link kopieren',
+  copy: 'Kopieren',
+  emoji: 'Emoji',
+  editMedia: 'Medien bearbeiten',
+  shortcutHelp: 'Tastenkürzel-Hilfe',
+  confirm: 'Bestätigen',
+  closeDialog: 'Dialog schließen',
+  postPrivacy: 'Sichtbarkeit des Beitrags',
+  localOnly: 'Nur lokal',
+  contentType: 'Inhaltstyp',
+  contentTypeLabel: 'Inhaltstyp ändern (aktuell {label})',
+  // Seitentitel / Timeline-Header (aria)
+  homeOnInstance: 'Startseite auf {instance}',
+  statusesTimelineOnInstance: 'Tröts: {timeline}-Zeitleiste auf {instance}',
+  statusesHashtag: 'Tröts: #{hashtag}-Hashtag',
+  statusesThread: 'Tröts: Thread',
+  statusesAccountTimeline: 'Tröts: Konto-Zeitleiste',
+  statusesList: 'Tröts: Liste',
+  notificationsOnInstance: 'Benachrichtigungen auf {instance}'
 }
