@@ -5,6 +5,9 @@
         <img class="not-logged-in-home-logo" src="/icons/icon-source.svg" alt="" />
       </div>
       <h1>{'intl.appName'}</h1>
+      <!-- TEMP root-store proof (remove after verifying M1b foundation). This component does NOT bind
+           the store; if the root store is inherited, $messages resolves and this shows "Log in". -->
+      <p style="color: red; font-weight: bold;">i18n root-store proof: [{$messages && $messages.logIn}]</p>
       <div class="not-logged-in-home-description">
         {@html 'intl.homeDescription'}
       </div>
