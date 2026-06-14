@@ -47,12 +47,15 @@
     },
     store: () => store,
     computed: {
-      navItemLabels: ({ $isUserLoggedIn }) => ({
-        settings: 'intl.settings',
-        'settings/about': 'intl.aboutApp',
-        'settings/general': 'intl.general',
-        'settings/instances': 'intl.instances',
-        'settings/instances/add': $isUserLoggedIn ? 'intl.addInstance' : 'intl.logIn'
+      // Resolve via the reactive $messages map (not bare 'intl.x', which the loader turns into a
+      // getMessage call that wouldn't re-run on a language switch) so the breadcrumb crumbs follow
+      // the live UI language.
+      navItemLabels: ({ $isUserLoggedIn, $messages }) => ({
+        settings: $messages.settings,
+        'settings/about': $messages.aboutApp,
+        'settings/general': $messages.general,
+        'settings/instances': $messages.instances,
+        'settings/instances/add': $isUserLoggedIn ? $messages.addInstance : $messages.logIn
       }),
       navItems: ({ page, navItemLabels }) => {
         const res = []

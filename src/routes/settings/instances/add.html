@@ -16,7 +16,7 @@
       pageComponent
     }),
     computed: {
-      titleName: ({ $isUserLoggedIn }) => $isUserLoggedIn ? 'intl.addInstance' : 'intl.logIn'
+      titleName: ({ $isUserLoggedIn, $messages }) => $isUserLoggedIn ? $messages.addInstance : $messages.logIn
     }
   }
 </script>

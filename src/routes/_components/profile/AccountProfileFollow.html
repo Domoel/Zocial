@@ -121,17 +121,17 @@
         return relationship && relationship.requested
       },
       requested: ({ following, followRequested }) => !following && followRequested,
-      label: ({ overrideLabel, blocking, requested, following }) => {
+      label: ({ overrideLabel, blocking, requested, following, $messages }) => {
         if (overrideLabel) {
-          return overrideLabel
+          return overrideLabel // already-resolved transient label set during a follow/unfollow action
         } else if (blocking) {
-          return 'intl.unblock'
+          return $messages.unblock
         } else if (requested) {
-          return 'intl.unrequestLabel'
+          return $messages.unrequestLabel
         } if (following) {
-          return 'intl.unfollowLabel'
+          return $messages.unfollowLabel
         } else {
-          return 'intl.followLabel'
+          return $messages.followLabel
         }
       },
       isOwnProfile: ({ account, verifyCredentials }) => !!(account && verifyCredentials && account.id === verifyCredentials.id),

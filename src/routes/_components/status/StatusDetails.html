@@ -214,21 +214,21 @@
       displayAbsoluteFormattedEditedDate: ({ editedAtDateTS, $isMobileSize }) => (
         ((editedAtDateTS || $isMobileSize) ? shortAbsoluteDateFormatter : absoluteDateFormatter)().format(editedAtDateTS)
       ),
-      reblogsLabel: ({ $disableReblogCounts, numReblogs }) => {
+      reblogsLabel: ({ $disableReblogCounts, numReblogs, $messages }) => {
         if ($disableReblogCounts) {
-          return 'intl.reblogCountsHidden'
+          return $messages.reblogCountsHidden
         }
         return formatIntl('intl.rebloggedTimes', { count: numReblogs })
       },
-      favoritesLabel: ({ $disableFavCounts, numFavs }) => {
+      favoritesLabel: ({ $disableFavCounts, numFavs, $messages }) => {
         if ($disableFavCounts) {
-          return 'intl.favoriteCountsHidden'
+          return $messages.favoriteCountsHidden
         }
         return formatIntl('intl.favoritedTimes', { count: numFavs })
       },
-      reactionsLabel: ({ $disableFavCounts, numReactions }) => {
+      reactionsLabel: ({ $disableFavCounts, numReactions, $messages }) => {
         if ($disableFavCounts) {
-          return 'intl.reactionCountsHidden'
+          return $messages.reactionCountsHidden
         }
         return formatIntl('intl.reactedTimes', { count: numReactions })
       },

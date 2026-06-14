@@ -137,16 +137,15 @@
     computed: {
       hasMore: ({ paginated, nextMaxId }) => paginated && !!nextMaxId,
       verifyCredentials: ({ $currentVerifyCredentials }) => $currentVerifyCredentials,
-      // Resolved by the {:else} (empty) branch only; returns a literal `intl.*` key so the
-      // svelte-intl-loader translates it at build time.
-      emptyMessage: ({ errored, expectedCount }) => {
+      // Resolved via the reactive $messages map so the empty/error text follows a live language switch.
+      emptyMessage: ({ errored, expectedCount, $messages }) => {
         if (errored) {
-          return 'intl.couldNotLoadAccounts'
+          return $messages.couldNotLoadAccounts
         }
         if (expectedCount && expectedCount > 0) {
-          return 'intl.accountListUnavailable'
+          return $messages.accountListUnavailable
         }
-        return 'intl.nothingToShow'
+        return $messages.nothingToShow
       },
       // Shown under a non-empty list that can't be paged further (no "next" from the server) yet
       // the account's reported count is higher — so the user knows the rest exists but isn't

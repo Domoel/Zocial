@@ -67,7 +67,7 @@
     store: () => store,
     computed: {
       disabled: ({ $postingStatus, overLimit }) => $postingStatus || overLimit,
-      label: ({ editId }) => editId ? 'intl.edit' : 'intl.postStatus'
+      label: ({ editId, $messages }) => editId ? $messages.edit : $messages.postStatus
     },
     components: {
       SvgIcon

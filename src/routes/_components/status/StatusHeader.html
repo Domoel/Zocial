@@ -239,15 +239,15 @@
           return null
         }
       },
-      actionText: ({ notificationInfo, status, inReplyToAccount, timelineType, timelineValue, matchingHashtag, isThreadBundle }) => {
+      actionText: ({ notificationInfo, status, inReplyToAccount, timelineType, timelineValue, matchingHashtag, isThreadBundle, $messages }) => {
         if (isThreadBundle) {
-          return 'intl.startedThread'
+          return $messages.startedThread
         } else if (status && status.reblog) {
-          return 'intl.reblogged'
+          return $messages.reblogged
         } else if (notificationInfo) {
           return notificationInfo.actionText
         } else if (inReplyToAccount) {
-          return 'intl.replyToLower'
+          return $messages.replyToLower
         } else if (matchingHashtag) {
           return '#' + matchingHashtag
         }

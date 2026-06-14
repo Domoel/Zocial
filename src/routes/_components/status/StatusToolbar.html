@@ -251,19 +251,19 @@
       reblogAnimation: REBLOG_ANIMATION
     }),
     computed: {
-      replyLabel: ({ inReplyToId }) => (
-        inReplyToId ? 'intl.replyToThread' : 'intl.reply'
+      replyLabel: ({ inReplyToId, $messages }) => (
+        inReplyToId ? $messages.replyToThread : $messages.reply
       ),
       replyIcon: ({ inReplyToId }) => inReplyToId ? '#fa-reply-all' : '#fa-reply',
       isUser: ({ originalAccountId, $currentVerifyCredentials }) => $currentVerifyCredentials && originalAccountId === $currentVerifyCredentials.id,
-      reblogLabel: ({ visibility, isUser }) => {
+      reblogLabel: ({ visibility, isUser, $messages }) => {
         switch (visibility) {
           case 'private':
-            return isUser ? 'intl.reblog' + ' (' + 'intl.followersOnly' + ')' : 'intl.cannotReblogFollowersOnly'
+            return isUser ? $messages.reblog + ' (' + $messages.followersOnly + ')' : $messages.cannotReblogFollowersOnly
           case 'direct':
-            return 'intl.cannotReblogDirectMessage'
+            return $messages.cannotReblogDirectMessage
           default:
-            return 'intl.reblog'
+            return $messages.reblog
         }
       },
       reblogIcon: ({ visibility, isUser }) => {

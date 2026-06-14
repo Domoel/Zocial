@@ -10,19 +10,18 @@
   import { setAccountMuted } from '../_actions/mute.js'
 
   export default {
-    data: () => ({
-      accountActions: [
+    computed: {
+      // accountActions is a computed (not data) so the button label follows a live language switch.
+      accountActions: ({ $messages }) => ([
         {
           icon: '#fa-volume-up',
-          label: 'intl.unmute',
+          label: $messages.unmute,
           onclick: (accountId) => setAccountMuted(accountId,
             /* mute */ false,
             /* notifications */ false,
             /* toastOnSuccess */ true)
         }
-      ]
-    }),
-    computed: {
+      ]),
       accountsFetcher: ({ $currentInstance, $accessToken }) => (maxId) => getMutedAccounts($currentInstance, $accessToken, maxId)
     },
     store: () => store,

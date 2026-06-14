@@ -116,7 +116,7 @@
       singleInstance: getSingleInstance()
     }),
     computed: {
-      pageLabel: ({ $isUserLoggedIn }) => $isUserLoggedIn ? 'intl.addInstance' : 'intl.logIn',
+      pageLabel: ({ $isUserLoggedIn, $messages }) => $isUserLoggedIn ? $messages.addInstance : $messages.logIn,
       instance: ({ $instanceNameInSearch }) => getSingleInstance() || $instanceNameInSearch
     },
     methods: {

@@ -1,4 +1,4 @@
-<Title name={parsedPage.title} />
+<Title name={pageTitle} />
 
 <LazyPage pageComponent={parsedPage.component} params={parsedPage.params} />
 
@@ -17,6 +17,9 @@
       Title
     },
     computed: {
+      // parsedPage is keyed only on `params` (not $messages) so a language switch never rebuilds it
+      // — which would remount the page component. It stores the title as a bare i18n KEY; the
+      // separate pageTitle computed resolves it via the reactive $messages map.
       parsedPage: ({ params }) => {
         const { statusParams } = params
         const statusId = statusParams[0]
@@ -26,7 +29,7 @@
             params: {
               statusId
             },
-            title: 'intl.status'
+            titleKey: 'status'
           }
         } if (statusParams.length === 2 && !statusParams[1].includes('.')) {
           const page = statusParams[1]
@@ -36,7 +39,7 @@
               params: {
                 statusId
               },
-              title: 'intl.favorites'
+              titleKey: 'favorites'
             }
           }
           if (page === 'reactions') {
@@ -45,7 +48,7 @@
               params: {
                 statusId
               },
-              title: 'intl.reactions'
+              titleKey: 'reactions'
             }
           }
           if (page === 'reblogs') {
@@ -54,7 +57,7 @@
               params: {
                 statusId
               },
-              title: 'intl.reblogs'
+              titleKey: 'reblogs'
             }
           }
         } else {
@@ -64,7 +67,7 @@
               statusId,
               fallbackUrl: 'https://' + statusParams.slice(1).map(e => encodeURI(e)).join('/')
             },
-            title: 'intl.status'
+            titleKey: 'status'
           }
         }
         return {
@@ -74,7 +77,8 @@
             message: 'Not found'
           }
         }
-      }
+      },
+      pageTitle: ({ parsedPage, $messages }) => parsedPage.titleKey ? $messages[parsedPage.titleKey] : ''
     }
   }
 </script>

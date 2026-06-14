@@ -69,22 +69,22 @@
     store: () => store,
     computed: {
       filters: ({ instanceName, $instanceFilters }) => $instanceFilters[instanceName] || [],
-      formattedFilters: ({ filters }) => filters.map(filter => ({
+      formattedFilters: ({ filters, $messages }) => filters.map(filter => ({
         ...filter,
         formattedContexts: listFormat().format(filter.context.map(context => {
           switch (context) {
             case 'home':
-              return 'intl.filterHome'
+              return $messages.filterHome
             case 'notifications':
-              return 'intl.filterNotifications'
+              return $messages.filterNotifications
             case 'public':
-              return 'intl.filterPublic'
+              return $messages.filterPublic
             case 'thread':
-              return 'intl.filterThread'
+              return $messages.filterThread
             case 'account':
-              return 'intl.filterAccount'
+              return $messages.filterAccount
             default:
-              return 'intl.filterUnknown'
+              return $messages.filterUnknown
           }
         }))
       }))

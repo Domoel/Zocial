@@ -10,16 +10,15 @@
   import { setAccountBlocked } from '../_actions/block.js'
 
   export default {
-    data: () => ({
-      accountActions: [
+    computed: {
+      // accountActions is a computed (not data) so the button label follows a live language switch.
+      accountActions: ({ $messages }) => ([
         {
           icon: '#fa-unlock',
-          label: 'intl.unblock',
+          label: $messages.unblock,
           onclick: (accountId) => setAccountBlocked(accountId, false, true)
         }
-      ]
-    }),
-    computed: {
+      ]),
       accountsFetcher: ({ $currentInstance, $accessToken }) => (maxId) => getBlockedAccounts($currentInstance, $accessToken, maxId)
     },
     store: () => store,

@@ -391,26 +391,25 @@
     },
     store: () => store,
     computed: {
-      themeTitle: ({ $loggedInInstancesInOrder, $currentInstance }) => (
+      themeTitle: ({ $loggedInInstancesInOrder, $currentInstance, $messages }) => (
         $loggedInInstancesInOrder.length > 1
           ? formatIntl('intl.themeForInstance', { instance: $currentInstance })
-          : 'intl.theme'
+          : $messages.theme
       ),
       translationLanguagesAvailable: ({ $translationLanguages, $currentInstance }) => {
         const langs = $translationLanguages && $translationLanguages[$currentInstance]
         return Array.isArray(langs) && langs.length > 0
       },
-      translationLanguageOptions: ({ $translationLanguages, $currentInstance }) => {
-        // NB: a simple intl string (no placeholders) is inlined as a plain string by
-        // svelte-intl-loader, so it must NOT be wrapped in formatIntl (which expects an AST).
-        const base = [{ value: '', label: 'intl.translationBrowserDefault' }]
+      translationLanguageOptions: ({ $translationLanguages, $currentInstance, $messages }) => {
+        // Resolve via the reactive $messages map so the default option follows a live language switch.
+        const base = [{ value: '', label: $messages.translationBrowserDefault }]
         const langs = $translationLanguages && $translationLanguages[$currentInstance]
         if (!Array.isArray(langs)) return base
         return base.concat(langs.map(l => ({ value: l.code, label: l.name })))
       },
       // local-only posts are only available when the current instance advertises support
       localOnlySupported: ({ $currentSupportedToggles }) => !!($currentSupportedToggles && $currentSupportedToggles.local_only),
-      localOnlyHint: ({ localOnlySupported }) => (localOnlySupported ? '' : 'intl.localOnlyUnsupported')
+      localOnlyHint: ({ localOnlySupported, $messages }) => (localOnlySupported ? '' : $messages.localOnlyUnsupported)
     },
     data: () => ({
       singleInstance: getSingleInstance(),

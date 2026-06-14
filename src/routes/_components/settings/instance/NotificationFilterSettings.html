@@ -13,42 +13,45 @@
     NOTIFICATION_POLLS,
     NOTIFICATION_SUBSCRIPTIONS
   } from '../../../_static/instanceSettings.js'
+  import { store } from '../../../_store/store.js'
 
   export default {
-    data: () => ({
-      options: [
+    store: () => store,
+    computed: {
+      // Resolve via the reactive $messages map so the labels follow a live language switch.
+      options: ({ $messages }) => ([
         {
           key: NOTIFICATION_FOLLOWS,
-          label: 'intl.newFollowers',
+          label: $messages.newFollowers,
           defaultValue: true
         },
         {
           key: NOTIFICATION_FAVORITES,
-          label: 'intl.favorites',
+          label: $messages.favorites,
           defaultValue: true
         },
         {
           key: NOTIFICATION_REBLOGS,
-          label: 'intl.reblogs',
+          label: $messages.reblogs,
           defaultValue: true
         },
         {
           key: NOTIFICATION_MENTIONS,
-          label: 'intl.mentions',
+          label: $messages.mentions,
           defaultValue: true
         },
         {
           key: NOTIFICATION_POLLS,
-          label: 'intl.pollResults',
+          label: $messages.pollResults,
           defaultValue: true
         },
         {
           key: NOTIFICATION_SUBSCRIPTIONS,
-          label: 'intl.subscriptions',
+          label: $messages.subscriptions,
           defaultValue: true
         }
-      ]
-    }),
+      ])
+    },
     components: {
       GenericInstanceSettings
     }

@@ -19,21 +19,20 @@
   }
 
   export default {
-    data: () => ({
-      accountActions: [
+    computed: {
+      // accountActions is a computed (not data) so the button labels follow a live language switch.
+      accountActions: ({ $messages }) => ([
         {
           icon: '#fa-check',
-          label: 'intl.approve',
+          label: $messages.approve,
           onclick: (accountId) => setFollowRequestApprovedOrRejected(accountId, true, true)
         },
         {
           icon: '#fa-times',
-          label: 'intl.reject',
+          label: $messages.reject,
           onclick: (accountId) => setFollowRequestApprovedOrRejected(accountId, false, true)
         }
-      ]
-    }),
-    computed: {
+      ]),
       accountsFetcher: ({ $currentInstance, $accessToken }) => async () => {
         const followReqs = await getFollowRequests($currentInstance, $accessToken)
         updateFollowReqsCount($currentInstance, followReqs)

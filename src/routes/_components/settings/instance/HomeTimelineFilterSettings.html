@@ -6,22 +6,25 @@
 <script>
   import GenericInstanceSettings from './GenericInstanceSettings.html'
   import { HOME_REBLOGS, HOME_REPLIES } from '../../../_static/instanceSettings.js'
+  import { store } from '../../../_store/store.js'
 
   export default {
-    data: () => ({
-      options: [
+    store: () => store,
+    computed: {
+      // Resolve via the reactive $messages map so the labels follow a live language switch.
+      options: ({ $messages }) => ([
         {
           key: HOME_REBLOGS,
-          label: 'intl.showReblogs',
+          label: $messages.showReblogs,
           defaultValue: true
         },
         {
           key: HOME_REPLIES,
-          label: 'intl.showReplies',
+          label: $messages.showReplies,
           defaultValue: true
         }
-      ]
-    }),
+      ])
+    },
     components: {
       GenericInstanceSettings
     }

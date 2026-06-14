@@ -141,14 +141,14 @@
       requested: ({ localFollowing, relationship }) => (
         localFollowing !== undefined ? false : !!(relationship && relationship.requested)
       ),
-      followLabel: ({ busy, following, requested }) => {
+      followLabel: ({ busy, following, requested, $messages }) => {
         if (busy) {
-          return (following || requested) ? 'intl.unfollowingLabel' : 'intl.requestingLabel'
+          return (following || requested) ? $messages.unfollowingLabel : $messages.requestingLabel
         }
         if (requested) {
-          return 'intl.unrequestLabel'
+          return $messages.unrequestLabel
         }
-        return following ? 'intl.unfollowLabel' : 'intl.followLabel'
+        return following ? $messages.unfollowLabel : $messages.followLabel
       }
     },
     methods: {

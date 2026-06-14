@@ -197,37 +197,37 @@
         listsLength + staticPinnablesLength
       ),
 
-      staticPinnables: ({ $bubbleTimelineEnabled }) => [
+      staticPinnables: ({ $bubbleTimelineEnabled, $messages }) => [
         {
           href: '/local',
-          label: 'intl.localTimeline',
+          label: $messages.localTimeline,
           icon: '#fa-users'
         },
         ...($bubbleTimelineEnabled
           ? [{
               href: '/bubble',
-              label: 'intl.bubbleTimeline',
+              label: $messages.bubbleTimeline,
               icon: '#fa-circle'
             }]
           : []),
         {
           href: '/federated',
-          label: 'intl.federatedTimeline',
+          label: $messages.federatedTimeline,
           icon: '#fa-globe'
         },
         {
           href: '/favorites',
-          label: 'intl.favorites',
+          label: $messages.favorites,
           icon: '#fa-star'
         },
         {
           href: '/direct',
-          label: 'intl.directMessages',
+          label: $messages.directMessages,
           icon: '#fa-envelope'
         },
         {
           href: '/bookmarks',
-          label: 'intl.bookmarks',
+          label: $messages.bookmarks,
           icon: '#fa-bookmark'
         }
       ]

@@ -132,7 +132,7 @@
       overLimit: ({ $maxMediaDescChars, length }) => length > $maxMediaDescChars,
       url: ({ media, index }) => get(media, [index, 'data', 'url']),
       mediaId: ({ media, index }) => get(media, [index, 'data', 'id']),
-      extractButtonText: ({ extracting }) => extracting ? 'intl.extractingText' : 'intl.extractText',
+      extractButtonText: ({ extracting, $messages }) => extracting ? $messages.extractingText : $messages.extractText,
       extractButtonLabel: ({ extractButtonText, extractionProgress, extracting }) => {
         if (extracting) {
           return formatIntl('intl.extractingTextCompletion', { percent: Math.round(extractionProgress) })

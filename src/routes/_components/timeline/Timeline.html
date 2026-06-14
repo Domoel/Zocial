@@ -123,11 +123,11 @@
           case 'tag':
             return formatIntl('intl.statusesHashtag', { hashtag: timelineValue })
           case 'status':
-            return 'intl.statusesThread'
+            return $messages.statusesThread
           case 'account':
-            return 'intl.statusesAccountTimeline'
+            return $messages.statusesAccountTimeline
           case 'list':
-            return 'intl.statusesList'
+            return $messages.statusesList
           case 'notifications':
             return formatIntl('intl.notificationsOnInstance', { instance: $currentInstance })
         }
@@ -165,8 +165,8 @@
           : `/${timeline}`
         return !Array.isArray($pinnedPagesForInstance) || !$pinnedPagesForInstance.includes(pageUrl)
       },
-      scrollToTopLabel: ({ timelineType }) => (
-        timelineType === 'status' ? 'intl.scrollToTopOfConversation' : 'intl.scrollToTop'
+      scrollToTopLabel: ({ timelineType, $messages }) => (
+        timelineType === 'status' ? $messages.scrollToTopOfConversation : $messages.scrollToTop
       )
     },
     store: () => store,

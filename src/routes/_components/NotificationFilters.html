@@ -6,22 +6,25 @@
 />
 <script>
   import TabSet from './TabSet.html'
+  import { store } from '../_store/store.js'
 
   export default {
-    data: () => ({
-      tabs: [
+    store: () => store,
+    computed: {
+      // Resolve via the reactive $messages map so the tab labels follow a live language switch.
+      tabs: ({ $messages }) => ([
         {
           name: '',
-          label: 'intl.all',
+          label: $messages.all,
           href: '/notifications'
         },
         {
           name: 'mentions',
-          label: 'intl.mentions',
+          label: $messages.mentions,
           href: '/notifications/mentions'
         }
-      ]
-    }),
+      ])
+    },
     components: {
       TabSet
     }

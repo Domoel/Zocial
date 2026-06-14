@@ -67,7 +67,7 @@
     store: () => store,
     computed: {
       following: ({ tagInfo }) => tagInfo && tagInfo.following,
-      label: ({ following, overrideLabel }) => overrideLabel || following ? 'intl.unfollowLabel' : 'intl.followLabel'
+      label: ({ following, overrideLabel, $messages }) => overrideLabel || following ? $messages.unfollowLabel : $messages.followLabel
     },
     data: () => ({
       tagInfo: null,
