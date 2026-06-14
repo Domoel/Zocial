@@ -2,16 +2,12 @@
 
 import * as sapper from '../__sapper__/server.js'
 import express from 'express'
-import { store } from './routes/_store/store.js'
 
 const { PORT = 4002 } = process.env
 const app = express()
 
 app.use(express.static('static'))
-// Provide the app-wide store as the root store so every component inherits `$`-access (e.g. the
-// reactive `$messages` i18n map) without each binding it individually. Same singleton on the
-// client (see client.js); on the server it runs with browser guards off.
-app.use(sapper.middleware({ store: () => store }))
+app.use(sapper.middleware())
 
 app.listen(PORT, () => console.log(`listening on port ${PORT}`))
 
