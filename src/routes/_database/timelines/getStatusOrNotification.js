@@ -25,7 +25,7 @@ export async function getStatus (instanceName, id) {
 
 export async function getNotification (instanceName, id) {
   if (hasInCache(notificationsCache, instanceName, id)) {
-    return getInCache(notificationsCache, instanceName, id)
+    return cloneDeep(getInCache(notificationsCache, instanceName, id))
   }
   const db = await getDatabase(instanceName)
   const storeNames = [NOTIFICATIONS_STORE, STATUSES_STORE, ACCOUNTS_STORE]
@@ -33,6 +33,6 @@ export async function getNotification (instanceName, id) {
     const [notificationsStore, statusesStore, accountsStore] = stores
     fetchNotification(notificationsStore, statusesStore, accountsStore, id, callback)
   })
-  setInCache(notificationsCache, instanceName, id, result)
+  setInCache(notificationsCache, instanceName, id, cloneDeep(result))
   return result
 }

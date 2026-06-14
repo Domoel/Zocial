@@ -105,7 +105,13 @@ export function deleteDatabase(instanceName: string) {
     const req = indexedDB.deleteDatabase(instanceName)
     req.onsuccess = () => resolve()
     req.onerror = () => reject(req.error)
-    req.onblocked = () => console.error(`database ${instanceName} blocked`)
+    // Another open connection (e.g. a second tab) blocks the delete. The request stays pending and
+    // completes once that connection closes, but we must not hang the caller (logout / clear data)
+    // forever waiting on it — resolve best-effort and let the actual delete finish in the background.
+    req.onblocked = () => {
+      console.warn(`database ${instanceName} delete blocked by another connection; continuing`)
+      resolve()
+    }
   })
     .then(() => deleteKnownInstance(instanceName))
     .then(() => clearAllCaches(instanceName))

@@ -24,6 +24,7 @@ function byUsesThenName (a, b) {
 export function doHashtagSearch (searchText) {
   const { currentInstance, accessToken } = store.get()
   const requestThrottler = new RequestThrottler(searchHashtags)
+  let canceled = false
 
   async function searchHashtags (signal) {
     const results = await search(
@@ -35,6 +36,12 @@ export function doHashtagSearch (searchText) {
   scheduleIdleTask(async () => {
     try {
       const results = await requestThrottler.request()
+      // The throttler rejects in-flight requests on cancel, but a request that resolved in the
+      // tiny window just before cancel() could still write stale results over a newer search;
+      // the flag closes that gap (matching the account/emoji autosuggest searches).
+      if (canceled) {
+        return
+      }
       store.setForCurrentAutosuggest({
         autosuggestType: 'hashtag',
         autosuggestSelected: 0,
@@ -52,6 +59,7 @@ export function doHashtagSearch (searchText) {
 
   return {
     cancel: () => {
+      canceled = true
       requestThrottler.cancel()
     }
   }

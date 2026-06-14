@@ -17,7 +17,6 @@ function filterItemIdsFromTimelines (instanceName, timelineFilter, idFilter) {
       }
       const filteredSummaries = summaries.filter(summaryFilter)
       if (!isEqual(summaries, filteredSummaries)) {
-        console.log('deleting an item from timelineName', timelineName, 'for key', key)
         store.setForTimeline(instanceName, timelineName, {
           [key]: filteredSummaries
         })
@@ -49,7 +48,6 @@ async function deleteStatusesAndNotifications (instanceName, statusIdsToDelete, 
 }
 
 async function doDeleteStatus (instanceName, statusId) {
-  console.log('deleting statusId', statusId)
   const rebloggedIds = await getIdsThatRebloggedThisStatus(instanceName, statusId)
   const statusIdsToDelete = Array.from(new Set([statusId].concat(rebloggedIds).filter(Boolean)))
   const notificationIdsToDelete = Array.from(new Set(await getNotificationIdsForStatuses(instanceName, statusIdsToDelete)))
