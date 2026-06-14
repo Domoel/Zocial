@@ -39,7 +39,12 @@
       const { data } = this.get()
       const node = this.refs.node
       requestPostAnimationFrame(() => {
-        if (!node || !data) {
+        // requestPostAnimationFrame can't be cancelled, so this can still fire after the item was
+        // destroyed (fast scroll out of the realm window before the frame). A destroyed item's node
+        // is detached but still truthy, and getBoundingClientRect() on it returns 0 — writing
+        // height:0 for this id would corrupt the offset maths and hide it on re-entry until
+        // re-measured. isConnected is false once detached, so skip the stale write.
+        if (!node || !node.isConnected || !data) {
           return
         }
         mark('VirtualListItem gBCR')
