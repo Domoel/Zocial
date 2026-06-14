@@ -123,9 +123,11 @@ export default {
     <li><kbd>g</kbd> + <kbd>h</kbd> главная</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> уведомления</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> локальная лента</li>
+    <li><kbd>g</kbd> + <kbd>b</kbd> лента «Пузырь»</li>
     <li><kbd>g</kbd> + <kbd>t</kbd> глобальная лента</li>
     <li><kbd>g</kbd> + <kbd>c</kbd> сообщество</li>
     <li><kbd>g</kbd> + <kbd>d</kbd> личные сообщения</li>
+    <li><kbd>g</kbd> + <kbd>i</kbd> страница инстансов</li>
     <li><kbd>h</kbd> или <kbd>?</kbd> диалог справки</li>
     <li><kbd>Backspace</kbd> закрыть диалог, чтобы вернуться назад</li>
   `,
@@ -137,6 +139,10 @@ export default {
     <li><kbd>f</kbd> в избранное</li>
     <li><kbd>b</kbd> продвинуть</li>
     <li><kbd>r</kbd> ответить</li>
+    <li><kbd>e</kbd> редактировать свои записи</li>
+    <li><kbd>q</kbd> цитировать запись, если поддерживается</li>
+    <li><kbd>Escape</kbd> закрыть ответ</li>
+    <li><kbd>a</kbd> в закладки</li>
     <li><kbd>i</kbd> открыть изображения, видео или аудио</li>
     <li><kbd>y</kbd> показать или скрыть деликатное медиа</li>
     <li><kbd>m</kbd> упомянуть автора</li>
@@ -144,6 +150,7 @@ export default {
     <li><kbd>l</kbd> открыть ссылку карточки в новой вкладке</li>
     <li><kbd>x</kbd> показать или скрыть текст за предупреждением о содержимом</li>
     <li><kbd>z</kbd> показать или скрыть все предупреждения о содержимом в треде</li>
+    <li><kbd>t</kbd> перевести запись</li>
   `,
   mediaHotkeys: `
     <li><kbd>←</kbd> / <kbd>→</kbd> перейти к следующему или предыдущему</li>
@@ -721,5 +728,177 @@ export default {
   statusesList: 'Записи: список',
   notificationsOnInstance: 'Уведомления на {instance}',
   // Details
-  statusEdited: 'Edited'
+  statusEdited: 'Изменено',
+
+  // --- Дополнено 2026-06-15: ранее отсутствующие ключи (использовался английский) ---
+  homeMultiInstance: `
+    <p>
+      Войдите в инстанс, чтобы начать:
+    </p>
+  `,
+  account: 'Аккаунт',
+  start: 'Начать',
+  stop: 'Остановить',
+  reactions: 'Реакции',
+  bubble: 'Пузырь',
+  bubbleTimeline: 'Лента «Пузырь»',
+  bubbleTimelineNotLoggedIn: 'Ваша лента «Пузырь» появится здесь после входа.',
+  bubbleTimelineNotSupported: 'Лента «Пузырь» не поддерживается вашим инстансом.',
+  accountNotLoggedIn: 'Настройки аккаунта появятся здесь после входа.',
+  filtered: 'Отфильтровано',
+  youVotedFor: 'Вы проголосовали за',
+  fourteenDays: '14 дней',
+  thirtyDays: '30 дней',
+  oneYear: '1 год',
+  schedulePost: 'Запланировать запись',
+  removeSchedule: 'Убрать планирование',
+  scheduleSet: 'Запланировать',
+  scheduleDateTimeLabel: 'Отправить в',
+  scheduleTooSoon: 'Запланированное время должно быть не менее чем через 5 минут',
+  scheduledStatusCreated: 'Запись запланирована',
+  scheduledPosts: 'Запланированные записи',
+  noScheduledPosts: 'Нет запланированных записей',
+  cancelScheduledPost: 'Отменить',
+  rescheduleLabel: 'Перепланировать',
+  scheduledPostCancelled: 'Запланированная запись отменена',
+  scheduledPostRescheduled: 'Перепланировано',
+  backfill: 'Загрузить недостающие записи',
+  createList: 'Создать список',
+  unableToCreateList: 'Не удалось создать список: {error}',
+  listTitle: 'Название списка',
+  manageInLists: 'Управление участием в списках',
+  listMembership: 'Участие в списках для {account}',
+  noListsYet: 'Списков пока нет',
+  errorInListMembership: 'Ошибка обновления участия в списке',
+  listMembershipNotSupported: 'Не поддерживается этим сервером',
+  translateStatus: 'Перевести запись',
+  translated: `Запись переведена с {from}{detected, select,
+    true { - Определено}
+    other {}
+  }`,
+  translation: 'Перевод',
+  translationTargetLanguage: 'Язык перевода',
+  translationBrowserDefault: 'По умолчанию (браузер)',
+  translationLanguageUnavailable: 'Список языков недоступен — язык перевода соответствует языку браузера',
+  translateError: 'Произошла ошибка при переводе этой записи',
+  translateRateLimit: 'Вы достигли лимита переводов',
+  translateUnsupportedLanguage: 'Этот язык сейчас не поддерживается',
+  alreadyInTargetLanguage: 'Запись уже на вашем языке',
+  translating: 'Перевод...',
+  hideTranslation: 'Скрыть перевод',
+  reactToStatus: 'Отреагировать на запись',
+  quoteStatus: 'Цитировать запись',
+  joined: 'Регистрация',
+  postingStatsSummary: 'Последние {posts} за {duration}',
+  postingStatsPosts: '{total, plural, one {# запись} few {# записи} many {# записей} other {# записи}}',
+  postingStatsDays: '{days, plural, one {# день} few {# дня} many {# дней} other {# дня}}',
+  postingStatsYears: '{years, plural, one {# год} few {# года} many {# лет} other {# года}}',
+  postingStatsOriginal: 'Оригинальные',
+  postingStatsReplies: 'Ответы',
+  postingStatsBoosts: 'Продвижения',
+  postingStatsOriginalTitle: '{count, plural, one {# оригинальная запись} few {# оригинальные записи} many {# оригинальных записей} other {# оригинальные записи}} ({percent})',
+  postingStatsRepliesTitle: '{count, plural, one {# ответ} few {# ответа} many {# ответов} other {# ответа}} ({percent})',
+  postingStatsBoostsTitle: '{count, plural, one {# продвижение} few {# продвижения} many {# продвижений} other {# продвижения}} ({percent})',
+  scrollToTopOfConversation: 'Прокрутить к началу обсуждения',
+  scrollToTop: 'Прокрутить вверх',
+  unrequestLabel: 'Отменить запрос',
+  unfollowingLabel: 'Отписка...',
+  unblockingLabel: 'Разблокировка...',
+  unrequestingLabel: 'Отмена...',
+  requestingLabel: 'Запрос...',
+  locked: 'Этот аккаунт закрыт. Владелец вручную одобряет подписчиков.',
+  logs: 'Журналы',
+  showAllLogs: 'Показать все журналы (отладка и инфо)',
+  showAllLogsHint: 'По умолчанию показываются только предупреждения и ошибки. Включите это, чтобы также видеть журналы отладки и информации.',
+  copyLogs: 'Копировать журналы',
+  logsCopied: 'Журналы скопированы в буфер обмена',
+  logsCopyFailed: 'Не удалось скопировать журналы',
+  clearLogs: 'Очистить журналы',
+  clearLogsConfirm: 'Очистить все журналы? Это нельзя отменить.',
+  logsCleared: 'Журналы очищены',
+  showAllSpoilers: 'Раскрывать предупреждения о содержимом по умолчанию',
+  announceCardDescriptionsPre: 'Озвучивать',
+  announceCardDescriptionsText: 'описания предпросмотра ссылок',
+  announceCardDescriptionsDescription: `Заголовок карточки предпросмотра ссылки всегда включается в озвучивание для скринридеров. \
+     Включите это, чтобы также добавить текст описания под заголовком.`,
+  announceCardDescriptionsPost: '',
+  disableFollowRequestCount: 'Скрывать число запросов на подписку',
+  hideLongPosts: 'Сворачивать длинные записи без предупреждений о содержимом',
+  longPostLengthLabel: 'Порог сворачивания (символов)',
+  enableThreadPolling: 'Показывать кнопку автообновления в тредах',
+  defaultUnlistedReplies: 'Отвечать со скрытой видимостью по умолчанию',
+  defaultLocalOnly: 'Публиковать только в локальную ленту по умолчанию',
+  enableQuotePost: 'Показывать выбор «Продвинуть/Цитировать» при продвижении',
+  boostOrQuote: 'Продвинуть или цитировать',
+  localOnlyUnsupported: 'Ваш инстанс не поддерживает записи только для локальной ленты',
+  editProfile: 'Редактировать профиль',
+  editProfileDisplayName: 'Отображаемое имя',
+  editProfileBio: 'О себе',
+  editProfileFields: 'Метаданные профиля',
+  editProfileFieldName: 'Метка',
+  editProfileFieldValue: 'Содержимое',
+  editProfileChangeAvatar: 'Изменить аватар',
+  editProfileChangeHeader: 'Изменить шапку',
+  editProfileSave: 'Сохранить',
+  editProfileSaving: 'Сохранение…',
+  profileUpdated: 'Профиль обновлён',
+  profileUpdateFailed: 'Не удалось обновить профиль: {error}',
+  threadPollingStart: 'Автообновление ответов (каждые 30 с)',
+  threadPollingStop: 'Остановить автообновление',
+  enableDesktopNotifications: 'Включить уведомления на рабочем столе',
+  deviceNotificationsForegroundOnly: 'Этот сервер не поддерживает фоновые push-уведомления, поэтому вы будете получать уведомления только пока Zocial открыт в этой вкладке.',
+  osNotificationsPromptTitle: 'Включить уведомления на этом устройстве?',
+  osNotificationsPromptText: 'Получайте уведомления на рабочем столе или push-уведомления на этом устройстве, когда что-то происходит. Вы можете изменить это в любой момент в настройках. Уведомления в приложении остаются включёнными в любом случае.',
+  enableNotifications: 'Включить',
+  notNow: 'Не сейчас',
+  desktopNotificationsNotSupported: 'Ваш браузер не поддерживает уведомления на рабочем столе.',
+  desktopNotificationsBlocked: 'Уведомления на рабочем столе заблокированы. Разрешите их в настройках браузера или системы.',
+  desktopNotificationTitle: 'Zocial',
+  desktopNotificationBody: `{count, plural,
+    one {1 новое уведомление}
+    few {{count} новых уведомления}
+    many {{count} новых уведомлений}
+    other {{count} новых уведомления}
+  }`,
+  hideReplyCount: 'Скрывать число ответов',
+  disableNotificationSound: 'Отключить звуки уведомлений',
+  composer: 'Редактор',
+  filterNotificationsTextSingle: 'настройки аккаунта',
+  followedHashtags: 'Отслеживаемые хэштеги',
+  noFollowedHashtags: 'Вы не отслеживаете ни одного хэштега.',
+  addHashtag: 'Отслеживать хэштег',
+  accountRequestedFollow: '{name} запросил(-а) подписку на вас, {account}',
+  accountReported: '{name} отправил(-а) жалобу, {account}',
+  unhandledNotification: 'Необработанный тип уведомления {type}',
+  moved: 'переехал(-а) на',
+  bite: 'укусил(-а) вас',
+  reactionCountsHidden: 'Число реакций скрыто',
+  reactedTimes: `Отреагировал(-а) {count, plural,
+    one {{count} раз}
+    few {{count} раза}
+    many {{count} раз}
+    other {{count} раза}
+  }`,
+  reacted: 'отреагировал(-а) эмодзи',
+  reactedWith: 'отреагировал(-а)',
+  edited: 'отредактировал(-а) свою запись',
+  requestedFollow: 'запросил(-а) подписку на вас',
+  reported: 'отправил(-а) жалобу',
+  boostsAction: 'продвинул(-а)',
+  repliesTo: 'в ответ',
+  startedThread: 'начал(-а) тему',
+  accountEdited: '{account} отредактировал(-а) свою запись',
+  rebloggedByAccount: '{account} продвинул(-а) {original}',
+  themeTangerine: 'Tangerine',
+  themeZocial: 'Zocial',
+  themeEmber: 'Ember',
+  themeCohostLight: 'Cohost Light',
+  replyTo: 'В ответ',
+  replyToLower: 'в ответ',
+  addWordFilter: 'Добавить фильтр слов',
+  dropFiltersNotSupported: 'Этот сервер не поддерживает необратимые (отбрасывающие) фильтры. Оставьте «Необратимый» снятым, чтобы вместо этого скрывать подходящие записи за предупреждением.',
+  copy: 'Копировать',
+  localOnly: 'Только локально',
+  contentType: 'Тип содержимого',
+  contentTypeLabel: 'Изменить тип содержимого (сейчас {label})'
 }
