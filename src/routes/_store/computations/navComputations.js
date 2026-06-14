@@ -1,16 +1,16 @@
 import { mark, stop } from '../../_utils/marks.js'
 
-function pageToNavObject (page, lists) {
+function pageToNavObject (page, lists, messages) {
   if (page === '/federated') {
-    return { name: 'federated', href: '/federated', svg: '#fa-globe', label: 'intl.federated' }
+    return { name: 'federated', href: '/federated', svg: '#fa-globe', label: messages.federated }
   } else if (page === '/bubble') {
-    return { name: 'bubble', href: '/bubble', svg: '#fa-circle', label: 'intl.bubble' }
+    return { name: 'bubble', href: '/bubble', svg: '#fa-circle', label: messages.bubble }
   } else if (page === '/direct') {
-    return { name: 'direct', href: '/direct', svg: '#fa-envelope', label: 'intl.directMessages' }
+    return { name: 'direct', href: '/direct', svg: '#fa-envelope', label: messages.directMessages }
   } else if (page === '/favorites') {
-    return { name: 'favorites', href: '/favorites', svg: '#fa-star', label: 'intl.favorites' }
+    return { name: 'favorites', href: '/favorites', svg: '#fa-star', label: messages.favorites }
   } else if (page === '/bookmarks') {
-    return { name: 'bookmarks', href: '/bookmarks', svg: '#fa-bookmark', label: 'intl.bookmarks' }
+    return { name: 'bookmarks', href: '/bookmarks', svg: '#fa-bookmark', label: messages.bookmarks }
   } else if (page && page.startsWith('/lists/')) {
     // Resolve each pinned list's title from its own id, so multiple pinned lists
     // are labeled correctly (not all with the first list's title).
@@ -20,20 +20,23 @@ function pageToNavObject (page, lists) {
       name: `lists/${listId}`,
       href: page,
       svg: '#fa-bars',
-      label: (list && list.title) || 'intl.list'
+      label: (list && list.title) || messages.list
     }
   }
 
-  return { name: 'local', href: '/local', svg: '#fa-users', label: 'intl.local' }
+  return { name: 'local', href: '/local', svg: '#fa-users', label: messages.local }
 }
 
 export function navComputations (store) {
   mark('navComputations')
 
+  // Labels come from the reactive `messages` map (keyed on the current locale) rather than the
+  // imperative getMessage(), so the nav re-labels instantly when the language is switched (the
+  // compute depends on `messages`, and reads the already-locale-correct map — no ordering race).
   store.compute(
     'navPages',
-    ['pinnedPagesForInstance', 'lists', 'navTabOrderForInstance'],
-    (pinnedPagesForInstance, lists, navTabOrderForInstance) => {
+    ['pinnedPagesForInstance', 'lists', 'navTabOrderForInstance', 'messages'],
+    (pinnedPagesForInstance, lists, navTabOrderForInstance, messages) => {
       const pages = Array.isArray(pinnedPagesForInstance)
         ? pinnedPagesForInstance
         : [pinnedPagesForInstance || '/bookmarks']
@@ -41,14 +44,14 @@ export function navComputations (store) {
       const pinnedPageObjects = pages
         .filter(Boolean)
         .slice(0, 2)
-        .map(page => pageToNavObject(page, lists))
+        .map(page => pageToNavObject(page, lists, messages))
 
       const defaultOrder = [
-        { name: 'home', href: '/', svg: '#logo', label: 'intl.home' },
+        { name: 'home', href: '/', svg: '#logo', label: messages.home },
         ...pinnedPageObjects,
-        { name: 'notifications', href: '/notifications', svg: '#fa-bell', label: 'intl.notifications' },
-        { name: 'search', href: '/search', svg: '#fa-search', label: 'intl.search' },
-        { name: 'settings', href: '/settings', svg: '#fa-gear', label: 'intl.settings' }
+        { name: 'notifications', href: '/notifications', svg: '#fa-bell', label: messages.notifications },
+        { name: 'search', href: '/search', svg: '#fa-search', label: messages.search },
+        { name: 'settings', href: '/settings', svg: '#fa-gear', label: messages.settings }
       ]
 
       if (!navTabOrderForInstance) {
