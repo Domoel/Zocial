@@ -160,6 +160,12 @@ export default {
   devtool: 'source-map',
   performance: {
     hints: dev ? false : (process.env.DEBUG ? 'warning' : 'error'),
+    // The main entrypoint bundles all UI-language tables (~100 KiB minified) so the language can
+    // be switched at runtime — a deliberate, accepted size increase (see _intl/). Raised from the
+    // 244 KiB default to leave headroom while still catching genuine bloat regressions. If initial
+    // load size becomes a concern, lazy-load non-default locales instead of raising this further.
+    maxAssetSize: 409600, // 400 KiB
+    maxEntrypointSize: 409600, // 400 KiB
     assetFilter: (assetFilename) => {
       return !/\.map$|tesseract-asset|\$(polyfill|katex)\$/.test(assetFilename)
     }
