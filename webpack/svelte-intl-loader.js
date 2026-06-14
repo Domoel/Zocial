@@ -24,12 +24,18 @@ function transformScript (code) {
   code = code.replace(/(formatIntl\(\s*)(['"])intl\.([^'"]+)\2/g,
     (match, prefix, _quote, key) => prefix + NUL + key + NUL)
   // 2. Any remaining bare 'intl.X' -> getMessage('intl.X')
-  code = code.replace(INTL_RE, (match, _quote, key) => `getMessage('intl.${key}')`)
+  let usedGetMessage = false
+  code = code.replace(INTL_RE, (match, _quote, key) => {
+    usedGetMessage = true
+    return `getMessage('intl.${key}')`
+  })
   // 3. Restore the protected formatIntl keys.
   code = code.replace(new RegExp('formatIntl\\(\\s*' + NUL + '([^' + NUL + ']+)' + NUL, 'g'),
     (match, key) => `formatIntl('intl.${key}'`)
-  // 4. Ensure getMessage is imported if we introduced a call to it.
-  if (/\bgetMessage\(/.test(code) && !/import\s*\{[^}]*\bgetMessage\b[^}]*\}/.test(code)) {
+  // 4. Inject the getMessage import only if we actually produced a call to it, and the module
+  // doesn't already declare or import getMessage (e.g. the runtime module itself defines it).
+  const declaresGetMessage = /\bfunction\s+getMessage\b|\b(?:const|let|var)\s+getMessage\b|import\b[^\n;]*\bgetMessage\b/.test(code)
+  if (usedGetMessage && !declaresGetMessage) {
     code = "import { getMessage } from 'zocial-intl-runtime'\n" + code
   }
   return code
