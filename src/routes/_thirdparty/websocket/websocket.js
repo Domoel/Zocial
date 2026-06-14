@@ -208,7 +208,6 @@ export class WebSocketClient {
    * Reset the backoff function back to initial state
    */
   reset () {
-    console.log('websocket reset')
     this.backoff.reset()
   }
 
@@ -216,7 +215,6 @@ export class WebSocketClient {
    *
    */
   reconnect () {
-    console.log('websocket reconnect')
     this.onBackoffReady()
   }
 }

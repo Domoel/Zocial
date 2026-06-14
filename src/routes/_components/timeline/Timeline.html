@@ -60,7 +60,6 @@
 
   export default {
     oncreate () {
-      console.log('timeline oncreate()')
       // Track that a timeline is being viewed, so the 60s polling fallback only runs
       // while the user is actually on a timeline (not on settings/profile/etc.).
       this.store.set({ mountedTimelines: this.store.get().mountedTimelines + 1 })
@@ -180,7 +179,6 @@
         this.set({ initializeStarted: true })
         mark('initializeTimeline')
         doubleRAF(() => {
-          console.log('timeline initialized')
           this.store.set({ timelineInitialized: true })
           stop('initializeTimeline')
         })
@@ -253,9 +251,7 @@
       setupAsyncComponents () {
         this.observe('componentsPromise', async componentsPromise => {
           if (componentsPromise) {
-            console.log('loading timeline components')
             const components = await componentsPromise
-            console.log('loaded timeline components')
             this.set({ components })
           }
         })
@@ -264,7 +260,6 @@
         // If the timeline doesn't need to scroll, then we can safely "preinitialize,"
         // i.e. render anything above the fold of the timeline. This avoids the affect
         // where the scrollable content appears to jump around if we need to scroll it.
-        console.log('timeline preinitialized')
         this.store.set({ timelinePreinitialized: true })
       },
       showMoreAndScrollToTop

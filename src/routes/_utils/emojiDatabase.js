@@ -58,7 +58,6 @@ export async function findBySearchQuery (query) {
 if (ZOCIAL_IS_BROWSER) {
   lifecycle.addEventListener('statechange', event => {
     if (event.newState === 'frozen' && database) { // page is frozen, close IDB connections
-      console.log('closed emoji DB')
       database.close()
     }
   })

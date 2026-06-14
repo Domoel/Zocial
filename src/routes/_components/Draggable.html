@@ -101,10 +101,7 @@
     methods: {
       observe,
       onPointerDown (e) {
-        console.log('Draggable: onPointerDown')
         const rect = this.refs.indicator.getBoundingClientRect()
-        console.log('Draggable: e.clientX', e.clientX)
-        console.log('Draggable: e.clientY', e.clientY)
         this.set({
           dragging: true,
           dragOffsetX: e.clientX - rect.left,
@@ -112,10 +109,8 @@
         })
       },
       onPointerMove (e) {
-        console.log('Draggable: onPointerMove')
         const { dragging, indicatorWidth, indicatorHeight, dragOffsetX, dragOffsetY } = this.get()
         if (dragging) {
-          console.log('Draggable: dragging')
           calculateGBCR(() => {
             const rect = this.refs.area.getBoundingClientRect()
             const offsetX = dragOffsetX - (indicatorWidth / 2)
@@ -127,19 +122,13 @@
         }
       },
       onPointerUp (e) {
-        console.log('Draggable: onPointerUp')
         this.set({ dragging: false })
       },
       onPointerLeave (e) {
-        console.log('Draggable: onPointerLeave')
         this.set({ dragging: false })
       },
       onClick (e) {
-        console.log('Draggable: onClick')
-        console.log('Draggable: target classList', e.target.classList)
-        console.log('Draggable: currentTarget classList', e.currentTarget.classList)
         if (!e.target.classList.contains('draggable-indicator')) {
-          console.log('Draggable: onClick handled')
           const rect = this.refs.area.getBoundingClientRect()
           const x = clamp((e.clientX - rect.left) / rect.width)
           const y = clamp((e.clientY - rect.top) / rect.height)

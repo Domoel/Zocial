@@ -90,7 +90,6 @@
         const { shouldBeShown } = this.get()
         if (this._autosuggest && shouldBeShown) {
           const { insetInlineStart, top } = this.calculateInsetInlineStartAndTop()
-          console.log('updating autosuggest position', { insetInlineStart, top })
           this._autosuggest.set({ insetInlineStart, top })
         }
       },

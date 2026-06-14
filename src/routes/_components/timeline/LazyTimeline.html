@@ -15,7 +15,6 @@
 
   export default {
     async oncreate () {
-      console.log('LazyTimeline oncreate')
       const { currentInstance } = this.store.get()
       const { timeline } = this.get()
       const [timelineComponent] = await Promise.all([

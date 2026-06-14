@@ -17,7 +17,6 @@ export async function showComposeDialog () {
     await database.deleteWebShareData() // only need this data once; it came from Web Share (service worker)
   }
 
-  console.log('share data', data)
   const { title, text, url, file } = (data || {})
 
   // url is currently ignored on Android, but one can dream

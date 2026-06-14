@@ -186,7 +186,6 @@ export default {
       onClick () {
         (async () => {
           const { mediaAttachments, index } = this.get()
-          console.log(mediaAttachments[index])
           const showMediaDialog = await importShowMediaDialog()
           showMediaDialog(mediaAttachments, index)
         })()

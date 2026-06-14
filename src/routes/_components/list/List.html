@@ -60,11 +60,9 @@
         if (scrollToItem) {
           const element = document.getElementById(`list-item-${scrollToItem}`)
           requestAnimationFrame(() => {
-            console.log('scrolling element into view')
             mark('scrollToElement')
             const scrollTopOffset = getScrollTopOffset()
             element.scrollIntoView(true)
-            console.log('scrollTopOffset', scrollTopOffset)
             getScrollContainer().scrollTop -= scrollTopOffset
             stop('scrollToElement')
             this.fire('initialized')

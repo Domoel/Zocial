@@ -74,12 +74,6 @@ export function renderMfm({
     }
   }
   walkElements(parseFragment(htmlContent))
-  console.log(
-    'mentionUrlsFromHtml',
-    mentionUrlsFromHtml,
-    'mentionsByURL',
-    mentionsByURL,
-  )
   const rootAst = parseMFM(mfmContent)
   const validTime = (t: string | boolean | null | undefined) => {
     if (t == null) return null

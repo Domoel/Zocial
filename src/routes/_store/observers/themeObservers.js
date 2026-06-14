@@ -16,7 +16,6 @@ export function themeObservers (store) {
   }, { init: false }) // init:false because the inline script takes care of it
   store.observe('currentTheme', currentTheme => {
     database.setLastTheme(currentTheme).then(() => {
-      console.log('saved theme color to idb')
     })
   })
 }

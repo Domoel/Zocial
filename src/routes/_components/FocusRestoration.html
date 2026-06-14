@@ -63,14 +63,12 @@
         if (!elementId) {
           return
         }
-        console.log('restoreFocus', realm, elementId)
         tryToFocusElement(elementId)
       },
       clearFocus () {
         const { realm } = this.get()
         const { ignoreBlurEvents } = this.getInCache()
         if (!ignoreBlurEvents) {
-          console.log('clearFocus', realm)
           this.deleteInCache('elementId')
         }
       },
@@ -80,7 +78,6 @@
         if (element) {
           const elementId = element.getAttribute('id')
           if (elementId) {
-            console.log('saveFocus', realm, elementId)
             this.setInCache({ elementId })
           }
         }

@@ -9,7 +9,6 @@ export class Backoff {
 
   backoff () {
     const delay = this.fibonacci(++this.attempts)
-    console.log('websocket delay', delay)
     setTimeout(this.onReady, delay)
   }
 

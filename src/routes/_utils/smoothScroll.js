@@ -66,20 +66,17 @@ export const hasNativeSmoothScroll = ZOCIAL_IS_BROWSER && testSupportsSmoothScro
 
 export function smoothScroll (node, topOrLeft, horizontal, preferFast) {
   if (store.get().reduceMotion) {
-    console.log('smooth scroll: disabled')
     // Don't do smooth-scroll at all for users who prefer reduced motion.
     node[horizontal ? 'scrollLeft' : 'scrollTop'] = topOrLeft
   } else if (hasNativeSmoothScroll && !(preferFast && isChrome())) {
     // In some cases (e.g. scrolling to the top of the timeline), Chrome can take a really long time
     // in their native smooth scroll implementation. If preferFast is true, just use the polyfill
     // so we can control how long it takes.
-    console.log('smooth scroll: using native')
     return node.scrollTo({
       [horizontal ? 'left' : 'top']: topOrLeft,
       behavior: 'smooth'
     })
   } else {
-    console.log('smooth scroll: using polyfill')
     return smoothScrollPolyfill(node, horizontal ? 'scrollLeft' : 'scrollTop', topOrLeft)
   }
 }

@@ -14,12 +14,10 @@ export async function tryToFocusElement (id, scroll) {
     if (element) {
       try {
         element.focus({ preventScroll: !scroll })
-        console.log('focused element', id)
         return
       } catch (e) {
         console.error(e)
       }
     }
   }
-  console.log('failed to focus element', id)
 }

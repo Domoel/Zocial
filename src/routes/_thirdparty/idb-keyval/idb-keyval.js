@@ -108,7 +108,6 @@ if (ZOCIAL_IS_BROWSER) {
   lifecycle.addEventListener('statechange', async event => {
     if (event.newState === 'frozen') { // page is frozen, close IDB connections
       await close()
-      console.log('closed keyval DB')
     }
   })
 }

@@ -6,7 +6,6 @@ to regenerate, fetch https://libretranslate.com/languages and map the resulting 
 ```js
 const langs = await (await fetch('https://libretranslate.com/languages')).json()
 const names = Object.fromEntries(langs.map(l => [l.code, l.name]))
-console.log(JSON.stringify(names, null, 2))
 ```
 
 */

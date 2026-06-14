@@ -21,7 +21,6 @@ function doCleanup () {
       }
     }
   }
-  console.log('deleted', changeCount, 'old drafts')
   if (changeCount) {
     store.set({ composeData })
   }

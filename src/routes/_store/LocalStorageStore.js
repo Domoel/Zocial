@@ -32,7 +32,6 @@ export class LocalStorageStore extends Store {
     if (ZOCIAL_IS_BROWSER) {
       lifecycle.addEventListener('statechange', e => {
         if (e.newState === 'passive') {
-          console.log('saving LocalStorageStore...')
           this.save()
         }
       })

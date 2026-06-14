@@ -173,7 +173,6 @@
       }
       try {
         const recentStatuses = await getRecentStatusesForAccount(account.id)
-        console.log('recentStatuses', recentStatuses)
         this.set({ recentStatuses })
       } catch (err) {
         console.error(err)

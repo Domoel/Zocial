@@ -37,10 +37,8 @@ export function scheduleInterval (callback, delay, runOnActive) {
 
     lifecycle.addEventListener('statechange', e => {
       if (e.newState === 'passive') {
-        console.log('pausing interval...')
         stopPolling()
       } else if (e.newState === 'active') {
-        console.log('restarting interval...')
         restartPolling()
       }
     })

@@ -31,7 +31,6 @@ async function initWorker (onProgress) {
 }
 
 function destroyWorker () {
-  console.log('destroying tesseract worker')
   if (worker) {
     worker.terminate()
     worker = null
