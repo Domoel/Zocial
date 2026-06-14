@@ -5,7 +5,7 @@ import path from 'path'
 import { inlineThemeColors } from '../webpack/shared.config.js'
 import { sapperInlineScriptChecksums } from '../src/server/sapperInlineScriptChecksums.js'
 import { build } from 'esbuild'
-import applyIntl from '../webpack/svelte-intl-loader.js'
+import { buildTimeIntl } from '../webpack/svelte-intl-loader.js'
 import MagicString from 'magic-string'
 import remap from '@ampproject/remapping'
 
@@ -37,7 +37,7 @@ async function buildInlineScriptAndCSP () {
   )
 
   let ms = new MagicString(js)
-  ms = applyIntl(ms)
+  ms = buildTimeIntl(ms)
   js = ms.toString() + '//# sourceMappingURL=/inline-script.js.map'
   map = remap(
     [

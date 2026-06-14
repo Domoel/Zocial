@@ -1,6 +1,7 @@
 import svgs from '../bin/svgs.js'
 import { execSync } from 'child_process'
 import { readFileSync } from 'fs'
+import path from 'path'
 import { themes } from '../src/routes/_static/themes.js'
 
 export const inlineSvgs = svgs.filter(_ => _.inline).map(_ => `#${_.id}`)
@@ -15,7 +16,10 @@ export const resolve = {
     // So format-message-interpret can fall back to that. This file is pretty big (9.83kB) and it's not needed.
     './plurals': 'lodash-es/noop.js',
     'lookup-closest-locale': 'lodash-es/noop.js',
-    'svelte/store.umd.js': 'svelte/store.js'
+    'svelte/store.umd.js': 'svelte/store.js',
+    // Stable specifier for the runtime i18n resolver, injected by svelte-intl-loader into modules
+    // that use bare intl keys (so the relative path doesn't have to be computed per file).
+    'zocial-intl-runtime$': path.resolve('src/routes/_intl/runtime.js')
   }
 }
 

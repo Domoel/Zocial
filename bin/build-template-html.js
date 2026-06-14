@@ -7,7 +7,7 @@ import { buildInlineScript } from './build-inline-script.js'
 import { buildSvg } from './build-svg.js'
 import { performance } from 'perf_hooks'
 import { debounce } from '../src/routes/_thirdparty/lodash/timers.js'
-import applyIntl from '../webpack/svelte-intl-loader.js'
+import { buildTimeIntl } from '../webpack/svelte-intl-loader.js'
 import { LOCALE } from '../src/routes/_static/intl.js'
 import rtlDetectPackage from 'rtl-detect'
 
@@ -99,7 +99,7 @@ async function buildAll () {
     return partial.result
   }))).join('')
 
-  html = applyIntl(html)
+  html = buildTimeIntl(html)
     .replace('{process.env.LOCALE}', LOCALE)
     .replace('{process.env.LOCALE_DIRECTION}', LOCALE_DIRECTION)
   await writeFile(path.resolve(__dirname, '../src/template.html'), html, 'utf8')

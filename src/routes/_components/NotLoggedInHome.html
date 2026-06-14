@@ -90,18 +90,6 @@
   import { getSingleInstance } from '../_utils/getSingleInstance.js'
 
   export default {
-    // TEMP i18n probe (remove after). This component does NOT declare store: () => store.
-    // If Svelte 2 inheritance gives it the store, this.store is defined and $messages would work
-    // in its template — meaning runtime i18n needs NO per-component injection.
-    oncreate () {
-      console.log('[i18n probe] this.store =', this.store)
-      try {
-        const msgs = this.store && this.store.get().messages
-        console.log('[i18n probe] messages.logIn =', msgs && msgs.logIn)
-      } catch (e) {
-        console.log('[i18n probe] messages access threw:', e.message)
-      }
-    },
     components: {
       FreeTextLayout,
       HiddenFromSSR
