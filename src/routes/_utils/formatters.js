@@ -1,5 +1,4 @@
-import { LOCALE } from '../_static/intl.js'
-import { thunk } from './thunk.js'
+import { getCurrentLocale } from '../_intl/runtime.js'
 
 const safeFormatter = (formatter) => {
   return {
@@ -20,24 +19,34 @@ const safeFormatter = (formatter) => {
   }
 }
 
-export const absoluteDateFormatter = thunk(() => safeFormatter(new Intl.DateTimeFormat(LOCALE, {
+// One memoized Intl formatter per locale, so date formats follow the runtime UI language (a new
+// formatter is built the first time each locale is used) instead of being frozen at the build locale.
+function perLocaleFormatter (create) {
+  const cache = {}
+  return () => {
+    const locale = getCurrentLocale()
+    return cache[locale] || (cache[locale] = safeFormatter(create(locale)))
+  }
+}
+
+export const absoluteDateFormatter = perLocaleFormatter((locale) => new Intl.DateTimeFormat(locale, {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
   hour: '2-digit',
   minute: '2-digit'
-})))
+}))
 
-export const shortAbsoluteDateFormatter = thunk(() => safeFormatter(new Intl.DateTimeFormat(LOCALE, {
+export const shortAbsoluteDateFormatter = perLocaleFormatter((locale) => new Intl.DateTimeFormat(locale, {
   year: 'numeric',
   month: 'short',
   day: 'numeric',
   hour: '2-digit',
   minute: '2-digit'
-})))
+}))
 
-export const dayOnlyAbsoluteDateFormatter = thunk(() => safeFormatter(new Intl.DateTimeFormat(LOCALE, {
+export const dayOnlyAbsoluteDateFormatter = perLocaleFormatter((locale) => new Intl.DateTimeFormat(locale, {
   year: 'numeric',
   month: 'short',
   day: 'numeric'
-})))
+}))

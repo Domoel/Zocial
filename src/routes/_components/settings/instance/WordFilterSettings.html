@@ -54,12 +54,16 @@
   import GenericInstanceSettingsStyle from './GenericInstanceSettingsStyle.html'
   import IconButton from '../../IconButton.html'
   import { store } from '../../../_store/store.js'
-  import { LOCALE } from '../../../_static/intl.js'
+  import { getCurrentLocale } from '../../../_intl/runtime.js'
   import { importShowWordFilterDialog } from '../../dialog/asyncDialogs/importShowWordFilterDialog.js'
   import { deleteFilter } from '../../../_actions/filters.js'
-  import { thunk } from '../../../_utils/thunk.js'
 
-  const listFormat = thunk(() => new Intl.ListFormat(LOCALE, { style: 'long', type: 'conjunction' }))
+  // Memoized per locale so the list format ("a, b and c") follows the runtime UI language.
+  const listFormatCache = {}
+  const listFormat = () => {
+    const locale = getCurrentLocale()
+    return listFormatCache[locale] || (listFormatCache[locale] = new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }))
+  }
 
   export default {
     store: () => store,

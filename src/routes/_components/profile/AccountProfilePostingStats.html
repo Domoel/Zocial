@@ -91,8 +91,7 @@
   import { store } from '../../_store/store.js'
   import { getAccountStatusesForStats } from '../../_api/accountStatuses.js'
   import { formatIntl } from '../../_utils/formatIntl.js'
-  import { LOCALE } from '../../_static/intl.js'
-  import { thunk } from '../../_utils/thunk.js'
+  import { getCurrentLocale } from '../../_intl/runtime.js'
   import { observe } from 'svelte-extras'
 
   const DAY_MS = 86400000
@@ -100,7 +99,12 @@
   // How long a cached result stays fresh within a session before it's refetched on the next
   // profile visit (matches Phanpy's ACCOUNT_INFO_MAX_AGE). A full page reload always refetches.
   const STATS_MAX_AGE = 1000 * 60 * 10 // 10 minutes
-  const percentFormat = thunk(() => new Intl.NumberFormat(LOCALE, { style: 'percent' }))
+  // Memoized per locale so the percentage format follows the runtime UI language.
+  const percentFormatCache = {}
+  const percentFormat = () => {
+    const locale = getCurrentLocale()
+    return percentFormatCache[locale] || (percentFormatCache[locale] = new Intl.NumberFormat(locale, { style: 'percent' }))
+  }
 
   export default {
     oncreate () {

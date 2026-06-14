@@ -1,10 +1,15 @@
 // adapted from https://unpkg.com/timeago.js@4.0.0-beta.1/lib/index.js
-import { LOCALE } from '../../_static/intl.js'
-import { thunk } from '../../_utils/thunk.js'
+import { getCurrentLocale } from '../../_intl/runtime.js'
 
 const IndexMapEn = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']
 const SEC_ARRAY = [60, 60, 24, 7, 365 / 7 / 12, 12]
-const intlFormat = thunk(() => new Intl.RelativeTimeFormat(LOCALE))
+// One Intl.RelativeTimeFormat per locale so relative times follow the runtime UI language instead
+// of being frozen at the build locale.
+const intlFormatCache = {}
+function intlFormat () {
+  const locale = getCurrentLocale()
+  return intlFormatCache[locale] || (intlFormatCache[locale] = new Intl.RelativeTimeFormat(locale))
+}
 
 function formatRelativeTime (number, index) {
   if (index === 0) {
