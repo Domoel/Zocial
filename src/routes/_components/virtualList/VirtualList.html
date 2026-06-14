@@ -16,7 +16,7 @@
       {/each}
       {#if !$visibleItems.length}
         <div class="nothing-to-show">
-          {'intl.nothingToShow'}
+          {nothingToShow}
         </div>
       {/if}
     {/if}
@@ -102,7 +102,12 @@
       })
     },
     data: () => ({
-      component: null
+      component: null,
+      // This component is bound to virtualListStore, not the main app store, so it can't use the
+      // reactive $messages map (the loader's template `'intl.x'` → $messages rewrite would read an
+      // undefined `messages` here and throw). Resolve the label in script via getMessage instead;
+      // it re-resolves whenever the list re-mounts (i.e. on navigation).
+      nothingToShow: 'intl.nothingToShow'
     }),
     store: () => virtualListStore,
     components: {
