@@ -450,6 +450,7 @@ export default {
   showAbsoluteTimestamps: 'Mostrar marcas de tiempo absolutas (p.ej., "3 de marzo") en vez de marcas de tiempo relativas (p. ej., "hace 5 minutos")',
   ui: 'Interfaz',
   language: 'Idioma',
+  interfaceLanguage: 'Idioma de la interfaz',
   grayscaleMode: 'Modo escala de grises',
   wellnessFooter: `Estas opciones están parcialmente basadas en pautas del
     <a rel="noopener" target="_blank" href="https://humanetech.com">Center for Humane Technology</a>.`,

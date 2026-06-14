@@ -486,6 +486,7 @@ export default {
   profileUpdated: 'Profil aktualisiert',
   ui: 'Benutzeroberfläche',
   language: 'Sprache',
+  interfaceLanguage: 'Sprache der Oberfläche',
   grayscaleMode: 'Graustufenmodus',
   wellnessFooter: `Diese Einstellungen basieren zum Teil auf Richtlinien des
     <a rel="noopener" target="_blank" href="https://humanetech.com">Center for Humane Technology</a>.`,

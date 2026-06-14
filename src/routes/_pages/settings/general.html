@@ -3,16 +3,29 @@
 
   {#if $isUserLoggedIn}
   <h2 id="section-language">{'intl.language'}</h2>
-  <form class="ui-settings">
-    <div class="setting-group setting-group-text language-group">
-      <label for="ui-language">{'intl.language'}</label>
+  <div class="ui-settings language-block">
+    <h3>{'intl.interfaceLanguage'}</h3>
+    <div class="setting-group language-group">
       <Select id="ui-language"
               options={languageOptions}
               defaultValue={$locale}
-              label="{'intl.language'}"
+              label="{'intl.interfaceLanguage'}"
               on:change="onLanguageChange(event)" />
     </div>
-  </form>
+
+    <h3>{'intl.translationTargetLanguage'}</h3>
+    <div class="setting-group translation-language-group">
+      <Select id="translation-language"
+              options={translationLanguageOptions}
+              defaultValue={$translationTargetLanguage || ''}
+              label="{'intl.translationTargetLanguage'}"
+              disabled={!translationLanguagesAvailable}
+              on:change="onTranslationLanguageChange(event)" />
+      {#if !translationLanguagesAvailable}
+        <span class="translation-language-hint">{'intl.translationLanguageUnavailable'}</span>
+      {/if}
+    </div>
+  </div>
 
   <h2 id="section-media">{'intl.media'}</h2>
   <form class="ui-settings">
@@ -123,21 +136,6 @@
     </label>
   </form>
 
-  <h2 id="section-translation">{'intl.translation'}</h2>
-  <form class="ui-settings">
-    <div class="setting-group translation-language-group">
-      <label for="translation-language">{'intl.translationTargetLanguage'}</label>
-      <Select id="translation-language"
-              options={translationLanguageOptions}
-              defaultValue={$translationTargetLanguage || ''}
-              label="{'intl.translationTargetLanguage'}"
-              disabled={!translationLanguagesAvailable}
-              on:change="onTranslationLanguageChange(event)" />
-      {#if !translationLanguagesAvailable}
-        <span class="translation-language-hint">{'intl.translationLanguageUnavailable'}</span>
-      {/if}
-    </div>
-  </form>
 
   <h2 id="section-accessibility">{'intl.accessibility'}</h2>
   <form class="ui-settings">
