@@ -540,6 +540,7 @@ Enable this to also include the description text below the title.`,
   immediacy: 'Immediacy',
   showAbsoluteTimestamps: 'Show absolute timestamps (e.g. "March 3rd") instead of relative timestamps (e.g. "5 minutes ago")',
   ui: 'UI',
+  language: 'Language',
   composer: 'Composer',
   grayscaleMode: 'Show emojis, images, and videos in grayscale',
   wellnessFooter: `These settings are partly based on guidelines from the

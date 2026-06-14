@@ -2,6 +2,18 @@
   <h1>{'intl.generalSettings'}</h1>
 
   {#if $isUserLoggedIn}
+  <h2 id="section-language">{'intl.language'}</h2>
+  <form class="ui-settings">
+    <div class="setting-group setting-group-text language-group">
+      <label for="ui-language">{'intl.language'}</label>
+      <Select id="ui-language"
+              options={languageOptions}
+              defaultValue={$locale}
+              label="{'intl.language'}"
+              on:change="onLanguageChange(event)" />
+    </div>
+  </form>
+
   <h2 id="section-media">{'intl.media'}</h2>
   <form class="ui-settings">
     <label class="setting-group">
@@ -272,7 +284,8 @@
     padding: 0;
   }
 
-  .translation-language-group {
+  .translation-language-group,
+  .language-group {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -295,6 +308,7 @@
   import Select from '../../_components/Select.html'
   import { formatIntl } from '../../_utils/formatIntl.js'
   import { fetchTranslationLanguages } from '../../_actions/fetchTranslationLanguages.js'
+  import { AVAILABLE_LOCALES } from '../../_intl/locales.js'
 
   export default {
     async oncreate () {
@@ -357,6 +371,12 @@
         this.store.set({ translationTargetLanguage: value || null })
         this.store.save()
       },
+      onLanguageChange (event) {
+        // Setting `locale` re-renders every $messages template instantly (the messages computed
+        // depends on it) and the store observer syncs the imperative resolver — no reload needed.
+        this.store.set({ locale: event.target.value })
+        this.store.save()
+      },
       onChange (event) {
         this.flushChangesToCheckAll()
         // these two are mutually exclusive
@@ -373,6 +393,8 @@
     },
     store: () => store,
     computed: {
+      // Autonyms (each language's own name) are intentionally not translated.
+      languageOptions: () => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.name })),
       themeTitle: ({ $loggedInInstancesInOrder, $currentInstance }) => (
         $loggedInInstancesInOrder.length > 1
           ? formatIntl('intl.themeForInstance', { instance: $currentInstance })

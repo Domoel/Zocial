@@ -399,6 +399,7 @@ export default {
   immediacy: 'Оперативность',
   showAbsoluteTimestamps: 'Показывать абсолютные метки времени (например, «3-е марта») вместо относительных меток времени (например, «5 минут назад»)',
   ui: 'Интерфейс',
+  language: 'Язык',
   grayscaleMode: 'Режим оттенков серого',
   wellnessFooter: `Эти настройки частично основаны на рекомендациях
     <a rel="noopener" target="_blank" href="https://humanetech.com">Центра гуманитарных технологий</a>.`,

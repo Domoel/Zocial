@@ -434,6 +434,7 @@ export default {
   desktopNotificationTitle: 'Zocial',
   desktopNotificationBody: `{count, plural, one {une nouvelle notification} other {{count} nouvelles notifications}}`,
   ui: 'Interface Utilisateur',
+  language: 'Langue',
   grayscaleMode: 'Mode echelle de gris',
   wellnessFooter: `Ces paramètres sont basé sur les recommendations du
     <a rel="noopener" target="_blank" href="https://humanetech.com">Center for Humane Technology</a>.`,
