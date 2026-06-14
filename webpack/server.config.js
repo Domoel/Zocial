@@ -1,4 +1,3 @@
-import { LOCALE } from '../src/routes/_static/intl.js'
 import path from 'path'
 import webpack from 'webpack'
 import config from 'sapper/config/webpack.js'
@@ -80,7 +79,6 @@ export default {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.INLINE_SVGS': JSON.stringify(inlineSvgs),
-      'process.env.LOCALE': JSON.stringify(LOCALE),
       ZOCIAL_VERSION: JSON.stringify(version),
       ZOCIAL_CHANNEL: JSON.stringify(channel),
       ZOCIAL_IS_SERVICE_WORKER: 'false',

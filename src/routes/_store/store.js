@@ -162,7 +162,14 @@ export const store = new PinaforeStore(state)
 // `store_locale`, so this picks up the user's saved language on boot.
 setCurrentLocale(store.get().locale)
 if (ZOCIAL_IS_BROWSER) {
-  store.observe('locale', locale => setCurrentLocale(locale))
+  // The static template ships <html lang="en">; keep the document language attribute in sync with
+  // the selected locale at runtime (for screen readers / spellcheck) since it's no longer baked in.
+  const applyDocumentLang = (locale) => { document.documentElement.lang = locale || DEFAULT_LOCALE }
+  applyDocumentLang(store.get().locale)
+  store.observe('locale', locale => {
+    setCurrentLocale(locale)
+    applyDocumentLang(locale)
+  })
 }
 
 // Migration: `enableDesktopNotifications` used to be a single global boolean; it is now a

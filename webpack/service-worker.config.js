@@ -1,4 +1,3 @@
-import { LOCALE } from '../src/routes/_static/intl'
 import path from 'path'
 
 import config from 'sapper/config/webpack.js'
@@ -40,7 +39,6 @@ export default {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.SAPPER_TIMESTAMP': process.env.SAPPER_TIMESTAMP || Date.now(),
-      'process.env.LOCALE': JSON.stringify(LOCALE),
       ZOCIAL_IS_SERVICE_WORKER: 'true',
       ZOCIAL_IS_BROWSER: 'true',
       'process.env.THEME_COLORS': JSON.stringify(inlineThemeColors),

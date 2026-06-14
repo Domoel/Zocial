@@ -1,7 +1,6 @@
 import path from 'path'
 import fs from 'fs'
 import { promisify } from 'util'
-import { LOCALE } from '../src/routes/_static/intl.js'
 import { buildTimeIntl } from '../webpack/svelte-intl-loader.js'
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname)
@@ -9,8 +8,10 @@ const readFile = promisify(fs.readFile)
 const writeFile = promisify(fs.writeFile)
 const copyFile = promisify(fs.copyFile)
 
-// Try 'en-US' first, then 'en' if that doesn't exist
-const PREFERRED_LOCALES = [LOCALE, LOCALE.split('-')[0]]
+// The emoji picker ships English shortcodes/labels; runtime-localising it is a separate enhancement.
+// Try 'en-US' first, then 'en' if that doesn't exist.
+const EMOJI_LOCALE = 'en-US'
+const PREFERRED_LOCALES = [EMOJI_LOCALE, EMOJI_LOCALE.split('-')[0]]
 
 // emojibase seems like the most "neutral" shortcodes, but cldr is available in every language
 const PREFERRED_SHORTCODES = ['emojibase', 'cldr']
@@ -41,11 +42,11 @@ async function buildEmojiI18nFile () {
   const json = await getFirstExistingEmojiI18nFile()
 
   if (!json) {
-    throw new Error(`Couldn't find i18n data for locale ${LOCALE}. Is it supported in emoji-picker-element-data?`)
+    throw new Error(`Couldn't find i18n data for locale ${EMOJI_LOCALE}. Is it supported in emoji-picker-element-data?`)
   }
 
   await writeFile(
-    path.resolve(__dirname, `../static/emoji-${LOCALE}.json`),
+    path.resolve(__dirname, `../static/emoji-${EMOJI_LOCALE}.json`),
     JSON.stringify(json),
     'utf8'
   )

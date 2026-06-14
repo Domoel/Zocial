@@ -1,5 +1,6 @@
 import { importLibreTranslate } from '../_utils/asyncModules/importLibreTranslate.js'
 import { store } from '../_store/store.js'
+import { DEFAULT_LOCALE } from '../_intl/locales.js'
 import escapeHtml from 'escape-html'
 import { renderPostHTML } from '../_utils/renderPostHTML.ts'
 import { logActionError } from '../_utils/isNetworkError.js'
@@ -113,7 +114,7 @@ function getDefaultLanguage () {
     const { translationTargetLanguage } = store.get()
     return (translationTargetLanguage || navigator.language).split('-')[0]
   }
-  return (process.env.LOCALE || 'en-US').split('-')[0]
+  return DEFAULT_LOCALE.split('-')[0]
 }
 export function translateStatus (
   status,

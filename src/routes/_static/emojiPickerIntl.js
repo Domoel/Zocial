@@ -1,11 +1,10 @@
-import { LOCALE } from './intl.js'
+// The emoji picker ships English data/labels. The UI language is switched at runtime, but the emoji
+// picker (a separate web component with its own i18n + IndexedDB cache) is not yet runtime-localised
+// — that's a deliberate, separate enhancement. See Architecture.md §20.
+export const emojiPickerDataSource = '/emoji-en-US.json'
 
-export const emojiPickerDataSource = `/emoji-${LOCALE}.json`
-
-// this should be undefined for English; it's already bundled with emoji-picker-element
+// undefined → emoji-picker-element uses its built-in English labels.
 export const emojiPickerI18n = process.env.EMOJI_PICKER_I18N
 
-// To avoid creating a new IDB database named emoji-picker-en-US, just
-// reuse the existing default "en" one (otherwise people will end up with
-// a stale database taking up useless space)
-export const emojiPickerLocale = LOCALE === 'en-US' ? 'en' : LOCALE
+// Reuse emoji-picker-element's default "en" IndexedDB database (avoids a stale extra DB).
+export const emojiPickerLocale = 'en'

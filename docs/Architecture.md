@@ -725,21 +725,103 @@ Svelte 2 computed properties are defined in the `<script>` block's `computed` ob
 
 ## 15. Internationalization
 
-**Source of truth:** `src/intl/en-US.js`
+> **As of v1.10.0 the UI language is a runtime feature, not a build-time one.** Every build ships **all** languages; the user picks one in-app and it switches **live, without a reload**. The old `LOCALE` build variable (which baked one language into the bundle) has been removed entirely — see the [v1.10.0] entry in §20 for the *why* and the migration story.
 
-### Adding a new string
+### 15.1 Goals & model
 
-1. Add the key to `src/intl/en-US.js`.
-2. Add translations to `de.js`, `fr.js`, `es.js`, `ru-RU.js`, and any other active locale files. If no translation exists, the English fallback is used automatically.
-3. Use in templates:
-   - No parameters: `{'intl.myKey'}` — compiles to a plain string at build time.
-   - With parameters: `{formatIntl('intl.myKey', { param: value })}` — compiles to an AST at build time.
+- **All languages in one build.** No per-locale builds, no `--build-arg LOCALE`. Currently: English (`en-US`), German (`de`), Spanish (`es`), French (`fr`), Russian (`ru-RU`).
+- **Live switch.** Selecting a language in **Settings → General → Interface language** (or on the login screen) applies immediately — no page reload.
+- **Always starts in English.** The default locale is `en-US` (`DEFAULT_LOCALE`). The user's choice is persisted (`store_locale`) and re-applied on boot.
+- **Safe English fallback.** Resolution order is **selected locale → en-US → the raw key**, so a missing or broken translation can never render blank or as `undefined`.
 
-### `svelte-intl-loader` + `formatIntl` rule
+### 15.2 The pieces
 
-The webpack loader transforms `'intl.KEY'` at build time:
-- **No `{param}`** → plain string. Do **not** wrap in `formatIntl()`. It expects an AST object; passing a plain string crashes the computed and blanks the entire component.
-- **With `{param}`** → AST object. Must be wrapped in `formatIntl({ param: value })`.
+| File | Role |
+|---|---|
+| `src/intl/en-US.js` (+ `de.js`, `es.js`, `fr.js`, `ru-RU.js`) | The message tables — `{ key: 'string' }`. **Source of truth = `en-US.js`.** |
+| `src/routes/_intl/locales.js` | Registry: `DEFAULT_LOCALE`, `LOCALE_TABLES` (locale → table), `AVAILABLE_LOCALES` (codes + autonyms for the picker). Single source of truth for "which locales exist". |
+| `src/routes/_intl/runtime.js` | The runtime resolver (see 15.4). `getCurrentLocale`/`setCurrentLocale`, `getMessage`, `formatMessage`, `getMessagesMap`. |
+| `src/routes/_store/computations/i18nComputations.js` | Registers the reactive `messages` store computed: `store.compute('messages', ['locale'], getMessagesMap)`. This is what templates read as `$messages`. |
+| `webpack/svelte-intl-loader.js` | Compile-time rewrite of `'intl.x'` literals (see 15.3). |
+| `src/routes/_utils/formatIntl.js` | Thin wrapper → `formatMessage` (placeholder messages). |
+
+The store wires it together: `store.js` calls `setCurrentLocale(store.get().locale)` on boot and, in the browser, `store.observe('locale', …)` keeps both the imperative resolver **and** `document.documentElement.lang` in sync on every switch.
+
+### 15.3 What the loader does to `'intl.x'`
+
+`svelte-intl-loader` rewrites `'intl.KEY'` literals at compile time, differently by context:
+
+- **In a template** → `$messages['KEY']` — a read from the reactive map, so it **re-renders on a language switch for free**.
+- **In a script (bare literal)** → `getMessage('intl.KEY')` (and auto-injects the `getMessage` import). Resolves against the *current* locale **at call time**.
+- **`formatIntl('intl.KEY', …)`** → the key is left intact; `formatIntl` resolves + interprets it (with placeholders) at call time.
+- **Service worker + `bin/` build scripts** → `buildTimeIntl()` inlines the **English** string at build time (these run with no store / before hydration; see 15.6).
+
+### 15.4 Runtime resolver internals (`runtime.js`)
+
+- `currentLocale` module variable, kept in sync with `store.locale` by the observer in `store.js`. Drives `getMessage`/`formatMessage` (the script side). Templates don't read it — they use the reactive `$messages` map.
+- `resolveAst(locale, key)` — strips the `intl.` prefix, applies the fallback chain (locale → en-US → key), parses to a `format-message` AST, caches it.
+- `astToPlainString(ast)` — **the critical guard.** An empty value (a deliberately blank key) parses to an **empty AST**, and `format-message-interpret` *throws* on an empty AST. So: empty AST → `''`; single string node → that string; otherwise `null` (needs `interpret`). This prevents both the "missing key renders `undefined`" and the "empty value crashes the re-render" bugs.
+- `getMessagesMap(locale)` — builds the flat `{ key: plainString }` map for **all no-placeholder** keys (the union of the locale's and en-US's keys), used by the `messages` computed. Placeholder messages are omitted (templates only use simple keys; placeholder ones go through `formatIntl`).
+- `interpret()` is called in exactly one place (guarded by `astToPlainString`).
+
+### 15.5 The reactivity rule (the important one)
+
+> **Templates are reactive for free. Script-side label resolution is not — it must depend on `$messages`.**
+
+A label resolved in a **persistent** computed/data block via a bare `'intl.x'` becomes a one-shot `getMessage()` call that only re-runs when that computed's *listed* dependencies change. On a pure language switch (where only `locale`/`$messages` changed) it **won't** re-run, so the label freezes at the boot language until something else forces a recompute or a reload.
+
+**The fix, everywhere it matters:** resolve via the reactive map and put `$messages` in the deps:
+
+```js
+// ❌ freezes at the boot language (getMessage runs once, dep is only `editId`)
+label: ({ editId }) => editId ? 'intl.edit' : 'intl.postStatus'
+
+// ✅ follows the live language ($messages in deps → recomputes on switch)
+label: ({ editId, $messages }) => editId ? $messages.edit : $messages.postStatus
+```
+
+For `_static/*.js` config objects (post-privacy, durations, themes, push alerts, timelines…), store the **bare i18n key** as the value (e.g. `label: 'public'`, *without* the `intl.` prefix so the loader leaves it alone) and resolve it in the consuming computed via `$messages[option.label]`.
+
+`$messages` keys are stored **without** the `intl.` prefix. Only **no-placeholder** keys are in the map — if you `$messages[key]` a placeholder key you'll get `undefined`. Placeholder messages stay on `formatIntl`.
+
+### 15.6 Deliberate exceptions (where bare `'intl.x'` is correct, not a bug)
+
+Not every resolution needs `$messages`. These are intentional and **clean**:
+
+- **Click-handlers / methods that build a dialog or toast** (`showTextConfirmationDialog({ title: 'intl.x' })`, `toast.say`, `announceAriaLivePolite`, `.set({ overrideLabel: 'intl.x' })`): `getMessage` runs at the moment of the action → always the current language. No frozen state exists.
+- **Dialog `data`/`computed`**: dialogs are created imperatively and **re-mount on every open**, so they resolve fresh each time. The only lag case — switching language *while a modal is open* — is structurally unreachable (the language picker lives in Settings / the login page, and a modal blocks the path there).
+
+### 15.7 The one real compromise: the emoji picker & VirtualList
+
+- **Emoji picker** (`emoji-picker-element`, a separate Svelte-3 web component with its own i18n + IndexedDB cache): ships **English** data (`/emoji-en-US.json`, built by `bin/build-assets.js`) and English labels (`emojiPickerI18n` is `undefined`). It does **not** follow the runtime language. Making it multilingual at runtime would mean building all 5 emoji data files and re-initialising the picker on switch — a separate enhancement, not done. This matches the old default-image behaviour (which already shipped English emoji), so there's no regression.
+- **VirtualList** (`_components/virtualList/VirtualList.html`) is bound to `virtualListStore`, **not** the main app store, so it has no `$messages`. Its one string ("nothing to show") is resolved via `getMessage` in `data()` — re-resolves on navigation (re-mount) but lags if you switch language *while staring at an empty list*. Justified by the store isolation (leak avoidance); could be made fully reactive with a separate mini-subscription to the main store's `messages` if it ever matters in practice.
+
+> **Rule of thumb:** a component bound to a non-main store must resolve i18n in **script** (`getMessage`), never in a template (`$messages` would read an undefined `messages` map there and throw). VirtualList is the only such component with a user-facing string.
+
+### 15.8 Locale-aware formatters
+
+Date, number, list and relative-time formatters (`_utils/formatters.js`, `_thirdparty/timeago/timeago.js`, and a few profile/settings components) build **one `Intl.*` formatter per locale**, keyed by `getCurrentLocale()`, instead of a single formatter frozen at the boot locale. So dates/numbers/relative times follow the language too (on the next render — most carriers re-render via `$messages` anyway).
+
+### 15.9 Adding a string / a language
+
+**A new string:**
+1. Add the key to `src/intl/en-US.js` (source of truth), then to the other locale files (missing ones fall back to English automatically).
+2. Use it:
+   - Template, no params: `{'intl.myKey'}` → reactive `$messages` automatically.
+   - Template, with params: `{formatIntl('intl.myKey', { param: value })}`.
+   - **Persistent script/computed:** use `$messages.myKey` with `$messages` in the deps (see 15.5) — *not* a bare `'intl.myKey'`.
+
+**A new language:**
+1. Add `src/intl/<code>.js`.
+2. Register it in `src/routes/_intl/locales.js` (`LOCALE_TABLES` + `AVAILABLE_LOCALES` with its autonym).
+3. That's it — it appears in the picker and resolves at runtime. (If it's an RTL language, the static `dir="ltr"` in `src/build/template.html` and the runtime `document.documentElement.lang` handling in `store.js` would need a `dir` update too — all current locales are LTR.)
+
+### 15.10 The `formatIntl` / AST rule (still applies)
+
+A **no-placeholder** message resolves to a plain string; a **placeholder** message resolves to an AST. `formatIntl` expects to resolve a key (or interpret an AST) — passing it a *simple* key that resolves to a bare string used to crash the computed and blank the component. Rule:
+
+- **No `{param}`** → `{'intl.myKey'}` (template) or `$messages.myKey` (script). Do **not** wrap in `formatIntl()`.
+- **With `{param}`** → `formatIntl('intl.myKey', { param: value })`.
 
 ```html
 <!-- Correct -->
@@ -1448,6 +1530,31 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
+### [v1.10.0] Runtime i18n — bundle all languages, switch live, remove the `LOCALE` build flag
+
+**Decision:** Make the UI language a **runtime** feature. Ship every language in a single build, let the user pick one in-app (Settings → General, and on the login screen) with an **instant, reload-free** switch, default to English with a safe English fallback for missing strings, and **remove the build-time `LOCALE` variable entirely**.
+
+**Rationale:** The old model baked one language into the bundle at build time (`LOCALE=de` → a German-only build). That meant a separate build/image per language, a poor UX for multilingual users, and — for the public `zocial.social` image — every user stuck on whatever the image was built with. Bundling all five locales costs little (text tables are small) and turns language into a normal user preference. "Always start in English + fall back to English per-string" guarantees the UI is never blank or `undefined`, even with an incomplete translation.
+
+**How it works (see §15 for the full mechanics):** locale tables in `src/intl/*` → registry in `_intl/locales.js` → resolver in `_intl/runtime.js` → a reactive `messages` store computed exposed to templates as `$messages`. The webpack loader rewrites `'intl.x'` to `$messages['x']` in templates (reactive) and to `getMessage('intl.x')` in scripts (current-locale at call time).
+
+**Challenges encountered (the reasons this touched a lot of files):**
+- **Reactivity is free in templates but not in scripts.** Template `'intl.x'` became reactive automatically. But any label resolved in a *persistent* computed/data via a bare `'intl.x'` compiles to a one-shot `getMessage()` that only re-runs when that computed's listed deps change — so it froze at the boot language on a live switch. Fixing this meant sweeping every script-side label site to resolve via `$messages` with `$messages` in the deps (breadcrumbs, page titles, status headers/toolbars, follow buttons, list/empty messages, settings labels, `_static/*` config dropdowns). The breadth reflects how many labels the app builds in JS, not a flaw in the approach.
+- **Empty values crashed re-renders.** A deliberately blank key parses to an empty `format-message` AST, and `interpret()` throws on that. `astToPlainString` guards it (empty → `''`), which also fixed missing keys rendering as `undefined`.
+- **Imperatively-mounted components have no inherited store.** Dialogs/snackbars created via `new X({ target })` don't inherit `this.store`, so `$messages` was undefined and threw. They now get the store passed explicitly. (Toast/loadingMask deliberately *don't* — they'd create an import cycle and use no intl.)
+- **Foreign-store components.** `VirtualList` is bound to `virtualListStore`, so a template `'intl.x'` → `$messages` read an undefined map and crashed once a list rendered empty. Resolved in script via `getMessage` instead.
+
+**Compromises (deliberate, documented honestly):**
+- **Dialog labels and click-handler/toast strings keep bare `'intl.x'`** — they resolve at mount/action time (dialogs re-mount per open; the only lag case is structurally unreachable). Converting them would be churn for no observable benefit.
+- **Emoji picker stays English** (its own web component + IDB cache); runtime-localising it is a separate enhancement. No regression vs. the old default image.
+- **VirtualList "nothing to show"** resolves at mount → lags only if you switch language while viewing an empty list.
+
+**Cleanup:** removed the `LOCALE` constant (`_static/intl.js` deleted), the `process.env.LOCALE`/`LOCALE_DIRECTION` DefinePlugin entries and template placeholders (static `<html lang="en" dir="ltr">` + runtime `document.documentElement.lang`), the `LOCALE`-derived `EMOJI_PICKER_I18N` and emoji-picker-element locale imports, and the `LOCALE` row from `README.md` / `docker/.env.example`. The Dockerfile/compose/CI never had a `LOCALE` build-arg. `rtl-detect` is now unused (was only for the build-time `dir`) and can be dropped from `package.json` with a lockfile regen.
+
+**Key files:** `_intl/locales.js`, `_intl/runtime.js`, `_store/computations/i18nComputations.js`, `webpack/svelte-intl-loader.js`, `_utils/formatIntl.js`, `_pages/settings/general.html` (picker), `_components/NotLoggedInHome.html` (login picker), plus the script-side `$messages` sweep across timeline/status/compose/profile/settings/list components.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1482,6 +1589,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.9.0** | 2026-06-13 | **Consolidated release.** Bundles the new notification system (rich Web Push, honest single-account model C + C+, in-app notifications + sound, full i18n) with a full code-review hardening pass across nine neuralgic subsystems (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters). Security: OAuth `state` CSRF protection on login. New: manage follows (follow/unfollow + "⋯" menu) directly from the Follows list, a scroll-to-top button on the follows/followers lists, and graded empty-state messages for account lists (legible "why is this empty?"). Correctness fixes incl. timeline-read crash from dangling pointers, IndexedDB connection leak, empty-filter catch-all, and list/tag cold-load auto-retry. See the §22 Code Review Log for the per-area outcomes |
 | **1.9.1** | 2026-06-13 | "Remove from followers" (Mastodon `remove_from_followers`) in the account "⋯" menu — shown for anyone who follows you, with a confirmation dialog (only the removed person can undo it). Backends without the endpoint show a clear "not supported" toast on use (deliberate show-then-toast rather than an unmaintainable capability allowlist — see §20) |
 | **1.9.2** | 2026-06-14 | Unfollow now purges that account's already-cached posts from the follow-gated timelines (**home + your lists**), and block purges them from **all** cached timelines (home/local/federated/tag/list/account) — in-memory and from IndexedDB — instead of letting them linger until age-cleanup (the timeline cache is union-only and never unmerged). Boosts of their content by accounts you still follow are kept |
+| **1.10.0** | 2026-06-15 | **Runtime internationalisation.** All languages (en/de/es/fr/ru) ship in one build and the UI language is chosen in-app (Settings → General + login screen) with an **instant, reload-free** switch; always starts in English with a per-string English fallback. The build-time `LOCALE` variable is **removed** (no more per-language builds / `--build-arg LOCALE`). Live reactivity wired across all script-side label sites; locale-aware date/number/relative-time formatters. Deliberate English-only exceptions: the emoji picker and a few re-mount-per-open dialogs (see §15/§20) |
 
 ---
 

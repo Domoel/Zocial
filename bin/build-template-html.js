@@ -8,13 +8,8 @@ import { buildSvg } from './build-svg.js'
 import { performance } from 'perf_hooks'
 import { debounce } from '../src/routes/_thirdparty/lodash/timers.js'
 import { buildTimeIntl } from '../webpack/svelte-intl-loader.js'
-import { LOCALE } from '../src/routes/_static/intl.js'
-import rtlDetectPackage from 'rtl-detect'
-
-const { getLangDir } = rtlDetectPackage
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname)
-const LOCALE_DIRECTION = getLangDir(LOCALE)
 const DEBOUNCE = 500
 
 const builders = [
@@ -100,8 +95,6 @@ async function buildAll () {
   }))).join('')
 
   html = buildTimeIntl(html)
-    .replace('{process.env.LOCALE}', LOCALE)
-    .replace('{process.env.LOCALE_DIRECTION}', LOCALE_DIRECTION)
   await writeFile(path.resolve(__dirname, '../src/template.html'), html, 'utf8')
   const end = performance.now()
   console.log(`Built template.html in ${(end - start).toFixed(2)}ms`)

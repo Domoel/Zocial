@@ -1,23 +1,15 @@
-import { DEFAULT_LOCALE, LOCALE } from '../src/routes/_static/intl.js'
+import { DEFAULT_LOCALE } from '../src/routes/_intl/locales.js'
 
 import enUS from '../src/intl/en-US.js'
-import fr from '../src/intl/fr.js'
-import de from '../src/intl/de.js'
-import es from '../src/intl/es.js'
-import ruRU from '../src/intl/ru-RU.js'
 import parse from 'format-message-parse'
 
-// TODO: make it so we don't have to explicitly list these out
+// Build-time strings (static loading-screen template, manifest, service worker) are always rendered
+// in the default locale (English); the live UI language is resolved at runtime, not here.
 const locales = {
-  'en-US': enUS,
-  fr,
-  de,
-  es,
-  'ru-RU': ruRU
+  'en-US': enUS
 }
 
-const intl = locales[LOCALE] || {}
-const defaultIntl = locales[DEFAULT_LOCALE] || {}
+const intl = locales[DEFAULT_LOCALE] || {}
 
 export function warningOrError (message) { // avoid crashing the whole server on `pnpm dev`
   if (process.env.NODE_ENV === 'production') {
@@ -32,8 +24,8 @@ const cache = {}
 export function getIntl (key) {
   if (cache[key]) return cache[key]
 
-  // 1. Suche in der gewählten Sprache, dann im Englischen Fallback
-  let res = intl[key] || defaultIntl[key]
+  // 1. Look up the English build-time string
+  let res = intl[key]
 
   // 2. Wenn gar nichts gefunden wurde, gib eine Warnung aus und nutze den Key als Notlösung
   if (typeof res !== 'string') {

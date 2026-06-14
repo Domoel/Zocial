@@ -224,8 +224,13 @@ npm run dev          # dev server at http://localhost:4002
 |---|---|---|
 | `SINGLE_INSTANCE` | *(unset)* | Lock the client to a specific instance hostname |
 | `PORT` | `80` | Host port exposed by the Docker container |
-| `LOCALE` | `en-US` | UI locale baked in at build time (`de`, `es`, `fr`) |
 | `TRANSLATE_API` | `https://translate.zocial.social` | Base URL of a [LibreTranslate](https://libretranslate.com)-compatible translation backend |
+
+> **Removed:** `LOCALE`. The UI language used to be baked in at build time via this variable. It is now a runtime feature — every build ships all languages and the user picks one in-app (see *Interface language* below). The `LOCALE` build arg and `--build-arg LOCALE=…` no longer exist; remove it from any `compose.yaml`, CI workflow, or build script.
+
+### Interface language
+
+All shipped languages (currently English, German, Spanish, French, Russian) are bundled into **every** build. Users choose their language in **Settings → General → Interface language** (and on the login screen before logging in); the change applies **instantly, without a page reload**. The app always starts in **English** and falls back to English for any individual string that is missing in the chosen language, so the UI can never render blank. No rebuild or environment variable is involved.
 
 ### Post translation
 
