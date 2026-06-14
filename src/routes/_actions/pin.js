@@ -4,6 +4,7 @@ import { pinStatus, unpinStatus } from '../_api/pin.js'
 import { database } from '../_database/database.js'
 import { emit } from '../_utils/eventBus.ts'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setStatusPinnedOrUnpinned (statusId, pinned, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -20,7 +21,7 @@ export async function setStatusPinnedOrUnpinned (statusId, pinned, toastOnSucces
     await database.setStatusPinned(currentInstance, statusId, pinned)
     emit('updatePinnedStatuses')
   } catch (e) {
-    console.error(e)
+    logActionError('pin status', e)
     /* no await */ toast.say(pinned
       ? formatIntl('intl.unableToPinStatus', { error: (e.message || '') })
       : formatIntl('intl.unableToUnpinStatus', { error: (e.message || '') })

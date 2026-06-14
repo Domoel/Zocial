@@ -3,6 +3,7 @@ import { notifyAccount, denotifyAccount } from '../_api/notify.js'
 import { toast } from '../_components/toast/toast.js'
 import { updateLocalRelationship } from './accounts.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setAccountNotified (accountId, notify, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -18,7 +19,7 @@ export async function setAccountNotified (accountId, notify, toastOnSuccess) {
       /* no await */ toast.say(notify ? 'intl.subscribedAccount' : 'intl.unsubscribedAccount')
     }
   } catch (e) {
-    console.error(e)
+    logActionError('set account notified', e)
     /* no await */ toast.say(notify
       ? formatIntl('intl.unableToSubscribe', { error: (e.message || '') })
       : formatIntl('intl.unableToUnsubscribe', { error: (e.message || '') })

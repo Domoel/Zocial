@@ -2,6 +2,7 @@ import { getAccount } from '../_api/user.js'
 import { getRelationship } from '../_api/relationships.js'
 import { database } from '../_database/database.js'
 import { store } from '../_store/store.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 async function _updateAccount (accountId, instanceName, accessToken) {
   const localPromise = database.getAccount(instanceName, accountId)
@@ -18,7 +19,7 @@ async function _updateAccount (accountId, instanceName, accessToken) {
   try {
     store.set({ currentAccountProfile: (await remotePromise) })
   } catch (e) {
-    console.error(e)
+    logActionError('load account profile', e)
   }
 }
 
@@ -38,7 +39,7 @@ async function _updateRelationship (accountId, instanceName, accessToken) {
   try {
     store.set({ currentAccountRelationship: (await remotePromise) })
   } catch (e) {
-    console.error(e)
+    logActionError('load relationship', e)
   }
 }
 

@@ -8,6 +8,7 @@ import { putMediaMetadata } from '../_api/media.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { uniqById } from '../_utils/lodash-lite.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
 
 export async function insertHandleForReply (realm, statusId) {
@@ -84,7 +85,7 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
     store.clearComposeData(realm)
     scheduleIdleTask(() => (mediaIds || []).forEach(mediaId => database.deleteCachedMediaFile(mediaId))) // clean up media cache
   } catch (e) {
-    console.error(e)
+    logActionError('post status', e)
     /* no await */ toast.say(formatIntl('intl.unableToPost', { error: (e.message || '') }))
   } finally {
     store.set({ postingStatus: false })

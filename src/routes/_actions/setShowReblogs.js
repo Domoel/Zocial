@@ -3,6 +3,7 @@ import { setShowReblogs as setShowReblogsApi } from '../_api/showReblogs.js'
 import { toast } from '../_components/toast/toast.js'
 import { updateLocalRelationship } from './accounts.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setShowReblogs (accountId, showReblogs, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -13,7 +14,7 @@ export async function setShowReblogs (accountId, showReblogs, toastOnSuccess) {
       /* no await */ toast.say(showReblogs ? 'intl.showingReblogs' : 'intl.hidingReblogs')
     }
   } catch (e) {
-    console.error(e)
+    logActionError('set show reblogs', e)
     /* no await */ toast.say(showReblogs
       ? formatIntl('intl.unableToShowReblogs', { error: (e.message || '') })
       : formatIntl('intl.unableToHideReblogs', { error: (e.message || '') })

@@ -2,6 +2,7 @@ import { store } from '../_store/store.js'
 import { toast } from '../_components/toast/toast.js'
 import { search } from '../_api/search.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
 
 export async function doSearch () {
@@ -23,7 +24,7 @@ export async function doSearch () {
     /* no await */ toast.say(
       formatIntl('intl.searchError', { error: e.message || String(e) })
     )
-    console.error(e)
+    logActionError('search', e)
   } finally {
     store.set({ searchLoading: false })
   }

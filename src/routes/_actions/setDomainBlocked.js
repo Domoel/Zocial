@@ -3,6 +3,7 @@ import { blockDomain, unblockDomain } from '../_api/blockDomain.js'
 import { toast } from '../_components/toast/toast.js'
 import { updateRelationship } from './accounts.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setDomainBlocked (accountId, domain, block, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -17,7 +18,7 @@ export async function setDomainBlocked (accountId, domain, block, toastOnSuccess
       /* no await */ toast.say(block ? 'intl.hidDomain' : 'intl.unhidDomain')
     }
   } catch (e) {
-    console.error(e)
+    logActionError('set domain blocked', e)
     /* no await */ toast.say(block
       ? formatIntl('intl.unableToHideDomain', { error: (e.message || '') })
       : formatIntl('intl.unableToUnhideDomain', { error: (e.message || '') })

@@ -3,6 +3,7 @@ import { toast } from '../_components/toast/toast.js'
 import { bookmarkStatus, unbookmarkStatus } from '../_api/bookmark.js'
 import { database } from '../_database/database.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setStatusBookmarkedOrUnbookmarked (statusId, bookmarked) {
   const { currentInstance, accessToken } = store.get()
@@ -20,7 +21,7 @@ export async function setStatusBookmarkedOrUnbookmarked (statusId, bookmarked) {
     store.setStatusBookmarked(currentInstance, statusId, bookmarked)
     await database.setStatusBookmarked(currentInstance, statusId, bookmarked)
   } catch (e) {
-    console.error(e)
+    logActionError('bookmark', e)
     /* no await */toast.say(
       bookmarked
         ? formatIntl('intl.unableToBookmark', { error: (e.message || '') })

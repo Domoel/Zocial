@@ -2,6 +2,7 @@ import { importLibreTranslate } from '../_utils/asyncModules/importLibreTranslat
 import { store } from '../_store/store.js'
 import escapeHtml from 'escape-html'
 import { renderPostHTML } from '../_utils/renderPostHTML.ts'
+import { logActionError } from '../_utils/isNetworkError.js'
 function unsupportedLanguageError (language) {
   const err = new Error('Unsupported source language: ' + (language || 'unknown'))
   err.type = 'unsupportedLanguage'
@@ -189,7 +190,7 @@ export function translateStatus (
           // not an error worth logging to the console.
           statusTranslations[id].unsupportedLanguage = true
         } else {
-          console.error('error translating status', err)
+          logActionError('translate status', err)
           statusTranslations[id].error = true
         }
         delete statusTranslationContents[id]

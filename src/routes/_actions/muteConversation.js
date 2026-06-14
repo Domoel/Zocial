@@ -3,6 +3,7 @@ import { muteConversation, unmuteConversation } from '../_api/muteConversation.j
 import { toast } from '../_components/toast/toast.js'
 import { database } from '../_database/database.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setConversationMuted (statusId, mute, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -17,7 +18,7 @@ export async function setConversationMuted (statusId, mute, toastOnSuccess) {
       /* no await */ toast.say(mute ? 'intl.mutedConversation' : 'intl.unmutedConversation')
     }
   } catch (e) {
-    console.error(e)
+    logActionError('mute conversation', e)
     /* no await */ toast.say(mute
       ? formatIntl('intl.unableToMuteConversation', { error: (e.message || '') })
       : formatIntl('intl.unableToUnmuteConversation', { error: (e.message || '') })

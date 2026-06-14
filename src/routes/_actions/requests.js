@@ -3,6 +3,7 @@ import { approveFollowRequest, rejectFollowRequest } from '../_api/requests.js'
 import { emit } from '../_utils/eventBus.ts'
 import { toast } from '../_components/toast/toast.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setFollowRequestApprovedOrRejected (accountId, approved, toastOnSuccess) {
   const {
@@ -20,7 +21,7 @@ export async function setFollowRequestApprovedOrRejected (accountId, approved, t
     }
     emit('refreshAccountsList')
   } catch (e) {
-    console.error(e)
+    logActionError('follow request', e)
     /* no await */ toast.say(approved
       ? formatIntl('intl.unableToApproveFollowRequest', { error: (e.message || '') })
       : formatIntl('intl.unableToRejectFollowRequest', { error: (e.message || '') })

@@ -4,6 +4,7 @@ import { toast } from '../_components/toast/toast.js'
 import { updateLocalRelationship } from './accounts.js'
 import { emit } from '../_utils/eventBus.ts'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setAccountMuted (accountId, mute, notifications, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -20,7 +21,7 @@ export async function setAccountMuted (accountId, mute, notifications, toastOnSu
     }
     emit('refreshAccountsList')
   } catch (e) {
-    console.error(e)
+    logActionError('mute account', e)
     /* no await */ toast.say(mute
       ? formatIntl('intl.unableToMute', { error: (e.message || '') })
       : formatIntl('intl.unableToUnmute', { error: (e.message || '') })

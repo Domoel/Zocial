@@ -2,6 +2,7 @@ import { reactStatus, unreactStatus } from '../_api/react.js'
 import { store } from '../_store/store.js'
 import { toast } from '../_components/toast/toast.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 import { importShowEmojiDialog } from '../_components/dialog/asyncDialogs/importShowEmojiDialog.js'
 import { updateCustomEmojiForInstance } from './emoji.js'
 import { updateStatus } from './timeline.js'
@@ -25,7 +26,7 @@ export async function setReacted (statusId, reacting, reaction, apiVersion) {
     await networkPromise
     return true
   } catch (e) {
-    console.error(e)
+    logActionError('react', e)
     /* no await */ toast.say(reacting
       ? formatIntl('intl.unableToFavorite', { error: (e.message || '') })
       : formatIntl('intl.unableToUnfavorite', { error: (e.message || '') })

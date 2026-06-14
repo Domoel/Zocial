@@ -5,7 +5,7 @@ import { updateLocalRelationship } from './accounts.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { emit } from '../_utils/eventBus.ts'
 import { removeAccountFromFollowGatedTimelines } from './timeline.js'
-import { isNetworkNoiseError } from '../_utils/isNetworkError.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setAccountFollowed (accountId, follow, toastOnSuccess) {
   const { currentInstance, accessToken } = store.get()
@@ -27,13 +27,9 @@ export async function setAccountFollowed (accountId, follow, toastOnSuccess) {
       /* no await */ toast.say(follow ? 'intl.followedAccount' : 'intl.unfollowedAccount')
     }
   } catch (e) {
-    // Transient network failures are infrastructure noise, not bugs — log as warn (matching the
-    // timeline path) so they don't show as a red error; the user still gets a toast.
-    if (isNetworkNoiseError(e)) {
-      console.warn(`${follow ? 'follow' : 'unfollow'} failed:`, (e.message || e))
-    } else {
-      console.error(e)
-    }
+    // Transient network failures are infrastructure noise, not bugs — log as warn so they don't
+    // show as a red error; the user still gets a toast.
+    logActionError(follow ? 'follow' : 'unfollow', e)
     /* no await */ toast.say(follow
       ? formatIntl('intl.unableToFollow', { error: (e.message || '') })
       : formatIntl('intl.unableToUnfollow', { error: (e.message || '') })
@@ -58,11 +54,7 @@ export async function removeAccountFromFollowers (accountId) {
       /* no await */ toast.say('intl.removeFromFollowersNotSupported')
     } else {
       // Network noise → warn (not a red error); genuine/unexpected failures → error.
-      if (isNetworkNoiseError(e)) {
-        console.warn('remove from followers failed:', (e.message || e))
-      } else {
-        console.error(e)
-      }
+      logActionError('remove from followers', e)
       /* no await */ toast.say(formatIntl('intl.error', { error: (e.message || '') }))
     }
   }

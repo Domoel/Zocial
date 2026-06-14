@@ -24,3 +24,15 @@ export function isNetworkNoiseError (err) {
   }
   return OTHER_NETWORK.test(message)
 }
+
+// Shared logging for a failed user action that already surfaces a toast to the user. Transient
+// network/HTTP failures (offline, timeout, server hiccup) are infrastructure noise and log as a
+// warning; anything else is a genuine bug and stays a red console.error so it's visually distinct.
+// `label` is a short action name ("favorite", "reblog", …) used in the warning line.
+export function logActionError (label, err) {
+  if (isNetworkNoiseError(err)) {
+    console.warn(`${label} failed:`, (err && err.message) || err)
+  } else {
+    console.error(err)
+  }
+}

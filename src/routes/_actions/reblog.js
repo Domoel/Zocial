@@ -3,6 +3,7 @@ import { toast } from '../_components/toast/toast.js'
 import { reblogStatus, unreblogStatus } from '../_api/reblog.js'
 import { database } from '../_database/database.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setReblogged (statusId, reblogged) {
   const online = store.get()
@@ -19,7 +20,7 @@ export async function setReblogged (statusId, reblogged) {
     await networkPromise
     await database.setStatusReblogged(currentInstance, statusId, reblogged)
   } catch (e) {
-    console.error(e)
+    logActionError('reblog', e)
     /* no await */ toast.say(reblogged
       ? formatIntl('intl.failedToReblog', { error: (e.message || '') })
       : formatIntl('intl.failedToUnreblog', { error: (e.message || '') })

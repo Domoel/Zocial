@@ -6,6 +6,7 @@ import { store } from '../_store/store.js'
 import { updateVerifyCredentialsForInstance } from './instances.js'
 import { updateCustomEmojiForInstance } from './emoji.js'
 import { database } from '../_database/database.js'
+import { logActionError } from '../_utils/isNetworkError.js'
 
 const GENERIC_ERROR = `
   Is this a valid instance? Is a browser extension
@@ -78,7 +79,7 @@ export async function logInToInstance () {
   try {
     await redirectToOauth()
   } catch (err) {
-    console.error(err)
+    logActionError('log in to instance', err)
     const error = `${(err.message || err.name).replace(/\.$/, '')}. ` +
       (err.knownError ? '' : (navigator.onLine ? GENERIC_ERROR : 'Are you offline?'))
     const { instanceNameInSearch } = store.get()
