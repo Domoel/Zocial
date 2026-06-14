@@ -37,6 +37,7 @@ export function navComputations (store) {
     'navPages',
     ['pinnedPagesForInstance', 'lists', 'navTabOrderForInstance', 'messages'],
     (pinnedPagesForInstance, lists, navTabOrderForInstance, messages) => {
+      messages = messages || {} // defensive: never crash if messages isn't ready yet
       const pages = Array.isArray(pinnedPagesForInstance)
         ? pinnedPagesForInstance
         : [pinnedPagesForInstance || '/bookmarks']
