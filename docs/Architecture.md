@@ -1104,6 +1104,8 @@ This section captures significant design decisions, feature choices, and archite
 
 **Rationale:** GoToSocial users had no other way to manage list memberships — the official Mastodon web UI was unavailable to them. This was the primary driver. The feature was built generically so it works across all backends.
 
+**Backend-support detection (runtime, not a deterministic upfront check):** lists have **no capability flag** in instance info (they predate `api_versions`), so support can't be pre-detected the way Collections can (`api_versions.mastodon >= 10`). Instead it's **try-then-detect**: `syncLists` calls `getLists`; a *definitive* "not supported" response (**403/404/501**) sets `instanceListsSupported[instance] = false`, while **transient** errors (429/5xx/network) are ignored so the UI isn't hidden for the whole session over a blip (refined in 1.7.0). Gating: the Community-settings Lists section shows on `{#if $listsSupported !== false}` (optimistic — visible unless *known* unsupported), and the profile "⋯ Manage list memberships" item is gated on `$lists.length > 0` (so it never wrongly appears where lists aren't supported). `instanceListsSupported` is **non-persisted**, so on an unsupported backend the Lists *section* can briefly show each session until the first `getLists` fails, then hides; the ⋯ item is never affected. Reliable after the first lists fetch; not eliminable upfront without a capability flag. (Persisting the flag would remove the brief flash — deliberately not done; minor, and a persisted value would only self-correct on the next successful fetch.)
+
 ---
 
 ### [v1.5.0] Quote post implementation: URL-in-text over FEP-e232
