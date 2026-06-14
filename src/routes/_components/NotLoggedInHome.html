@@ -34,12 +34,15 @@
     text-align: center;
   }
 
-  /* Language picker, centered just below the login button. Kept in normal flow with a plain top
-     margin: it does NOT stretch the card (so no mobile scroll) and does NOT overlap the page footer
-     (the earlier min-height:85vh stretched it → scroll; position:fixed bottom collided with the
-     footer). The card's content is short, so this sits comfortably without forcing the page taller. */
+  /* Language picker pinned 1cm above the bottom edge of the card (<main>, which is position:relative
+     with min-height:70vh — see global.scss). position:absolute takes it out of flow, so it sits in
+     the card's empty lower area WITHOUT stretching the card (no mobile scroll) and WITHOUT touching
+     the page footer (which is a separate element below <main>, not inside it). */
   .login-language-picker {
-    margin-top: 2.5rem;
+    position: absolute;
+    left: 50%;
+    bottom: 1cm;
+    transform: translateX(-50%);
   }
 
   .logo-wrap {
