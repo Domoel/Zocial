@@ -130,32 +130,39 @@ export default {
       }
       pour changer de pages
     </li>
-    <li><kbd>7</kbd> or <kbd>c</kbd> pour écrire un nouveau pouet</li>
-    <li><kbd>s</kbd> or <kbd>/</kbd> pour rechercher</li>
-    <li><kbd>g</kbd> + <kbd>h</kbd> pour renter à l'acceuil</li>
-    <li><kbd>g</kbd> + <kbd>n</kbd> pour voir les notifications</li>
-    <li><kbd>g</kbd> + <kbd>l</kbd> pour voir l'historique local</li>
-    <li><kbd>g</kbd> + <kbd>t</kbd> pour voir l'historique fédéré</li>
-    <li><kbd>g</kbd> + <kbd>c</kbd> pour voir les paramètres de communauté</li>
-    <li><kbd>g</kbd> + <kbd>d</kbd> pour voir les messages directs</li>
-    <li><kbd>h</kbd> ou <kbd>?</kbd> pour voir les raccourcis clavier</li>
-    <li><kbd>Retour arrière</kbd> pour rentrer à la page précédente, ou fermer une boite de dialogue</li>
+    <li><kbd>7</kbd> ou <kbd>c</kbd> pour écrire une nouvelle publication</li>
+    <li><kbd>s</kbd> ou <kbd>/</kbd> pour rechercher</li>
+    <li><kbd>g</kbd> + <kbd>h</kbd> pour aller à l’accueil</li>
+    <li><kbd>g</kbd> + <kbd>n</kbd> pour aller aux notifications</li>
+    <li><kbd>g</kbd> + <kbd>l</kbd> pour aller au fil local</li>
+    <li><kbd>g</kbd> + <kbd>b</kbd> pour aller au fil bulle</li>
+    <li><kbd>g</kbd> + <kbd>t</kbd> pour aller au fil fédéré</li>
+    <li><kbd>g</kbd> + <kbd>c</kbd> pour aller à la page communauté</li>
+    <li><kbd>g</kbd> + <kbd>d</kbd> pour aller aux messages directs</li>
+    <li><kbd>g</kbd> + <kbd>i</kbd> pour aller à la page des instances</li>
+    <li><kbd>h</kbd> ou <kbd>?</kbd> pour afficher ou masquer l’aide</li>
+    <li><kbd>Retour arrière</kbd> pour revenir en arrière, fermer les boîtes de dialogue</li>
   `,
   timelineHotkeys: `
-    <li><kbd>j</kbd> ou <kbd>↓</kbd> pour activer le pouet suivant</li>
-    <li><kbd>k</kbd> ou <kbd>↑</kbd> pour activer le pouet précedent</li>
-    <li><kbd>.</kbd> pour afficher les nouveaus messages et renter en haut</li>
+    <li><kbd>j</kbd> ou <kbd>↓</kbd> pour activer la publication suivante</li>
+    <li><kbd>k</kbd> ou <kbd>↑</kbd> pour activer la publication précédente</li>
+    <li><kbd>.</kbd> pour afficher plus et remonter en haut</li>
     <li><kbd>o</kbd> pour ouvrir</li>
     <li><kbd>f</kbd> pour ajouter aux favoris</li>
     <li><kbd>b</kbd> pour partager</li>
     <li><kbd>r</kbd> pour répondre</li>
-    <li><kbd>i</kbd> pour voir une image, vidéo, ou audio</li>
-    <li><kbd>y</kbd> pour afficher ou cacher une image sensible</li>
-    <li><kbd>m</kbd> pour mentionner l'auteur</li>
-    <li><kbd>p</kbd> pour voir le profile de l'auteur</li>
-    <li><kbd>l</kbd> pour ouvrir un lien de carte dans un nouvel onglet</li>
-    <li><kbd>x</kbd> pour afficher ou cacher le texte caché derrière une avertissement</li>
-    <li><kbd>z</kbd> pour afficher ou cacher toutes les avertissements</li>
+    <li><kbd>e</kbd> pour modifier vos propres publications</li>
+    <li><kbd>q</kbd> pour citer une publication, si pris en charge</li>
+    <li><kbd>Escape</kbd> pour fermer la réponse</li>
+    <li><kbd>a</kbd> pour mettre en signet</li>
+    <li><kbd>i</kbd> pour ouvrir les images, vidéos ou audio</li>
+    <li><kbd>y</kbd> pour afficher ou masquer les médias sensibles</li>
+    <li><kbd>m</kbd> pour mentionner l’auteur</li>
+    <li><kbd>p</kbd> pour ouvrir le profil de l’auteur</li>
+    <li><kbd>l</kbd> pour ouvrir le lien de la carte dans un nouvel onglet</li>
+    <li><kbd>x</kbd> pour afficher ou masquer le texte derrière un avertissement de contenu</li>
+    <li><kbd>z</kbd> pour afficher ou masquer tous les avertissements de contenu d’un fil</li>
+    <li><kbd>t</kbd> pour traduire une publication</li>
   `,
   mediaHotkeys: `
     <li><kbd>←</kbd> / <kbd>→</kbd> pour voir la prochaine ou dernière image</li>
@@ -699,5 +706,201 @@ export default {
   // Snackbar UI
   updateAvailable: 'Mise à jour disponible.',
   // Details
-  statusEdited: 'Edited'
+  statusEdited: 'Modifié',
+
+  // --- Complété le 2026-06-15 : clés auparavant manquantes (retombaient sur l’anglais) ---
+  // Publication / planification
+  newStatus: 'Nouvelle publication',
+  youVotedFor: 'Vous avez voté pour',
+  twelveHours: '12 heures',
+  fourteenDays: '14 jours',
+  thirtyDays: '30 jours',
+  oneYear: '1 an',
+  never: 'Jamais',
+  schedulePost: 'Planifier la publication',
+  removeSchedule: 'Supprimer la planification',
+  scheduleSet: 'Planifier',
+  scheduleDateTimeLabel: 'Envoyer le',
+  scheduleTooSoon: 'L’heure planifiée doit être au moins 5 minutes après maintenant',
+  scheduledStatusCreated: 'Publication planifiée',
+  scheduledPosts: 'Publications planifiées',
+  noScheduledPosts: 'Aucune publication planifiée',
+  cancelScheduledPost: 'Annuler',
+  rescheduleLabel: 'Replanifier',
+  scheduledPostCancelled: 'Publication planifiée annulée',
+  scheduledPostRescheduled: 'Replanifiée',
+  // Listes
+  backfill: 'Charger les publications manquantes',
+  createList: 'Créer une liste',
+  unableToCreateList: 'Impossible de créer la liste : {error}',
+  listTitle: 'Titre de la liste',
+  manageInLists: 'Gérer l’appartenance aux listes',
+  listMembership: 'Appartenance aux listes pour {account}',
+  noListsYet: 'Aucune liste pour l’instant',
+  errorInListMembership: 'Erreur lors de la mise à jour de l’appartenance à la liste',
+  listMembershipNotSupported: 'Non pris en charge par ce serveur',
+  // Traduction
+  translateStatus: 'Traduire la publication',
+  translated: `Publication traduite depuis {from}{detected, select,
+    true { - Détecté}
+    other {}
+  }`,
+  translation: 'Traduction',
+  translationTargetLanguage: 'Langue de traduction',
+  translationBrowserDefault: 'Valeur par défaut du navigateur',
+  translationLanguageUnavailable: 'Liste des langues indisponible — la langue de traduction suit la valeur par défaut du navigateur',
+  translateError: 'Une erreur s’est produite lors de la traduction de cette publication',
+  translateRateLimit: 'Vous avez atteint la limite de traductions',
+  translateUnsupportedLanguage: 'Cette langue n’est pas prise en charge actuellement',
+  alreadyInTargetLanguage: 'La publication est déjà dans votre langue',
+  translating: 'Traduction en cours...',
+  hideTranslation: 'Masquer la traduction',
+  // Actions sur la publication
+  reactToStatus: 'Réagir à la publication',
+  quoteStatus: 'Citer la publication',
+  joined: 'Inscription',
+  // Statistiques du profil
+  postingStatsSummary: 'Dernières {posts} sur {duration}',
+  postingStatsPosts: '{total, plural, one {# publication} other {# publications}}',
+  postingStatsDays: '{days, plural, one {# jour} other {# jours}}',
+  postingStatsYears: '{years, plural, one {# an} other {# ans}}',
+  postingStatsOriginal: 'Originales',
+  postingStatsReplies: 'Réponses',
+  postingStatsBoosts: 'Partages',
+  postingStatsOriginalTitle: '{count, plural, one {# publication originale} other {# publications originales}} ({percent})',
+  postingStatsRepliesTitle: '{count, plural, one {# réponse} other {# réponses}} ({percent})',
+  postingStatsBoostsTitle: '{count, plural, one {# partage} other {# partages}} ({percent})',
+  // Navigation / abonnements
+  scrollToTopOfConversation: 'Faire défiler vers le haut de la conversation',
+  scrollToTop: 'Faire défiler vers le haut',
+  unrequestLabel: 'Annuler la demande',
+  unfollowingLabel: 'Désabonnement...',
+  unblockingLabel: 'Déblocage...',
+  unrequestingLabel: 'Annulation...',
+  requestingLabel: 'Demande en cours...',
+  notify: 'S’abonner à {account}',
+  denotify: 'Se désabonner de {account}',
+  subscribedAccount: 'Abonné au compte',
+  unsubscribedAccount: 'Désabonné du compte',
+  locked: 'Ce compte est privé. Le propriétaire vérifie manuellement qui peut le suivre.',
+  // Journaux
+  logs: 'Journaux',
+  showAllLogs: 'Afficher tous les journaux (débogage et info)',
+  showAllLogsHint: 'Par défaut, seuls les avertissements et les erreurs sont affichés. Activez ceci pour inclure aussi les journaux de débogage et d’information.',
+  copyLogs: 'Copier les journaux',
+  logsCopied: 'Journaux copiés dans le presse-papiers',
+  logsCopyFailed: 'Impossible de copier les journaux',
+  clearLogs: 'Effacer les journaux',
+  clearLogsConfirm: 'Effacer tous les journaux ? Cette action est irréversible.',
+  logsCleared: 'Journaux effacés',
+  // Paramètres
+  bottomNav: 'Placer la barre de navigation en bas de l’écran',
+  centerNav: 'Centrer la barre de navigation',
+  enableThreadPolling: 'Afficher le bouton d’actualisation automatique dans les fils',
+  defaultUnlistedReplies: 'Répondre en visibilité non listée par défaut',
+  defaultLocalOnly: 'Publier uniquement sur le fil local par défaut',
+  enableQuotePost: 'Afficher le choix Partager/Citer lors du partage',
+  boostOrQuote: 'Partager ou citer',
+  localOnlyUnsupported: 'Votre instance ne prend pas en charge les publications locales uniquement',
+  // Modifier le profil
+  editProfile: 'Modifier le profil',
+  editProfileDisplayName: 'Nom affiché',
+  editProfileBio: 'Bio',
+  editProfileFields: 'Métadonnées du profil',
+  editProfileFieldName: 'Étiquette',
+  editProfileFieldValue: 'Contenu',
+  editProfileChangeAvatar: 'Changer l’avatar',
+  editProfileChangeHeader: 'Changer la bannière',
+  editProfileSave: 'Enregistrer',
+  editProfileSaving: 'Enregistrement…',
+  profileUpdated: 'Profil mis à jour',
+  profileUpdateFailed: 'Échec de la mise à jour du profil : {error}',
+  threadPollingStart: 'Actualiser les réponses automatiquement (toutes les 30 s)',
+  threadPollingStop: 'Arrêter l’actualisation automatique',
+  hideReplyCount: 'Masquer le nombre de réponses',
+  disableNotificationSound: 'Désactiver les sons de notification',
+  immediacy: 'Immédiateté',
+  showAbsoluteTimestamps: 'Afficher les horodatages absolus (par ex. « 3 mars ») au lieu des horodatages relatifs (par ex. « il y a 5 minutes »)',
+  composer: 'Rédaction',
+  filterNotificationsTextSingle: 'paramètres du compte',
+  subscriptions: 'Publications des abonnements',
+  // Textes d’action (en-tête / notifications)
+  accountSignedUp: '{name} s’est inscrit, {account}',
+  accountRequestedFollow: '{name} a demandé à vous suivre, {account}',
+  accountReported: '{name} a envoyé un signalement, {account}',
+  unhandledNotification: 'Type de notification non géré {type}',
+  moved: 'a déménagé vers',
+  bite: 'vous a mordu',
+  reactionCountsHidden: 'Nombre de réactions masqué',
+  reactedTimes: `A réagi {count, plural,
+    one {1 fois}
+    other {{count} fois}
+  }`,
+  reacted: 'a réagi avec un emoji',
+  reactedWith: 'a réagi avec',
+  edited: 'a modifié sa publication',
+  requestedFollow: 'a demandé à vous suivre',
+  reported: 'a envoyé un signalement',
+  signedUp: 's’est inscrit',
+  posted: 'a publié',
+  boostsAction: 'a partagé',
+  repliesTo: 'en réponse à',
+  favorited: 'a mis en favori',
+  unreblogged: 'partage annulé',
+  unfavorited: 'favori retiré',
+  accountEdited: '{account} a modifié sa publication',
+  rebloggedByAccount: '{account} a partagé {original}',
+  // Thèmes (noms propres, non traduits comme les autres)
+  themeTangerine: 'Tangerine',
+  themeEmber: 'Ember',
+  themeCohostLight: 'Cohost Light',
+  unableToSubscribe: 'Impossible de s’abonner : {error}',
+  unableToUnsubscribe: 'Impossible de se désabonner : {error}',
+  // Filtres de mots
+  wordFilters: 'Filtres de mots',
+  noFilters: 'Vous n’avez aucun filtre de mots.',
+  wordOrPhrase: 'Mot ou expression',
+  contexts: 'Contextes',
+  addFilter: 'Ajouter un filtre',
+  addWordFilter: 'Ajouter un filtre de mots',
+  editFilter: 'Modifier le filtre',
+  filterHome: 'Accueil et listes',
+  filterNotifications: 'Notifications',
+  filterPublic: 'Fils publics',
+  filterThread: 'Conversations',
+  filterAccount: 'Profils',
+  filterUnknown: 'Inconnu',
+  expireAfter: 'Expire après',
+  whereToFilter: 'Où filtrer',
+  irreversible: 'Irréversible',
+  wholeWord: 'Mot entier',
+  save: 'Enregistrer',
+  updatedFilter: 'Filtre mis à jour',
+  createdFilter: 'Filtre créé',
+  failedToModifyFilter: 'Échec de la modification du filtre : {error}',
+  dropFiltersNotSupported: 'Ce serveur ne prend pas en charge les filtres irréversibles (de suppression). Laissez « Irréversible » décoché pour masquer les publications correspondantes derrière un avertissement.',
+  deletedFilter: 'Filtre supprimé',
+  required: 'Obligatoire',
+  // Titres de dialogues / menus (aria)
+  profileOptions: 'Options du profil',
+  copyLink: 'Copier le lien',
+  copy: 'Copier',
+  emoji: 'Emoji',
+  editMedia: 'Modifier le média',
+  shortcutHelp: 'Aide sur les raccourcis',
+  statusOptions: 'Options de la publication',
+  confirm: 'Confirmer',
+  closeDialog: 'Fermer la boîte de dialogue',
+  postPrivacy: 'Visibilité de la publication',
+  localOnly: 'Local uniquement',
+  contentType: 'Type de contenu',
+  contentTypeLabel: 'Changer le type de contenu (actuellement {label})',
+  // Titres de page / en-têtes de fil (aria)
+  homeOnInstance: 'Accueil sur {instance}',
+  statusesTimelineOnInstance: 'Publications : fil {timeline} sur {instance}',
+  statusesHashtag: 'Publications : hashtag #{hashtag}',
+  statusesThread: 'Publications : fil',
+  statusesAccountTimeline: 'Publications : fil du compte',
+  statusesList: 'Publications : liste',
+  notificationsOnInstance: 'Notifications sur {instance}'
 }

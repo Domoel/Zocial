@@ -136,10 +136,12 @@ export default {
     <li><kbd>s</kbd> o <kbd>/</kbd> para buscar</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> para ir a inicio</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> para ir a notificaciones</li>
-    <li><kbd>g</kbd> + <kbd>l</kbd> to para ir a la cronología local</li>
+    <li><kbd>g</kbd> + <kbd>l</kbd> para ir a la cronología local</li>
+    <li><kbd>g</kbd> + <kbd>b</kbd> para ir a la cronología de burbuja</li>
     <li><kbd>g</kbd> + <kbd>t</kbd> para ir a la cronología federada</li>
-    <li><kbd>g</kbd> + <kbd>c</kbd> para ir a la página comunidad</li>
+    <li><kbd>g</kbd> + <kbd>c</kbd> para ir a la página de comunidad</li>
     <li><kbd>g</kbd> + <kbd>d</kbd> para ir a la página de mensajes directos</li>
+    <li><kbd>g</kbd> + <kbd>i</kbd> para ir a la página de instancias</li>
     <li><kbd>h</kbd> o <kbd>?</kbd> para abrir o cerrar el diálogo de ayuda</li>
     <li><kbd>Backspace</kbd> para retroceder, cerrar diálogos</li>
   `,
@@ -151,6 +153,8 @@ export default {
     <li><kbd>f</kbd> para marcar como favorito</li>
     <li><kbd>b</kbd> para reenviar</li>
     <li><kbd>r</kbd> para responder</li>
+    <li><kbd>e</kbd> para editar tus propias publicaciones</li>
+    <li><kbd>q</kbd> para citar una publicación, si es compatible</li>
     <li><kbd>Escape</kbd> para cerrar respuesta</li>
     <li><kbd>a</kbd> para marcador</li>
     <li><kbd>i</kbd> para abrir imágenes, vídeo o audio</li>
@@ -160,6 +164,7 @@ export default {
     <li><kbd>l</kbd> para abrir el enlace de la publicación en una nueva pestaña</li>
     <li><kbd>x</kbd> para mostrar u ocultar el texto tras una advertencia de contenido</li>
     <li><kbd>z</kbd> para mostrar u ocultar todas las advertencias de contenido en un hilo</li>
+    <li><kbd>t</kbd> para traducir una publicación</li>
   `,
   mediaHotkeys: `
     <li><kbd>←</kbd> / <kbd>→</kbd> para ir a siguiente o anterior</li>
@@ -766,5 +771,135 @@ export default {
   statusesList: 'Estado: lista',
   notificationsOnInstance: 'Notificaciones en {instance}',
   // Details
-  statusEdited: 'Edited'
+  statusEdited: 'Editado',
+
+  // --- Completado 2026-06-15: claves antes ausentes (recurrían al inglés) ---
+  // Encuestas / programación
+  youVotedFor: 'Votaste por',
+  fourteenDays: '14 días',
+  thirtyDays: '30 días',
+  oneYear: '1 año',
+  schedulePost: 'Programar publicación',
+  removeSchedule: 'Quitar programación',
+  scheduleSet: 'Programar',
+  scheduleDateTimeLabel: 'Enviar el',
+  scheduleTooSoon: 'La hora programada debe ser al menos 5 minutos a partir de ahora',
+  scheduledStatusCreated: 'Publicación programada',
+  scheduledPosts: 'Publicaciones programadas',
+  noScheduledPosts: 'No hay publicaciones programadas',
+  cancelScheduledPost: 'Cancelar',
+  rescheduleLabel: 'Reprogramar',
+  scheduledPostCancelled: 'Publicación programada cancelada',
+  scheduledPostRescheduled: 'Reprogramada',
+  // Listas / backfill
+  backfill: 'Cargar publicaciones faltantes',
+  createList: 'Crear lista',
+  unableToCreateList: 'No se pudo crear la lista: {error}',
+  listTitle: 'Título de la lista',
+  manageInLists: 'Gestionar pertenencia a listas',
+  listMembership: 'Pertenencia a listas de {account}',
+  noListsYet: 'Aún no hay listas',
+  errorInListMembership: 'Error al actualizar la pertenencia a la lista',
+  listMembershipNotSupported: 'No compatible con este servidor',
+  // Traducción
+  translateStatus: 'Traducir publicación',
+  translated: `Publicación traducida de {from}{detected, select,
+    true { - Detectado}
+    other {}
+  }`,
+  translation: 'Traducción',
+  translationTargetLanguage: 'Idioma de traducción',
+  translationBrowserDefault: 'Predeterminado del navegador',
+  translationLanguageUnavailable: 'Lista de idiomas no disponible — el idioma de traducción sigue el predeterminado del navegador',
+  translateError: 'Hubo un error al traducir esta publicación',
+  translateRateLimit: 'Has alcanzado el límite de traducciones',
+  translateUnsupportedLanguage: 'Este idioma no es compatible actualmente',
+  alreadyInTargetLanguage: 'La publicación ya está en tu idioma',
+  translating: 'Traduciendo...',
+  hideTranslation: 'Ocultar traducción',
+  // Acciones de publicación
+  reactToStatus: 'Reaccionar a la publicación',
+  quoteStatus: 'Citar publicación',
+  joined: 'Se unió',
+  // Estadísticas de perfil
+  postingStatsSummary: 'Últimas {posts} en {duration}',
+  postingStatsPosts: '{total, plural, one {# publicación} other {# publicaciones}}',
+  postingStatsDays: '{days, plural, one {# día} other {# días}}',
+  postingStatsYears: '{years, plural, one {# año} other {# años}}',
+  postingStatsOriginal: 'Originales',
+  postingStatsReplies: 'Respuestas',
+  postingStatsBoosts: 'Impulsos',
+  postingStatsOriginalTitle: '{count, plural, one {# publicación original} other {# publicaciones originales}} ({percent})',
+  postingStatsRepliesTitle: '{count, plural, one {# respuesta} other {# respuestas}} ({percent})',
+  postingStatsBoostsTitle: '{count, plural, one {# impulso} other {# impulsos}} ({percent})',
+  // Navegación / follow
+  scrollToTopOfConversation: 'Desplazarse al inicio de la conversación',
+  scrollToTop: 'Desplazarse arriba',
+  unrequestLabel: 'Cancelar solicitud',
+  unfollowingLabel: 'Dejando de seguir...',
+  unblockingLabel: 'Desbloqueando...',
+  unrequestingLabel: 'Cancelando...',
+  requestingLabel: 'Solicitando...',
+  locked: 'Esta cuenta es privada. El propietario revisa manualmente quién puede seguirla.',
+  // Registros
+  logs: 'Registros',
+  showAllLogs: 'Mostrar todos los registros (depuración e info)',
+  showAllLogsHint: 'De forma predeterminada solo se muestran advertencias y errores. Actívalo para incluir también los registros de depuración e información.',
+  copyLogs: 'Copiar registros',
+  logsCopied: 'Registros copiados al portapapeles',
+  logsCopyFailed: 'No se pudieron copiar los registros',
+  clearLogs: 'Borrar registros',
+  clearLogsConfirm: '¿Borrar todos los registros? Esto no se puede deshacer.',
+  logsCleared: 'Registros borrados',
+  // Ajustes
+  enableThreadPolling: 'Mostrar el botón de actualización automática en los hilos',
+  defaultUnlistedReplies: 'Responder con visibilidad no listada de forma predeterminada',
+  defaultLocalOnly: 'Publicar solo en la cronología local de forma predeterminada',
+  enableQuotePost: 'Mostrar la opción Impulsar/Citar al impulsar',
+  boostOrQuote: 'Impulsar o citar',
+  localOnlyUnsupported: 'Tu instancia no admite publicaciones solo locales',
+  // Editar perfil
+  editProfile: 'Editar perfil',
+  editProfileDisplayName: 'Nombre visible',
+  editProfileBio: 'Biografía',
+  editProfileFields: 'Metadatos del perfil',
+  editProfileFieldName: 'Etiqueta',
+  editProfileFieldValue: 'Contenido',
+  editProfileChangeAvatar: 'Cambiar avatar',
+  editProfileChangeHeader: 'Cambiar cabecera',
+  editProfileSave: 'Guardar',
+  editProfileSaving: 'Guardando…',
+  profileUpdated: 'Perfil actualizado',
+  profileUpdateFailed: 'No se pudo actualizar el perfil: {error}',
+  threadPollingStart: 'Actualizar respuestas automáticamente (cada 30 s)',
+  threadPollingStop: 'Detener actualización automática',
+  hideReplyCount: 'Ocultar el número de respuestas',
+  disableNotificationSound: 'Desactivar los sonidos de notificación',
+  composer: 'Redacción',
+  filterNotificationsTextSingle: 'ajustes de la cuenta',
+  unhandledNotification: 'Tipo de notificación no gestionado {type}',
+  // Cabecera de publicación / reacciones
+  moved: 'se mudó a',
+  bite: 'te mordió',
+  reactionCountsHidden: 'Número de reacciones oculto',
+  reactedTimes: `Reaccionó {count, plural,
+    one {1 vez}
+    other {{count} veces}
+  }`,
+  reacted: 'reaccionó con un emoji',
+  reactedWith: 'reaccionó con',
+  boostsAction: 'impulsó',
+  repliesTo: 'en respuesta a',
+  rebloggedByAccount: '{account} impulsó {original}',
+  // Themes (nombres propios, sin traducir como los demás)
+  themeTangerine: 'Tangerine',
+  themeEmber: 'Ember',
+  themeCohostLight: 'Cohost Light',
+  // Filtros de palabras / varios
+  addWordFilter: 'Añadir filtro de palabras',
+  dropFiltersNotSupported: 'Este servidor no admite filtros irreversibles (de descarte). Deja «Irreversible» sin marcar para ocultar las publicaciones coincidentes tras una advertencia.',
+  copy: 'Copiar',
+  localOnly: 'Solo local',
+  contentType: 'Tipo de contenido',
+  contentTypeLabel: 'Cambiar el tipo de contenido (actualmente {label})'
 }
