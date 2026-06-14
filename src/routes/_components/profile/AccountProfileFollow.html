@@ -60,6 +60,7 @@
 </style>
 <script>
   import { store } from '../../_store/store.js'
+  import { formatIntl } from '../../_utils/formatIntl.js'
   import IconButton from '../IconButton.html'
   import { importShowAccountProfileOptionsDialog } from '../dialog/asyncDialogs/importShowAccountProfileOptionsDialog.js'
   import { importShowEditProfileDialog } from '../dialog/asyncDialogs/importShowEditProfileDialog.js'
@@ -121,17 +122,22 @@
         return relationship && relationship.requested
       },
       requested: ({ following, followRequested }) => !following && followRequested,
-      label: ({ overrideLabel, blocking, requested, following, $messages }) => {
+      label: ({ overrideLabel, blocking, requested, following, followRequested, $messages }) => {
         if (overrideLabel) {
           return overrideLabel // already-resolved transient label set during a follow/unfollow action
         } else if (blocking) {
           return $messages.unblock
         } else if (requested) {
           return $messages.unrequestLabel
-        } if (following) {
-          return $messages.unfollowLabel
+        }
+        // followLabel/unfollowLabel are placeholder messages (a {requested} select in non-English
+        // locales), so they must go through formatIntl, not $messages (which holds only
+        // placeholder-free keys — these would be undefined there). $messages stays in the deps so
+        // the label re-resolves on a live language switch.
+        if (following) {
+          return formatIntl('intl.unfollowLabel', { requested: followRequested })
         } else {
-          return $messages.followLabel
+          return formatIntl('intl.followLabel', { requested: followRequested })
         }
       },
       isOwnProfile: ({ account, verifyCredentials }) => !!(account && verifyCredentials && account.id === verifyCredentials.id),

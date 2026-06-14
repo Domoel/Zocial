@@ -113,6 +113,7 @@
   import IconButton from '../IconButton.html'
   import AccountDisplayName from '../profile/AccountDisplayName.html'
   import { store } from '../../_store/store.js'
+  import { formatIntl } from '../../_utils/formatIntl.js'
   import { setAccountFollowed } from '../../_actions/follow.js'
   import { importShowAccountProfileOptionsDialog } from '../dialog/asyncDialogs/importShowAccountProfileOptionsDialog.js'
 
@@ -148,7 +149,11 @@
         if (requested) {
           return $messages.unrequestLabel
         }
-        return following ? $messages.unfollowLabel : $messages.followLabel
+        // follow/unfollowLabel are placeholder messages (non-English {requested} select) → formatIntl,
+        // not $messages (would be undefined there). $messages stays in deps for live reactivity.
+        return following
+          ? formatIntl('intl.unfollowLabel', { requested: false })
+          : formatIntl('intl.followLabel', { requested: false })
       }
     },
     methods: {

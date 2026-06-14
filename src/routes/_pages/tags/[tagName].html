@@ -67,7 +67,14 @@
     store: () => store,
     computed: {
       following: ({ tagInfo }) => tagInfo && tagInfo.following,
-      label: ({ following, overrideLabel, $messages }) => overrideLabel || following ? $messages.unfollowLabel : $messages.followLabel
+      // followLabel/unfollowLabel are placeholder messages (non-English {requested} select) → formatIntl,
+      // not $messages (would be undefined there). overrideLabel is a transient already-resolved string.
+      label: ({ following, overrideLabel }) => {
+        if (overrideLabel) return overrideLabel
+        return following
+          ? formatIntl('intl.unfollowLabel', { requested: false })
+          : formatIntl('intl.followLabel', { requested: false })
+      }
     },
     data: () => ({
       tagInfo: null,

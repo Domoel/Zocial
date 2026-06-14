@@ -243,11 +243,11 @@
         if (isThreadBundle) {
           return $messages.startedThread
         } else if (status && status.reblog) {
-          return $messages.reblogged
+          return $messages.boostsAction // header verb ("boosts"); see intl notes
         } else if (notificationInfo) {
           return notificationInfo.actionText
         } else if (inReplyToAccount) {
-          return $messages.replyToLower
+          return $messages.repliesTo // header verb ("replies to"); boost-of-reply append below stays the noun
         } else if (matchingHashtag) {
           return '#' + matchingHashtag
         }

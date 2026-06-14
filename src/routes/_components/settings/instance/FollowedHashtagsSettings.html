@@ -8,7 +8,7 @@
             {tag.name}
           </a>
           <button type="button" class="unfollow-button" on:click="unfollow(tag.name)" aria-label="Unfollow #{tag.name}">
-            {'intl.unfollowLabel'}
+            {unfollowButtonLabel}
           </button>
         </li>
       {/each}
@@ -29,7 +29,7 @@
       autocapitalize="off"
       spellcheck="false"
     />
-    <button type="submit" class="add-button">{'intl.followLabel'}</button>
+    <button type="submit" class="add-button">{followButtonLabel}</button>
   </form>
 
   {#if errorMessage}
@@ -145,6 +145,7 @@
 </style>
 <script>
   import { store } from '../../../_store/store.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
   import SvgIcon from '../../SvgIcon.html'
   import { followHashtag, unfollowHashtag, refreshFollowedHashtagsForInstance } from '../../../_actions/followedTags.js'
 
@@ -157,7 +158,12 @@
     }),
     computed: {
       followedHashtags: ({ instanceName, $followedHashtagsForInstance }) =>
-        ($followedHashtagsForInstance || []).slice().sort((a, b) => a.name.localeCompare(b.name))
+        ($followedHashtagsForInstance || []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+      // follow/unfollowLabel are placeholder messages (non-English {requested} select), so they must
+      // go through formatIntl, not $messages (where they'd be undefined). Depend on $messages so the
+      // labels re-resolve on a live language switch.
+      followButtonLabel: ({ $messages }) => $messages && formatIntl('intl.followLabel', { requested: false }),
+      unfollowButtonLabel: ({ $messages }) => $messages && formatIntl('intl.unfollowLabel', { requested: false })
     },
     async oncreate () {
       const { instanceName } = this.get()

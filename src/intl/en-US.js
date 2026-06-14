@@ -678,6 +678,11 @@ Enable this to also include the description text below the title.`,
   pollYouCreatedEnded: 'A poll you created has ended',
   pollYouVotedEnded: 'A poll you voted on has ended',
   reblogged: 'boosted',
+  // Present-tense verbs used ONLY in the status header ("{account} boosts/replies to {target}").
+  // Kept separate from `reblogged`/`replyToLower`, which are reused for the boost confirmation
+  // announcement and the boost-of-reply noun ("boosted reply to …") respectively.
+  boostsAction: 'boosted',
+  repliesTo: 'reply to',
   startedThread: 'started a thread',
   favorited: 'favorited',
   unreblogged: 'unboosted',
