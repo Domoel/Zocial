@@ -901,5 +901,15 @@ export default {
   copy: 'Copiar',
   localOnly: 'Solo local',
   contentType: 'Tipo de contenido',
-  contentTypeLabel: 'Cambiar el tipo de contenido (actualmente {label})'
+  contentTypeLabel: 'Cambiar el tipo de contenido (actualmente {label})',
+  // Cabecera de redacción (editar/responder/citar) + opción de encuesta
+  editing: 'Editando',
+  replyingTo: 'En respuesta a',
+  quoting: 'Citando',
+  aPost: 'una publicación',
+  aPostBy: 'una publicación de {handle}',
+  dontEdit: 'No editar',
+  dontReply: 'No responder',
+  dontQuote: 'No citar',
+  addPollChoice: 'Añadir opción'
 }

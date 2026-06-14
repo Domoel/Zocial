@@ -892,5 +892,15 @@ Enable this to also include the description text below the title.`,
   statusesList: 'Statuses: list',
   notificationsOnInstance: 'Notifications on {instance}',
   // Details
-  statusEdited: 'Edited'
+  statusEdited: 'Edited',
+  // Compose header (edit/reply/quote) + poll choice
+  editing: 'Editing',
+  replyingTo: 'Replying to',
+  quoting: 'Quoting',
+  aPost: 'a post',
+  aPostBy: 'a post by {handle}',
+  dontEdit: 'Don\'t edit',
+  dontReply: 'Don\'t reply',
+  dontQuote: 'Don\'t quote',
+  addPollChoice: 'Add choice'
 }

@@ -900,5 +900,15 @@ export default {
   copy: 'Копировать',
   localOnly: 'Только локально',
   contentType: 'Тип содержимого',
-  contentTypeLabel: 'Изменить тип содержимого (сейчас {label})'
+  contentTypeLabel: 'Изменить тип содержимого (сейчас {label})',
+  // Заголовок редактора (редактировать/ответить/цитировать) + вариант опроса
+  editing: 'Редактировать',
+  replyingTo: 'Ответ на',
+  quoting: 'Цитировать',
+  aPost: 'запись',
+  aPostBy: 'запись от {handle}',
+  dontEdit: 'Не редактировать',
+  dontReply: 'Не отвечать',
+  dontQuote: 'Не цитировать',
+  addPollChoice: 'Добавить вариант'
 }

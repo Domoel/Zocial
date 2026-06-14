@@ -33,7 +33,7 @@
   </div>
   <IconButton
     className="add-poll-choice-button"
-    label="Add choice"
+    label="{'intl.addPollChoice'}"
     href="#fa-plus"
     muted={true}
     disabled={!canAddOption}
@@ -43,7 +43,7 @@
     <label id="poll-option-label-{realm}-{i}"
            class="sr-only"
            for="poll-option-{realm}-{i}">
-      Choice {i + 1}
+      {createLabel(i)}
     </label>
   {/each}
 </section>

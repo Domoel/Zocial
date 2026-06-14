@@ -9,10 +9,10 @@
            transition:slide="{duration: 333}">
         <div class="compose-edit-toolbar">
           <div class="compose-edit-toolbar-label">
-            Editing <a href={'/statuses/' + editId}>a post</a>
+            {'intl.editing'} <a href={'/statuses/' + editId}>{'intl.aPost'}</a>
           </div>
           <IconButton
-            label="Don't edit"
+            label="{'intl.dontEdit'}"
             href="#fa-times"
             on:click="onDontEditClick()"
           />
@@ -24,13 +24,13 @@
            transition:slide="{duration: 333}">
         <div class="compose-in-reply-to-toolbar">
           <div class="compose-in-reply-to-toolbar-label">
-            Replying to <a href={'/statuses/' + inReplyToId}>a post{#if inReplyToHandle}{' '}by {inReplyToHandle}{/if}</a>
+            {'intl.replyingTo'} <a href={'/statuses/' + inReplyToId}>{replyLinkText}</a>
           </div>
           {#if editId}
             <div style="height:36px"></div>
           {:else}
             <IconButton
-              label="Don't reply"
+              label="{'intl.dontReply'}"
               href="#fa-times"
               on:click="onDontReplyClick()"
             />
@@ -43,10 +43,10 @@
            transition:slide="{duration: 333}">
         <div class="compose-quote-toolbar">
           <div class="compose-quote-toolbar-label">
-            Quoting <a href={'/statuses/' + quoteId}>a post{#if quoteHandle}{' '}by {quoteHandle}{/if}</a>
+            {'intl.quoting'} <a href={'/statuses/' + quoteId}>{quoteLinkText}</a>
           </div>
           <IconButton
-            label="Don't quote"
+            label="{'intl.dontQuote'}"
             href="#fa-times"
             on:click="onDontQuoteClick()"
           />
@@ -193,6 +193,7 @@
   import { measureText } from '../../_utils/measureText.js'
   import { POST_PRIVACY_OPTIONS } from '../../_static/statuses.js'
   import { store } from '../../_store/store.js'
+  import { formatIntl } from '../../_utils/formatIntl.js'
   import { slide } from '../../_transitions/slide.js'
   import { postStatus, insertHandleForReply, setReplySpoiler, setReplyVisibility, applyDefaultLocalOnly } from '../../_actions/compose.js'
   import { classname } from '../../_utils/classname.js'
@@ -281,6 +282,14 @@
       inReplyToHandle: ({ composeData }) => composeData.inReplyToHandle,
       quoteId: ({ composeData }) => composeData.quoteId,
       quoteHandle: ({ composeData }) => composeData.quoteHandle,
+      // Link text for the reply/quote header — "a post" or "a post by {handle}". aPostBy is a
+      // placeholder message so it goes through formatIntl; $messages keeps it reactive on switch.
+      replyLinkText: ({ inReplyToHandle, $messages }) => inReplyToHandle
+        ? formatIntl('intl.aPostBy', { handle: inReplyToHandle })
+        : $messages.aPost,
+      quoteLinkText: ({ quoteHandle, $messages }) => quoteHandle
+        ? formatIntl('intl.aPostBy', { handle: quoteHandle })
+        : $messages.aPost,
       editId: ({ composeData }) => composeData.editId,
       scheduledAt: ({ composeData }) => composeData.scheduledAt,
       showSensitive: ({ $currentSupportedToggles }) => $currentSupportedToggles ? $currentSupportedToggles.sensitive : true

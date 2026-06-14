@@ -902,5 +902,15 @@ export default {
   statusesThread: 'Publications : fil',
   statusesAccountTimeline: 'Publications : fil du compte',
   statusesList: 'Publications : liste',
-  notificationsOnInstance: 'Notifications sur {instance}'
+  notificationsOnInstance: 'Notifications sur {instance}',
+  // En-tête de rédaction (modifier/répondre/citer) + option de sondage
+  editing: 'Modifier',
+  replyingTo: 'Répondre à',
+  quoting: 'Citer',
+  aPost: 'une publication',
+  aPostBy: 'une publication de {handle}',
+  dontEdit: 'Ne pas modifier',
+  dontReply: 'Ne pas répondre',
+  dontQuote: 'Ne pas citer',
+  addPollChoice: 'Ajouter un choix'
 }

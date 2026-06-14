@@ -60,7 +60,7 @@ export default {
   local: 'Lokal',
   notifications: 'Benachrichtigungen',
   mutedUsers: 'Stummgeschaltete Benutzer',
-  pinnedStatuses: 'Angeheftete Tröts',
+  pinnedStatuses: 'Angeheftete Beiträge',
   followRequests: 'Followeranfragen',
   followRequestsLabel: `Followeranfragen {hasFollowRequests, select,
     true {({count})}
@@ -97,8 +97,8 @@ export default {
   listNotLoggedIn: 'Hier erscheint eine Liste, wenn Du Dich anmeldest.',
   notificationsNotLoggedIn: 'Hier erscheinen Deine Benachrichtigungen, wenn Du Dich anmeldest.',
   notificationMentionsNotLoggedIn: 'Hier erscheinen Deine Benachrichtigungen zu Erwähnungen, wenn Du Dich anmeldest.',
-  statusNotLoggedIn: 'Hier erscheint der Faden zu einem Tröt, wenn Du Dich anmeldest.',
-  tagNotLoggedIn: 'Hier erscheinen Tröts zu einem hashtag, wenn Du Dich anmeldest.',
+  statusNotLoggedIn: 'Hier erscheint der Faden zu einem Beitrag, wenn Du Dich anmeldest.',
+  tagNotLoggedIn: 'Hier erscheinen Beiträge zu einem hashtag, wenn Du Dich anmeldest.',
   bubbleTimelineNotLoggedIn: 'Deine Bubble-Zeitleiste erscheint hier, sobald Du angemeldet bist.',
   bubbleTimelineNotSupported: 'Die Bubble-Zeitleiste wird von Deiner Instanz nicht unterstützt.',
   accountNotLoggedIn: 'Die Account-Einstellungen erscheinen hier, sobald Du angemeldet bist.',
@@ -131,7 +131,7 @@ export default {
       }
       um die Spalten umzuschalten
     </li>
-    <li><kbd>7</kbd> oder <kbd>c</kbd> zum Erstellen eines neuen Tröts</li>
+    <li><kbd>7</kbd> oder <kbd>c</kbd> zum Erstellen eines neuen Beitrags</li>
     <li><kbd>s</kbd> oder <kbd>/</kbd> zum Suchen</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> zur Startseite gehen</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> zu den Benachrichtigungen gehen</li>
@@ -145,13 +145,13 @@ export default {
     <li><kbd>Rückschritttaste</kbd> zurückgehen, Dialogfelder schließen</li>
   `,
   timelineHotkeys: `
-    <li><kbd>j</kbd> oder <kbd>↓</kbd> nächsten Tröt ansteuern</li>
-    <li><kbd>k</kbd> oder <kbd>↑</kbd> vorherigen Tröt ansteuern</li>
-    <li><kbd>.</kbd> neue Tröts anzeigen und nach oben scrollen</li>
-    <li><kbd>o</kbd> Tröt öffnen</li>
-    <li><kbd>f</kbd> Tröt favorisieren</li>
-    <li><kbd>b</kbd> Tröt boosten</li>
-    <li><kbd>r</kbd> auf Tröt antworten</li>
+    <li><kbd>j</kbd> oder <kbd>↓</kbd> nächsten Beitrag ansteuern</li>
+    <li><kbd>k</kbd> oder <kbd>↑</kbd> vorherigen Beitrag ansteuern</li>
+    <li><kbd>.</kbd> neue Beiträge anzeigen und nach oben scrollen</li>
+    <li><kbd>o</kbd> Beitrag öffnen</li>
+    <li><kbd>f</kbd> Beitrag favorisieren</li>
+    <li><kbd>b</kbd> Beitrag boosten</li>
+    <li><kbd>r</kbd> auf Beitrag antworten</li>
     <li><kbd>e</kbd> eigene Beiträge bearbeiten</li>
     <li><kbd>q</kbd> einen Beitrag zitieren, falls unterstützt</li>
     <li><kbd>Escape</kbd> Antwort schließen</li>
@@ -196,8 +196,8 @@ export default {
   }`,
   pinPage: 'Hefte {label} an',
   // Status composition
-  composeStatus: 'Tröt erstellen',
-  postStatus: 'Tröt!',
+  composeStatus: 'Beitrag erstellen',
+  postStatus: 'Post',
   contentWarning: 'Inhaltswarnung',
   dropToUpload: 'Fallenlassen zum Hochladen',
   invalidFileType: 'Ungültiger Dateityp',
@@ -304,25 +304,25 @@ export default {
   additionalComments: 'Zusätzliche Kommentare',
   forwardDescription: 'Auch an die Moderatoren von {instance} weiterleiten?',
   forwardLabel: 'An {instance} weiterleiten',
-  unableToLoadStatuses: 'Kann neueste Tröts nicht laden: {error}',
+  unableToLoadStatuses: 'Kann neueste Beiträge nicht laden: {error}',
   report: 'Melden',
   noContent: '(Keine Inhalte)',
-  noStatuses: 'Keine Tröts zum Melden vorhanden',
+  noStatuses: 'Keine Beiträge zum Melden vorhanden',
   // Status options
   unpinFromProfile: 'Vom Profil abheften',
   pinToProfile: 'An Profil anheften',
   muteConversation: 'Unterhaltung stummschalten',
   unmuteConversation: 'Stummschaltung der Unterhaltung aufheben',
-  bookmarkStatus: 'Tröt als Lesezeichen speichern',
-  unbookmarkStatus: 'Tröt aus Lesezeichen entfernen',
+  bookmarkStatus: 'Beitrag als Lesezeichen speichern',
+  unbookmarkStatus: 'Beitrag aus Lesezeichen entfernen',
   deleteAndRedraft: 'Löschen und neu eingeben',
-  reportStatus: 'Tröt melden',
-  shareStatus: 'Tröt teilen',
-  copyLinkToStatus: 'Link zum Tröt kopieren',
+  reportStatus: 'Beitrag melden',
+  shareStatus: 'Beitrag teilen',
+  copyLinkToStatus: 'Link zum Beitrag kopieren',
   // Account profile
   profileForAccount: 'Profil für {account}',
   statisticsAndMoreOptions: 'Statistiken und weitere Optionen',
-  statuses: 'Tröts',
+  statuses: 'Beiträge',
   joined: 'Beigetreten',
   postingStatsSummary: 'Letzte {posts} in den letzten {duration}',
   postingStatsPosts: `{total, plural, one {# Beitrag} other {# Beiträge}}`,
@@ -433,10 +433,10 @@ export default {
   largeMedia: 'Große eingebettete Bilder und Videos anzeigen',
   autoplayGifs: 'Animierte Gifs automatisch abspielen',
   hideCards: 'Linkvorschauen verbergen',
-  underlineLinks: 'Links in Tröts und Profilen unterstreichen',
+  underlineLinks: 'Links in Beiträge und Profilen unterstreichen',
   accessibility: 'Barrierefreiheit',
   reduceMotion: 'Bewegung in Animationen der Oberfläche reduzieren',
-  disableTappable: 'Berührungsempfindlichkeit auf ganzem Tröt deaktivieren',
+  disableTappable: 'Berührungsempfindlichkeit auf ganzem Beitrag deaktivieren',
   removeEmoji: 'Emoji aus Anzeigenamen der Benutzer entfernen',
   shortAria: 'Verkürzte aria-label für Artikel verwenden',
   announceCardDescriptionsPre: 'Link-Vorschau-',
@@ -501,7 +501,7 @@ export default {
   // to see a description. It's hard to properly internationalize, so we just break up the strings.
   disableInfiniteScrollPre: '',
   disableInfiniteScrollText: 'Unendliches Scrollen',
-  disableInfiniteScrollDescription: 'Wenn unendliches Scrollen deaktiviert ist, erscheinen neue Tröts nicht automatisch am unteren oder oberen Ende der zeitleiste. Stattdessen kannst Du weitere Inhalte durch dafür vorgesehene Schaltflächen nachladen.',
+  disableInfiniteScrollDescription: 'Wenn unendliches Scrollen deaktiviert ist, erscheinen neue Beiträge nicht automatisch am unteren oder oberen Ende der zeitleiste. Stattdessen kannst Du weitere Inhalte durch dafür vorgesehene Schaltflächen nachladen.',
   disableInfiniteScrollPost: 'deaktivieren',
   // Instance settings
   loggedInAs: 'Eingeloggt als',
@@ -622,9 +622,9 @@ export default {
     one {1 Mal}
     other {{count} Mal}
   }`,
-  pinnedStatus: 'Angehefteter Tröt',
-  rebloggedYou: 'hat Deinen Tröt geboostet',
-  favoritedYou: 'hat Deinen Tröt favorisiert',
+  pinnedStatus: 'Angehefteter Beitrag',
+  rebloggedYou: 'hat Deinen Beitrag geboostet',
+  favoritedYou: 'hat Deinen Beitrag favorisiert',
   reacted: 'hat mit einem Emoji reagiert',
   reactedWith: 'reagierte mit',
   followedYou: 'folgt Dir jetzt',
@@ -656,13 +656,13 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   longPost: 'Langer Beitrag',
   longPostLengthLabel: 'Kürzungsschwelle (Zeichen)',
   // Accessible status labels
-  accountRebloggedYou: '{account} hat Deinen Tröt geboostet',
-  accountFavoritedYou: '{account} hat Deinen Tröt favorisiert',
+  accountRebloggedYou: '{account} hat Deinen Beitrag geboostet',
+  accountFavoritedYou: '{account} hat Deinen Beitrag favorisiert',
   contentWarningContent: 'Inhaltswarnung: {spoiler}',
   hasMedia: 'hat Medien',
   accountEdited: '{account} hat seinen Beitrag bearbeitet',
   hasPoll: 'hat Umfrage',
-  shortStatusLabel: '{privacy} Tröt von {account}',
+  shortStatusLabel: '{privacy} Beitrag von {account}',
   // Privacy types
   public: 'Öffentlich',
   unlisted: 'Nicht gelistet',
@@ -724,23 +724,23 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   accountListUnavailable: 'Diese Liste ist hier nicht verfügbar – das Profil hält sie evtl. privat, oder dein Server kennt sie nicht.',
   accountListPartial: 'Zeige {shown} von {total} – den Rest liefert dein Server nicht.',
   // status thread page
-  statusThreadPage: 'Seite für Tröt-Unterhaltung',
-  status: 'Tröt',
+  statusThreadPage: 'Seite für Beitrag-Unterhaltung',
+  status: 'Beitrag',
   // toast messages
   blockedAccount: 'Account blockiert',
   unblockedAccount: 'Blockade des Accounts aufgehoben',
   unableToBlock: 'Konnte Account nicht blockieren: {error}',
   unableToUnblock: 'Konnte Blockade des Accounts nicht aufheben: {error}',
-  bookmarkedStatus: 'Tröt als Lesezeichen gespeichert',
-  unbookmarkedStatus: 'Tröt aus Lesezeichen entfernt',
+  bookmarkedStatus: 'Beitrag als Lesezeichen gespeichert',
+  unbookmarkedStatus: 'Beitrag aus Lesezeichen entfernt',
   unableToBookmark: 'Konnte kein lesezeichen setzen: {error}',
   unableToUnbookmark: 'Konnte Lesezeichen nicht entfernen: {error}',
   cannotPostOffline: 'Du kannst nicht senden, wenn Du offline bist',
   cannotPostEmpty: 'Schreibe etwas oder füge Medien hinzu, bevor du etwas postest.',
   pollNeedsTwoOptions: 'Gib deiner Umfrage mindestens zwei nicht-leere Optionen.',
-  unableToPost: 'Konnte Tröt nicht posten: {error}',
-  statusDeleted: 'Tröt gelöscht',
-  unableToDelete: 'Konnte Tröt nicht löschen: {error}',
+  unableToPost: 'Konnte Beitrag nicht posten: {error}',
+  statusDeleted: 'Beitrag gelöscht',
+  unableToDelete: 'Konnte Beitrag nicht löschen: {error}',
   cannotFavoriteOffline: 'Du kannst nicht favorisieren, wenn Du offline bist',
   cannotUnfavoriteOffline: 'Du kannst Favorisierung nicht zurücknehmen, wenn Du offline bist',
   // Custom emoji reactions
@@ -775,9 +775,9 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   unmutedConversation: 'Stummschaltung der Unterhaltung aufgehoben',
   unableToMuteConversation: 'Konnte Unterhaltung nicht stummschalten: {error}',
   unableToUnmuteConversation: 'Konnte Stummschaltung der Unterhaltung nicht aufheben: {error}',
-  unpinnedStatus: 'Tröt abgeheftet',
-  unableToPinStatus: 'Konnte Tröt nicht anheften: {error}',
-  unableToUnpinStatus: 'Konnte Tröt nicht abheften: {error}',
+  unpinnedStatus: 'Beitrag abgeheftet',
+  unableToPinStatus: 'Konnte Beitrag nicht anheften: {error}',
+  unableToUnpinStatus: 'Konnte Beitrag nicht abheften: {error}',
   unableToRefreshPoll: 'Konnte Umfrage nicht aktualisieren: {error}',
   unableToVoteInPoll: 'Konte in der Umfrage nicht abstimmen: {error}',
   cannotReblogOffline: 'Du kannst nicht boosten, wenn Du offline bist.',
@@ -802,7 +802,7 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   unableToShare: 'Teilen fehlgeschlagen: {error}',
   unableToSubscribe: 'Abonnieren fehlgeschlagen: {error}',
   showingOfflineContent: 'Anforderung übers Internet fehlgeschlagen. Zeige Offline-Inhalte an.',
-  youAreOffline: 'Du scheinst keine Verbindung zum Internet zu haben. Du kanst weiterhin Tröts lesen, solange Du offline bist.',
+  youAreOffline: 'Du scheinst keine Verbindung zum Internet zu haben. Du kanst weiterhin Beiträge lesen, solange Du offline bist.',
   // Snackbar UI
   updateAvailable: 'Update der App verfügbar',
   // Details
@@ -892,10 +892,20 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   contentTypeLabel: 'Inhaltstyp ändern (aktuell {label})',
   // Seitentitel / Timeline-Header (aria)
   homeOnInstance: 'Startseite auf {instance}',
-  statusesTimelineOnInstance: 'Tröts: {timeline}-Zeitleiste auf {instance}',
-  statusesHashtag: 'Tröts: #{hashtag}-Hashtag',
-  statusesThread: 'Tröts: Thread',
-  statusesAccountTimeline: 'Tröts: Konto-Zeitleiste',
-  statusesList: 'Tröts: Liste',
-  notificationsOnInstance: 'Benachrichtigungen auf {instance}'
+  statusesTimelineOnInstance: 'Beiträge: {timeline}-Zeitleiste auf {instance}',
+  statusesHashtag: 'Beiträge: #{hashtag}-Hashtag',
+  statusesThread: 'Beiträge: Thread',
+  statusesAccountTimeline: 'Beiträge: Konto-Zeitleiste',
+  statusesList: 'Beiträge: Liste',
+  notificationsOnInstance: 'Benachrichtigungen auf {instance}',
+  // Compose-Header (Bearbeiten/Antworten/Zitieren) + Umfrage-Option
+  editing: 'Bearbeite',
+  replyingTo: 'Antwort auf',
+  quoting: 'Zitiere',
+  aPost: 'einen Beitrag',
+  aPostBy: 'einen Beitrag von {handle}',
+  dontEdit: 'Nicht bearbeiten',
+  dontReply: 'Nicht antworten',
+  dontQuote: 'Nicht zitieren',
+  addPollChoice: 'Antwortoption hinzufügen'
 }
