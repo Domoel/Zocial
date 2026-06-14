@@ -4,9 +4,15 @@ import { mixins } from './mixins/mixins.js'
 import { LocalStorageStore } from './LocalStorageStore.js'
 import { observe } from 'svelte-extras'
 import { isKaiOS } from '../_utils/userAgent/isKaiOS.js'
+import { DEFAULT_LOCALE } from '../_intl/locales.js'
+import { setCurrentLocale } from '../_intl/runtime.js'
 
 const persistedState = {
   alwaysShowFocusRing: false,
+  // UI language, switchable at runtime (see _intl/). Always defaults to en-US (matching the static
+  // English prerender — no build-time language option); the persisted value wins on reload and
+  // survives logout (it's a UI preference, not instance state). Read reactively by the i18n resolver.
+  locale: DEFAULT_LOCALE,
   autoplayGifs: !(
     !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches
   ),
@@ -149,6 +155,15 @@ export class PinaforeStore extends LocalStorageStore {
 PinaforeStore.prototype.observe = observe
 
 export const store = new PinaforeStore(state)
+
+// Keep the imperative i18n resolver (getMessage/formatIntl called from component scripts and
+// actions) in sync with the selected locale. Templates react via the `messages` computed; this
+// covers the JS side. The LocalStorageStore constructor has already loaded any persisted
+// `store_locale`, so this picks up the user's saved language on boot.
+setCurrentLocale(store.get().locale)
+if (ZOCIAL_IS_BROWSER) {
+  store.observe('locale', locale => setCurrentLocale(locale))
+}
 
 // Migration: `enableDesktopNotifications` used to be a single global boolean; it is now a
 // per-instance map. Convert a legacy boolean once. A global `true` applied to whichever accounts

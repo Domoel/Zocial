@@ -1,27 +1,13 @@
-import interpret from 'format-message-interpret'
-import { LOCALE } from '../_static/intl.js'
+import { formatMessage } from '../_intl/runtime.js'
 import { mark, stop } from './marks.js'
 
-function doFormatIntl (ast, values) {
-  return interpret(ast, LOCALE)(values).trim().replace(/\s+/g, ' ')
-}
-
-export function formatIntl (ast, values) {
-  if (process.env.NODE_ENV !== 'production') {
-    // useful error debugging for dev mode
-    if (typeof ast === 'string') {
-      throw new Error('bad ast: ' + ast)
-    }
-    try {
-      return doFormatIntl(ast, values)
-    } catch (err) {
-      console.error(err)
-      throw new Error('bad ast or values : ' + ast + ' ' + values)
-    }
-  }
-
+// Thin wrapper kept for the stable import path used across the app. Delegates to the runtime
+// resolver, which resolves the message against the currently selected locale (current → en-US →
+// key fallback). Accepts either a message key (the runtime path, e.g. formatIntl(key, values))
+// or — for backward compatibility during the loader migration — an already-parsed AST.
+export function formatIntl (keyOrAst, values) {
   mark('formatIntl')
-  const res = doFormatIntl(ast, values)
+  const res = formatMessage(keyOrAst, values)
   stop('formatIntl')
   return res
 }
