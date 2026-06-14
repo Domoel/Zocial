@@ -1,4 +1,5 @@
 import { importToast } from '../../_utils/asyncModules/importToast.js'
+import { store } from '../../_store/store.js'
 
 let toast
 
@@ -8,7 +9,8 @@ const lazyToast = {
       const Toast = await importToast()
       if (!toast) {
         toast = new Toast({
-          target: document.querySelector('#theToast')
+          target: document.querySelector('#theToast'),
+          store
         })
         if (process.env.NODE_ENV !== 'production') {
           window.toast = toast // for debugging
