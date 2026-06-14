@@ -13,6 +13,15 @@
       {:else}
         <a class="button primary not-logged-in-home-button" rel="prefetch" href="/settings/instances/add">{'intl.logIn'}</a>
       {/if}
+      <!-- Language picker for logged-out users (they can't reach Settings). Pushed to the bottom
+           of the container via margin-top:auto; switches the UI language instantly (store.locale). -->
+      <div class="login-language-picker">
+        <Select id="login-language"
+                options={languageOptions}
+                defaultValue={$locale}
+                label="{'intl.language'}"
+                on:change="onLanguageChange(event)" />
+      </div>
     </div>
   </FreeTextLayout>
 </HiddenFromSSR>
@@ -23,6 +32,14 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+    /* Fill most of the viewport so the language picker can be pushed to the bottom of the card. */
+    min-height: 80vh;
+  }
+
+  /* Bottom-centered language picker, a few cm above the container's lower edge. */
+  .login-language-picker {
+    margin-top: auto;
+    margin-bottom: 2.5cm;
   }
 
   .logo-wrap {
@@ -86,23 +103,34 @@
 <script>
   import FreeTextLayout from './FreeTextLayout.html'
   import HiddenFromSSR from './HiddenFromSSR.html'
+  import Select from './Select.html'
   import { logInToInstance } from '../_actions/addInstance.js'
   import { getSingleInstance } from '../_utils/getSingleInstance.js'
+  import { AVAILABLE_LOCALES } from '../_intl/locales.js'
 
   export default {
     components: {
       FreeTextLayout,
-      HiddenFromSSR
+      HiddenFromSSR,
+      Select
     },
     data: () => {
       return {
-        singleInstance: getSingleInstance()
+        singleInstance: getSingleInstance(),
+        // Static list for the language picker; autonyms aren't translated.
+        languageOptions: AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.name }))
       }
     },
     methods: {
       logIn () {
         this.store.set({ instanceNameInSearch: getSingleInstance() })
         logInToInstance()
+      },
+      onLanguageChange (event) {
+        // Same as the Settings picker: setting locale re-renders $messages instantly (no reload).
+        // this.store is inherited from the root _layout (this component doesn't bind its own store).
+        this.store.set({ locale: event.target.value })
+        this.store.save()
       }
     }
   }
