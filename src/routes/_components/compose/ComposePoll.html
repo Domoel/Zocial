@@ -25,7 +25,7 @@
       {'intl.multipleChoice'}
     </label>
     <Select className="poll-expiry-select"
-            options={$statusPollExpiryOptions}
+            options={pollExpiryOptions}
             defaultValue={pollExpiryDefaultValue}
             on:change="onExpiryChange(event)"
             label="{'intl.pollDuration'}"
@@ -103,7 +103,13 @@
     }),
     computed: {
       canAddOption: ({ poll, $maxStatusPollOptions }) => poll.options.length <= $maxStatusPollOptions,
-      canRemoveOption: ({ poll }) => poll.options.length > 2
+      canRemoveOption: ({ poll }) => poll.options.length > 2,
+      // $statusPollExpiryOptions carries i18n keys as `label`; resolve them live so the duration
+      // dropdown follows the UI language.
+      pollExpiryOptions: ({ $statusPollExpiryOptions, $messages }) => $statusPollExpiryOptions.map(option => ({
+        value: option.value,
+        label: $messages[option.label]
+      }))
     },
     store: () => store,
     helpers: {

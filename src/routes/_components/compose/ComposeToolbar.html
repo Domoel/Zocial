@@ -114,9 +114,10 @@
       mediaAccept
     }),
     computed: {
-      actualPostPrivacy: ({ postPrivacy, localOnly }) => ({
+      actualPostPrivacy: ({ postPrivacy, localOnly, $messages }) => ({
         icon: postPrivacy.icon + (localOnly ? '-home' : ''),
-        label: postPrivacy.label + (localOnly ? ', ' + 'intl.localOnly' : '')
+        // postPrivacy.label is an i18n key; resolve live so it follows the UI language
+        label: $messages[postPrivacy.label] + (localOnly ? ', ' + $messages.localOnly : '')
       }),
       postPrivacyLabel: ({ actualPostPrivacy, editId }) => editId
         ? actualPostPrivacy.label

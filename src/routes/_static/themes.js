@@ -1,127 +1,129 @@
+// `label` holds the i18n message KEY (without `intl.` prefix), resolved at render time via
+// $messages so theme names follow the live UI language instead of freezing at the boot locale.
 const themes = [
   {
     name: 'default',
-    label: 'intl.themeRoyal',
+    label: 'themeRoyal',
     dark: false,
     color: 'royalblue'
   },
   {
     name: 'scarlet',
-    label: 'intl.themeScarlet',
+    label: 'themeScarlet',
     dark: false,
     color: '#e04e41'
   },
   {
     name: 'seafoam',
-    label: 'intl.themeSeafoam',
+    label: 'themeSeafoam',
     dark: false,
     color: '#177380'
   },
   {
     name: 'hotpants',
-    label: 'intl.themeHotpants',
+    label: 'themeHotpants',
     dark: false,
     color: 'hotpink'
   },
   {
     name: 'tangerine',
-    label: 'intl.themeTangerine',
+    label: 'themeTangerine',
     dark: false,
     color: '#df5815'
   },
   {
     name: 'oaken',
-    label: 'intl.themeOaken',
+    label: 'themeOaken',
     dark: false,
     color: 'saddlebrown'
   },
   {
     name: 'majesty',
-    label: 'intl.themeMajesty',
+    label: 'themeMajesty',
     dark: false,
     color: 'blueviolet'
   },
   {
     name: 'gecko',
-    label: 'intl.themeGecko',
+    label: 'themeGecko',
     dark: false,
     color: '#4ab92f'
   },
   {
     name: 'grayscale',
-    label: 'intl.themeGrayscale',
+    label: 'themeGrayscale',
     dark: false,
     color: '#999999'
   },
   {
     name: 'zocial',
-    label: 'intl.themeZocial',
+    label: 'themeZocial',
     dark: true,
     color: '#bd93f9'
   },
   {
     name: 'ozark',
-    label: 'intl.themeOzark',
+    label: 'themeOzark',
     dark: true,
     color: '#5263af'
   },
   {
     name: 'cobalt',
-    label: 'intl.themeCobalt',
+    label: 'themeCobalt',
     dark: true,
     color: '#08439b'
   },
   {
     name: 'sorcery',
-    label: 'intl.themeSorcery',
+    label: 'themeSorcery',
     dark: true,
     color: '#ae91e8'
   },
   {
     name: 'punk',
-    label: 'intl.themePunk',
+    label: 'themePunk',
     dark: true,
     color: '#ff5050'
   },
   {
     name: 'ember',
-    label: 'intl.themeEmber',
+    label: 'themeEmber',
     dark: true,
     color: '#f76522'
   },
   {
     name: 'riot',
-    label: 'intl.themeRiot',
+    label: 'themeRiot',
     dark: true,
     color: 'hotpink'
   },
   {
     name: 'hacker',
-    label: 'intl.themeHacker',
+    label: 'themeHacker',
     dark: true,
     color: '#4ab92f'
   },
   {
     name: 'mastodon',
-    label: 'intl.themeMastodon',
+    label: 'themeMastodon',
     dark: true,
     color: '#282C37'
   },
   {
     name: 'pitchblack',
-    label: 'intl.themePitchBlack',
+    label: 'themePitchBlack',
     dark: true,
     color: '#000'
   },
   {
     name: 'dark-grayscale',
-    label: 'intl.themeDarkGrayscale',
+    label: 'themeDarkGrayscale',
     dark: true,
     color: '#666'
   },
   {
     name: 'cohost_light',
-    label: 'intl.themeCohostLight',
+    label: 'themeCohostLight',
     dark: false,
     color: '#83254F'
   }

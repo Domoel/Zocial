@@ -449,19 +449,20 @@
       // A "hide with a warning" (non-irreversible) word filter matching this post in the current
       // timeline's context. Such posts are kept (not dropped) and collapsed behind a "Filtered"
       // warning by reusing the spoiler mechanism. Returns '' when no warn filter applies.
-      filterWarning: ({ status, $currentTimelineWarnFilterRegex }) => {
+      filterWarning: ({ status, $currentTimelineWarnFilterRegex, $messages }) => {
         if (!$currentTimelineWarnFilterRegex) {
           return ''
         }
         try {
           const searchIndex = createSearchIndexFromStatusOrNotification(status)
-          return $currentTimelineWarnFilterRegex.test(searchIndex) ? FILTERED_TEXT : ''
+          // FILTERED_TEXT is an i18n key; resolve it live so the warning follows the UI language
+          return $currentTimelineWarnFilterRegex.test(searchIndex) ? $messages[FILTERED_TEXT] : ''
         } catch (e) {
           return ''
         }
       },
-      computedSpoilerText: ({ spoilerText, plainTextContentOverLength, filterWarning }) => (
-        filterWarning || spoilerText || (plainTextContentOverLength && LONG_POST_TEXT)
+      computedSpoilerText: ({ spoilerText, plainTextContentOverLength, filterWarning, $messages }) => (
+        filterWarning || spoilerText || (plainTextContentOverLength && $messages[LONG_POST_TEXT])
       ),
       inReplyToId: ({ originalStatus }) => originalStatus.in_reply_to_id,
       uuid: ({ $currentInstance, timelineType, timelineValue, notificationId, statusId, quotedBy }) => (

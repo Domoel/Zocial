@@ -111,10 +111,10 @@
       makeProps: ({ $currentInstance, timelineType, timelineValue }) => (
         createMakeProps($currentInstance, timelineType, timelineValue)
       ),
-      label: ({ timeline, $currentInstance, timelineType, timelineValue }) => {
+      label: ({ timeline, $currentInstance, timelineType, timelineValue, $messages }) => {
         if (timelines[timeline]) {
           return formatIntl('intl.statusesTimelineOnInstance', {
-            timeline: timelines[timeline].label,
+            timeline: $messages[timelines[timeline].label], // .label is an i18n key; resolve live
             instance: $currentInstance
           })
         }

@@ -148,7 +148,6 @@
       filter: undefined,
       instanceName: undefined,
       positiveText: 'intl.save',
-      expiryOptions: WORD_FILTER_EXPIRY_OPTIONS,
       expiryDefaultValue: WORD_FILTER_EXPIRY_DEFAULT,
       filterContexts: [
         {
@@ -174,6 +173,14 @@
       ],
       confirmationButtonDisabled: false
     }),
+    computed: {
+      // WORD_FILTER_EXPIRY_OPTIONS carries i18n keys as `label`; resolve them live so the duration
+      // dropdown follows the UI language.
+      expiryOptions: ({ $messages }) => WORD_FILTER_EXPIRY_OPTIONS.map(option => ({
+        value: option.value,
+        label: $messages[option.label]
+      }))
+    },
     methods: {
       show,
       close,

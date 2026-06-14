@@ -1,11 +1,12 @@
 import { getAccountAccessibleName } from './getAccountAccessibleName.js'
 import { POST_PRIVACY_OPTIONS } from '../_static/statuses.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import { getMessage } from '../_intl/runtime.js'
 
 function getPrivacyText (visibility) {
   for (const option of POST_PRIVACY_OPTIONS) {
     if (option.key === visibility) {
-      return option.label
+      return getMessage(option.label) // option.label is an i18n key; resolve for the current locale
     }
   }
 }

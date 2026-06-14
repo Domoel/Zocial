@@ -15,7 +15,7 @@
                style="background-color: {theme.color};" >
           </div>
           <span class="theme-picker-label-span">
-            {createThemeLabel(theme)}
+            {theme.displayLabel}
           </span>
         </label>
       </div>
@@ -104,23 +104,26 @@
       selectedTheme: DEFAULT_THEME
     }),
     computed: {
-      themeGroups: ({ themes }) => ([
-        {
-          dark: false,
-          themes: themes.filter(_ => !_.dark)
-        },
-        {
-          dark: true,
-          themes: themes.filter(_ => _.dark)
-        }
-      ])
-    },
-    helpers: {
-      createThemeLabel (theme) {
-        return formatIntl('intl.themeLabel', {
-          label: theme.label,
-          default: theme.name === DEFAULT_THEME
-        })
+      // theme.label is an i18n key (e.g. 'themeRoyal'); resolve it live via $messages and bake the
+      // visible label into each theme so the names follow the UI language without a reload.
+      themeGroups: ({ themes, $messages }) => {
+        const withLabels = themes.map(theme => ({
+          ...theme,
+          displayLabel: formatIntl('intl.themeLabel', {
+            label: $messages[theme.label],
+            default: theme.name === DEFAULT_THEME
+          })
+        }))
+        return [
+          {
+            dark: false,
+            themes: withLabels.filter(_ => !_.dark)
+          },
+          {
+            dark: true,
+            themes: withLabels.filter(_ => _.dark)
+          }
+        ]
       }
     },
     methods: {

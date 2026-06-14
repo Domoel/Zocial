@@ -1,21 +1,24 @@
+// `label` holds the i18n message KEY (without the `intl.` prefix), resolved at render time by
+// consumers via $messages / getMessage so it follows the live UI language. (Storing 'intl.x' here
+// would make the loader inline it once at module load, freezing it at the boot locale.)
 export const POST_PRIVACY_OPTIONS = [
   {
-    label: 'intl.public',
+    label: 'public',
     key: 'public',
     icon: '#fa-globe'
   },
   {
-    label: 'intl.unlisted',
+    label: 'unlisted',
     key: 'unlisted',
     icon: '#fa-unlock'
   },
   {
-    label: 'intl.followersOnly',
+    label: 'followersOnly',
     key: 'private',
     icon: '#fa-lock'
   },
   {
-    label: 'intl.direct',
+    label: 'direct',
     key: 'direct',
     icon: '#fa-envelope'
   }
@@ -49,9 +52,11 @@ export const KNOWN_CONTENT_TYPES = {
 }
 
 export const LONG_POST_LENGTH = 1024
-export const LONG_POST_TEXT = 'intl.longPost'
+// i18n message KEYS (without `intl.` prefix), resolved at render time via $messages so they follow
+// the live UI language instead of freezing at the boot locale.
+export const LONG_POST_TEXT = 'longPost'
 // Shown as the spoiler/warning text for posts matching a "hide with a warning" word filter.
-export const FILTERED_TEXT = 'intl.filtered'
+export const FILTERED_TEXT = 'filtered'
 
 export const MAX_STATUS_CHARS = 500
 export const MAX_STATUS_MEDIA_ATTACHMENTS = 4

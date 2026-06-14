@@ -14,34 +14,36 @@ export const WORD_FILTER_CONTEXTS = [
 
 // Someday we can maybe replace this with Intl.DurationFormat
 // https://github.com/tc39/proposal-intl-duration-format
+// `label` holds the i18n message KEY (without `intl.` prefix), resolved at render time via
+// $messages so it follows the live UI language instead of freezing at the boot locale.
 export const WORD_FILTER_EXPIRY_OPTIONS = [
   {
     value: 0,
-    label: 'intl.never'
+    label: 'never'
   },
   {
     value: 1800,
-    label: 'intl.thirtyMinutes'
+    label: 'thirtyMinutes'
   },
   {
     value: 3600,
-    label: 'intl.oneHour'
+    label: 'oneHour'
   },
   {
     value: 21600,
-    label: 'intl.sixHours'
+    label: 'sixHours'
   },
   {
     value: 43200,
-    label: 'intl.twelveHours'
+    label: 'twelveHours'
   },
   {
     value: 86400,
-    label: 'intl.oneDay'
+    label: 'oneDay'
   },
   {
     value: 604800,
-    label: 'intl.sevenDays'
+    label: 'sevenDays'
   }
 ]
 

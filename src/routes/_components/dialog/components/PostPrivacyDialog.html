@@ -54,16 +54,16 @@
       localOnly: ({ composeData }) => {
         return composeData.localOnly
       },
-      items: ({ postPrivacy, postPrivacyOptions, $currentSupportedToggles, localOnly }) => {
+      items: ({ postPrivacy, postPrivacyOptions, $currentSupportedToggles, localOnly, $messages }) => {
         const items = postPrivacyOptions.map(option => ({
           key: option.key,
-          label: option.label,
+          label: $messages[option.label], // option.label is an i18n key; resolve live
           icon: option.icon,
           selected: postPrivacy.key === option.key
         }))
         if ($currentSupportedToggles && $currentSupportedToggles.local_only) {
           items.push({
-            label: 'intl.localOnly',
+            label: $messages.localOnly,
             key: 'local_only',
             icon: '#fa-home',
             selected: localOnly

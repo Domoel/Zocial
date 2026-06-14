@@ -1,45 +1,46 @@
 // Someday we can maybe replace this with Intl.DurationFormat
 // https://github.com/tc39/proposal-intl-duration-format
-
+// `label` holds the i18n message KEY (without `intl.` prefix), resolved at render time via
+// $messages so it follows the live UI language instead of freezing at the boot locale.
 export const POLL_EXPIRY_OPTIONS = [
   {
     value: 300,
-    label: 'intl.fiveMinutes'
+    label: 'fiveMinutes'
   },
   {
     value: 1800,
-    label: 'intl.thirtyMinutes'
+    label: 'thirtyMinutes'
   },
   {
     value: 3600,
-    label: 'intl.oneHour'
+    label: 'oneHour'
   },
   {
     value: 21600,
-    label: 'intl.sixHours'
+    label: 'sixHours'
   },
   {
     value: 86400,
-    label: 'intl.oneDay'
+    label: 'oneDay'
   },
   {
     value: 259200,
-    label: 'intl.threeDays'
+    label: 'threeDays'
   },
   {
     value: 604800,
-    label: 'intl.sevenDays'
+    label: 'sevenDays'
   },
   {
     value: 1209600,
-    label: 'intl.fourteenDays'
+    label: 'fourteenDays'
   },
   {
     value: 2592000,
-    label: 'intl.thirtyDays'
+    label: 'thirtyDays'
   },
   {
     value: 31536000,
-    label: 'intl.oneYear'
+    label: 'oneYear'
   }
 ]
