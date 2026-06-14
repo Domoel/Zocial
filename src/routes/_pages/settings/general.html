@@ -393,8 +393,6 @@
     },
     store: () => store,
     computed: {
-      // Autonyms (each language's own name) are intentionally not translated.
-      languageOptions: () => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.name })),
       themeTitle: ({ $loggedInInstancesInOrder, $currentInstance }) => (
         $loggedInInstancesInOrder.length > 1
           ? formatIntl('intl.themeForInstance', { instance: $currentInstance })
@@ -417,7 +415,9 @@
       localOnlyHint: ({ localOnlySupported }) => (localOnlySupported ? '' : 'intl.localOnlyUnsupported')
     },
     data: () => ({
-      singleInstance: getSingleInstance()
+      singleInstance: getSingleInstance(),
+      // Static list for the language picker. Autonyms (each language's own name) aren't translated.
+      languageOptions: AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.name }))
     })
   }
 </script>
