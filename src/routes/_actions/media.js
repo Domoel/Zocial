@@ -12,12 +12,12 @@ export async function doMediaUpload (realm, file) {
   try {
     let composeMedia = store.getComposeData(realm, 'media') || []
     if (composeMedia.length === maxStatusMediaAttachments) {
-      throw new Error('Only ' + maxStatusMediaAttachments + ' media max are allowed')
+      throw new Error(formatIntl('intl.tooManyMediaAttachments', { max: maxStatusMediaAttachments }))
     }
     const response = await uploadMedia(currentInstance, accessToken, file)
     composeMedia = store.getComposeData(realm, 'media') || []
     if (composeMedia.length === maxStatusMediaAttachments) {
-      throw new Error('Only ' + maxStatusMediaAttachments + ' media max are allowed')
+      throw new Error(formatIntl('intl.tooManyMediaAttachments', { max: maxStatusMediaAttachments }))
     }
     await database.setCachedMediaFile(response.id, file)
     composeMedia.push({

@@ -7,13 +7,7 @@ import { updateVerifyCredentialsForInstance } from './instances.js'
 import { updateCustomEmojiForInstance } from './emoji.js'
 import { database } from '../_database/database.js'
 import { logActionError } from '../_utils/isNetworkError.js'
-
-const GENERIC_ERROR = `
-  Is this a valid instance? Is a browser extension
-  blocking the request? Are you in private browsing mode?
-  If you believe this is a problem with your instance, please send
-  <a href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md"
-    target="_blank" rel="noopener">this link</a> to the administrator of your instance.`
+import { formatIntl } from '../_utils/formatIntl.js'
 
 function createKnownError (message) {
   const err = new Error(message)
@@ -37,7 +31,7 @@ async function redirectToOauth () {
   let { instanceNameInSearch, loggedInInstances } = store.get()
   instanceNameInSearch = instanceNameInSearch.replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase()
   if (Object.keys(loggedInInstances).includes(instanceNameInSearch)) {
-    throw createKnownError(`You've already logged in to ${instanceNameInSearch}`)
+    throw createKnownError(formatIntl('intl.alreadyLoggedInTo', { instance: instanceNameInSearch }))
   }
   const redirectUri = getRedirectUri()
   const registrationPromise = registerApplication(instanceNameInSearch, redirectUri)
@@ -81,7 +75,7 @@ export async function logInToInstance () {
   } catch (err) {
     logActionError('log in to instance', err)
     const error = `${(err.message || err.name).replace(/\.$/, '')}. ` +
-      (err.knownError ? '' : (navigator.onLine ? GENERIC_ERROR : 'Are you offline?'))
+      (err.knownError ? '' : (navigator.onLine ? 'intl.instanceGenericError' : 'intl.areYouOffline'))
     const { instanceNameInSearch } = store.get()
     store.set({
       logInToInstanceError: error,
@@ -135,11 +129,11 @@ export async function handleOauthCode (code, state) {
     // our own login flow (or was replayed/forged) — refuse it before exchanging the code.
     const { currentRegisteredInstanceState } = store.get()
     if (!currentRegisteredInstanceState || state !== currentRegisteredInstanceState) {
-      throw createKnownError('Invalid OAuth state — please start the login again')
+      throw createKnownError('intl.invalidOauthState')
     }
     await registerNewInstance(code)
   } catch (err) {
-    store.set({ logInToInstanceError: `${err.message || err.name}. Failed to connect to instance.` })
+    store.set({ logInToInstanceError: formatIntl('intl.failedToConnectToInstance', { error: err.message || err.name }) })
   } finally {
     store.set({ logInToInstanceLoading: false })
   }

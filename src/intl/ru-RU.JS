@@ -615,6 +615,15 @@ export default {
   unableToDelete: 'Не удалось удалить запись: {error}',
   cannotFavoriteOffline: 'Вы не можете добавлять в избранное в офлайн-режиме режиме',
   cannotUnfavoriteOffline: 'Вы не можете удалять из избранного в офлайн-режиме режиме',
+  // Custom emoji reactions
+  cannotReactWithRemoteEmoji: 'Ваш сервер не позволяет реагировать удалёнными пользовательскими эмодзи',
+  tooManyMediaAttachments: 'Разрешено не более {max} вложений',
+  // Instance login errors
+  alreadyLoggedInTo: 'Вы уже вошли на {instance}',
+  areYouOffline: 'Вы офлайн?',
+  invalidOauthState: 'Недействительное состояние OAuth — пожалуйста, начните вход заново',
+  failedToConnectToInstance: '{error}. Не удалось подключиться к серверу.',
+  instanceGenericError: `Это действительный сервер? Не блокирует ли запрос расширение браузера? Вы в режиме приватного просмотра? Если вы считаете, что это проблема вашего сервера, отправьте <a href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md" target="_blank" rel="noopener">эту ссылку</a> администрации вашего сервера.`,
   unableToFavorite: 'Не удалось добавить в избранное: {error}',
   unableToUnfavorite: 'Не удалось удалить из избранного: {error}',
   followedAccount: 'Подписан(-на) на аккаунт',

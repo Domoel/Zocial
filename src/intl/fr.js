@@ -635,6 +635,15 @@ export default {
   unableToDelete: 'Impossible de supprimer: {error}',
   cannotFavoriteOffline: 'Vous ne pouvez pas mettre en favori car vous êtes hors connexion',
   cannotUnfavoriteOffline: 'Vous ne pouvez pas enlever des favoris car vous êtes hors connexion',
+  // Custom emoji reactions
+  cannotReactWithRemoteEmoji: "Votre instance n'autorise pas les réactions avec des émojis personnalisés distants",
+  tooManyMediaAttachments: 'Seuls {max} fichiers multimédias sont autorisés',
+  // Instance login errors
+  alreadyLoggedInTo: 'Vous êtes déjà connecté·e à {instance}',
+  areYouOffline: 'Êtes-vous hors connexion ?',
+  invalidOauthState: 'État OAuth invalide — veuillez recommencer la connexion',
+  failedToConnectToInstance: '{error}. La connexion au serveur a échoué.',
+  instanceGenericError: `Est-ce une instance valide ? Une extension de navigateur bloque-t-elle la requête ? Êtes-vous en navigation privée ? Si vous pensez qu'il s'agit d'un problème lié à votre instance, veuillez envoyer <a href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md" target="_blank" rel="noopener">ce lien</a> à l'administration de votre instance.`,
   unableToFavorite: 'Impossible de mettre en favori: {error}',
   unableToUnfavorite: "Impossible d'enlever des favoris: {error}",
   followedAccount: 'Compte suivi',

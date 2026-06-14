@@ -660,6 +660,15 @@ export default {
   unableToDelete: 'No se puede borrar el toot: {error}',
   cannotFavoriteOffline: 'No puedes marcar como favorito mientras estás sin conexión',
   cannotUnfavoriteOffline: 'No puedes quitar marca de favorito mientras estás sin conexión',
+  // Custom emoji reactions
+  cannotReactWithRemoteEmoji: 'Tu instancia no permite reaccionar con emojis personalizados remotos',
+  tooManyMediaAttachments: 'Solo se permiten {max} archivos multimedia',
+  // Instance login errors
+  alreadyLoggedInTo: 'Ya has iniciado sesión en {instance}',
+  areYouOffline: '¿Estás sin conexión?',
+  invalidOauthState: 'Estado de OAuth no válido: vuelve a iniciar sesión',
+  failedToConnectToInstance: '{error}. No se pudo conectar con la instancia.',
+  instanceGenericError: `¿Es una instancia válida? ¿Hay una extensión del navegador bloqueando la solicitud? ¿Estás en modo de navegación privada? Si crees que es un problema de tu instancia, envía <a href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md" target="_blank" rel="noopener">este enlace</a> a la administración de tu instancia.`,
   unableToFavorite: 'No se puede marcar como favorito: {error}',
   unableToUnfavorite: 'No se puede quitar marca de favorito: {error}',
   followedAccount: 'Cuenta seguida',
