@@ -27,7 +27,7 @@
   {:else}
     <p class="empty-state">{'intl.noFilters'}</p>
   {/if}
-  <button type="button" on:click="add()">{'intl.addFilter'}</button>
+  <button type="button" class="add-filter-button" on:click="add()">{'intl.addFilter'}</button>
 </div>
 <GenericInstanceSettingsStyle />
 <style>
@@ -41,6 +41,12 @@
   .word-filters-break {
     word-break: break-word;
     text-overflow: ellipsis;
+  }
+
+  /* Center the "Add filter" button at the bottom of the box (instead of left-aligned). */
+  .add-filter-button {
+    display: block;
+    margin: 4px auto 0;
   }
 
   @media (max-width: 767px) {
