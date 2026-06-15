@@ -911,5 +911,6 @@ export default {
   dontEdit: 'No editar',
   dontReply: 'No responder',
   dontQuote: 'No citar',
-  addPollChoice: 'Añadir opción'
+  addPollChoice: 'Añadir opción',
+  postsAndReplies: 'Publicaciones y respuestas'
 }

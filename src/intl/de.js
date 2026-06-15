@@ -907,5 +907,6 @@ translateError: 'Beim Übersetzen dieses Beitrags ist ein Fehler aufgetreten',
   dontEdit: 'Nicht bearbeiten',
   dontReply: 'Nicht antworten',
   dontQuote: 'Nicht zitieren',
-  addPollChoice: 'Antwortoption hinzufügen'
+  addPollChoice: 'Antwortoption hinzufügen',
+  postsAndReplies: 'Beiträge und Antworten'
 }

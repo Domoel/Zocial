@@ -6,24 +6,28 @@
 />
 <script>
   import TabSet from '../TabSet.html'
+  import { store } from '../../_store/store.js'
 
   export default {
+    store: () => store,
     computed: {
-      tabs: ({ account }) => (
+      // Resolve via $messages so the tab labels follow the live UI language. Reuse `statuses`
+      // ("Posts") and `media`; postsAndReplies is the only new key.
+      tabs: ({ account, $messages }) => (
         [
           {
             name: '',
-            label: 'Posts',
+            label: $messages.statuses,
             href: `/accounts/${account.id}`
           },
           {
             name: 'with_replies',
-            label: 'Posts and replies',
+            label: $messages.postsAndReplies,
             href: `/accounts/${account.id}/with_replies`
           },
           {
             name: 'media',
-            label: 'Media',
+            label: $messages.media,
             href: `/accounts/${account.id}/media`
           }
         ]

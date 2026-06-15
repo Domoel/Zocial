@@ -902,5 +902,6 @@ Enable this to also include the description text below the title.`,
   dontEdit: 'Don\'t edit',
   dontReply: 'Don\'t reply',
   dontQuote: 'Don\'t quote',
-  addPollChoice: 'Add choice'
+  addPollChoice: 'Add choice',
+  postsAndReplies: 'Posts and replies'
 }

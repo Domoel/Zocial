@@ -910,5 +910,6 @@ export default {
   dontEdit: 'Не редактировать',
   dontReply: 'Не отвечать',
   dontQuote: 'Не цитировать',
-  addPollChoice: 'Добавить вариант'
+  addPollChoice: 'Добавить вариант',
+  postsAndReplies: 'Записи и ответы'
 }
