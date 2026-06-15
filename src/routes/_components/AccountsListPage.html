@@ -33,16 +33,10 @@
            server doesn't have it (e.g. a remote account's graph, or GoToSocial restricting
            other accounts' followers/following) → accountListUnavailable
          - otherwise genuinely empty             → nothingToShow -->
-    <p class="accounts-empty">{emptyMessage}</p>
+    <p class="empty-state">{emptyMessage}</p>
   {/if}
 </div>
 <style>
-  .accounts-empty {
-    padding: 30px 10px;
-    text-align: center;
-    font-size: 1.1em;
-    color: var(--deemphasized-text-color);
-  }
   .accounts-partial {
     margin-top: 15px;
     padding: 10px;

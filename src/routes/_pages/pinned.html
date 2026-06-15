@@ -10,7 +10,7 @@
       {/each}
     </ul>
     {:else}
-    <p class="pinned-toots-empty">{'intl.nothingToShow'}</p>
+    <p class="empty-state">{'intl.nothingToShow'}</p>
     {/if}
   </div>
 {/if}
@@ -24,11 +24,6 @@
     box-sizing: border-box;
     border: 1px solid var(--main-border);
     border-radius: 2px;
-  }
-  .pinned-toots-empty {
-    color: var(--deemphasized-text-color);
-    font-style: italic;
-    margin: 0;
   }
   @media (max-width: 767px) {
     .pinned-toots-page {

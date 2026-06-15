@@ -25,7 +25,7 @@
       </tbody>
     </table>
   {:else}
-    <p class="word-filters-p">{'intl.noFilters'}</p>
+    <p class="empty-state">{'intl.noFilters'}</p>
   {/if}
   <button type="button" on:click="add()">{'intl.addFilter'}</button>
 </div>
@@ -34,7 +34,7 @@
   .word-filters-table {
     width: 100%
   }
-  p.word-filters-p, .word-filters-table {
+  .word-filters-table {
     margin: 0 0 10px 0;
   }
 

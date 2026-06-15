@@ -285,3 +285,12 @@ textarea {
   height: 18px;
   flex: 1;
 }
+
+// Shared empty-state styling ("Nothing to show", "No filters", etc.). One source of truth so every
+// list/page renders an empty state the same way: centered, padded, slightly larger, deemphasized.
+.empty-state {
+  padding: 30px 10px;
+  text-align: center;
+  font-size: 1.1em;
+  color: var(--deemphasized-text-color);
+}

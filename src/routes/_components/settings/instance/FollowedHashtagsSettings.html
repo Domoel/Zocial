@@ -14,7 +14,7 @@
       {/each}
     </ul>
   {:else}
-    <p class="no-hashtags">{'intl.noFollowedHashtags'}</p>
+    <p class="empty-state">{'intl.noFollowedHashtags'}</p>
   {/if}
 
   <form class="add-hashtag-form" on:submit="onSubmit(event)">
@@ -100,12 +100,6 @@
   .unfollow-button:hover {
     border-color: var(--anchor-text);
     color: var(--body-text-color);
-  }
-
-  p.no-hashtags {
-    margin: 0 0 20px 0;
-    color: var(--deemphasized-text-color);
-    font-style: italic;
   }
 
   .add-hashtag-form {

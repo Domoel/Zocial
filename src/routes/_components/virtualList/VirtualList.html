@@ -15,7 +15,7 @@
         />
       {/each}
       {#if !$visibleItems.length}
-        <div class="nothing-to-show">
+        <div class="empty-state">
           {nothingToShow}
         </div>
       {/if}
@@ -29,12 +29,6 @@
   .virtual-list {
     position: relative;
     width: 100%;
-  }
-  .nothing-to-show {
-    font-size: 1.1em;
-    width: 100%;
-    padding: 20px 0;
-    text-align: center;
   }
 </style>
 <script>

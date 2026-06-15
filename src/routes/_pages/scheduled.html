@@ -6,7 +6,7 @@
     {:elseif error}
       <p class="scheduled-error" role="alert">{error}</p>
     {:elseif !scheduledStatuses.length}
-      <p class="scheduled-empty">{'intl.noScheduledPosts'}</p>
+      <p class="empty-state">{'intl.noScheduledPosts'}</p>
     {:else}
       <ul class="scheduled-list">
         {#each scheduledStatuses as s (s.id)}
@@ -119,10 +119,6 @@
   .scheduled-btn.danger:hover {
     border-color: var(--warn-color);
     color: var(--warn-color);
-  }
-  .scheduled-empty {
-    color: var(--deemphasized-text-color);
-    font-style: italic;
   }
   .scheduled-error {
     color: var(--warn-color);
