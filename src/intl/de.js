@@ -591,7 +591,7 @@ export default {
   darkBackground: 'Dunkler Hintergrund',
   lightBackground: 'Heller Hintergrund',
   themeLabel: `{label} {default, select,
-    true {(standard)}
+    true {(Standard)}
     other {}
   }`,
   animatedImage: 'Animiertes Gif: {description}',
