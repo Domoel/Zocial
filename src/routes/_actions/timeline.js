@@ -125,7 +125,7 @@ async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken
     // fails, the caller's catch handles the graceful fallback (empty/cached list, no toast).
     const isTransient = isNetworkNoiseError(e) && !e.status
     if (isSlowTimeline && isTransient && shouldRetryTimelineFetch(instanceName, timelineName)) {
-      console.warn('slow-timeline fetch failed, retrying once:', e.message || e)
+      console.warn('slow-timeline fetch failed, retrying once:', timelineName, '·', e.message || e)
       return fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
     }
     throw e
@@ -192,7 +192,7 @@ async function fetchTimelineItems (instanceName, accessToken, timelineName, onli
       if (isNetworkNoiseError(e)) {
         // Log the readable message (e.g. "Timed out after 20 seconds") rather than the bare Error,
         // whose minified .stack is unreadable in the in-app log viewer.
-        console.warn('timeline fetch failed:', e.message || e)
+        console.warn('timeline fetch failed:', timelineName, '·', e.message || e)
       } else {
         console.error(e)
       }
