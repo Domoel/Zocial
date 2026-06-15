@@ -400,12 +400,21 @@
         const langs = $translationLanguages && $translationLanguages[$currentInstance]
         return Array.isArray(langs) && langs.length > 0
       },
-      translationLanguageOptions: ({ $translationLanguages, $currentInstance, $messages }) => {
-        // Resolve via the reactive $messages map so the default option follows a live language switch.
+      translationLanguageOptions: ({ $translationLanguages, $currentInstance, $messages, $locale }) => {
+        // "Browser default" follows the live UI language via $messages. The language list itself
+        // comes from the LibreTranslate /api/languages response with ENGLISH names (l.name), so
+        // localise each name to the current UI locale via Intl.DisplayNames; fall back to the API
+        // name for codes it can't resolve. Depends on $locale so the names re-localise on a switch.
         const base = [{ value: '', label: $messages.translationBrowserDefault }]
         const langs = $translationLanguages && $translationLanguages[$currentInstance]
         if (!Array.isArray(langs)) return base
-        return base.concat(langs.map(l => ({ value: l.code, label: l.name })))
+        let displayNames
+        try { displayNames = new Intl.DisplayNames([$locale], { type: 'language' }) } catch (e) { /* unsupported */ }
+        const localizedName = (code, fallback) => {
+          if (!displayNames) return fallback
+          try { return displayNames.of(code) || fallback } catch (e) { return fallback }
+        }
+        return base.concat(langs.map(l => ({ value: l.code, label: localizedName(l.code, l.name) })))
       },
       // local-only posts are only available when the current instance advertises support
       localOnlySupported: ({ $currentSupportedToggles }) => !!($currentSupportedToggles && $currentSupportedToggles.local_only),
