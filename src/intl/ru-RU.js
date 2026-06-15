@@ -9,7 +9,7 @@ export default {
   logIn: 'Войти',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/releases">Zocial v{version}</a>
     </p>
   `,
   // Manifest
@@ -339,11 +339,19 @@ export default {
     Перевод записей выполняется с помощью <a rel="noopener" target="_blank" href="https://libretranslate.com">LibreTranslate</a> — движка машинного перевода с открытым исходным кодом без зависимости от Google. Запросы маршрутизируются через сервер, поэтому ни один сервис перевода не вызывается напрямую из вашего браузера. Самостоятельный хостинг поддерживается через переменную окружения <code>TRANSLATE_API</code>.
   </p>
 
+  <h2>Использование ИИ</h2>
+
+  <p>
+    Этот проект разрабатывается с использованием ИИ. Тем не менее его разработка следует строгой <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Architecture.md">философии проектирования</a> и строгим принципам программирования, а к реализации новых функций подходят с большой тщательностью. Код регулярно проверяется.
+  </p>
+
   <h2>Кредиты</h2>
 
   <p>
     Иконки предоставлены <a rel="noopener" target="_blank" href="http://fontawesome.io/">Font Awesome</a>.
   </p>
+
+  <h2>Лицензия</h2>
 
   <p>
     Zocial распространяется под <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a>
@@ -357,6 +365,16 @@ export default {
 
   <p>
     Если вы хотите поддержать проект: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Поддержать через PayPal</a>.
+  </p>
+
+  <h2>Поддержка и разработка</h2>
+
+  <p>
+    См. <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/User-Guide.md">руководство пользователя</a> для общего использования и <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md">руководство администратора</a>, если у вашего инстанса проблемы с подключением. Если вы хотите разобраться в архитектуре и обоснованиях решений Zocial, загляните в <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Architecture.md">Справочник по архитектуре</a>.
+  </p>
+
+  <p>
+    Для дальнейшей поддержки или участия в разработке присоединяйтесь к <a rel="noopener" target="_blank" href="https://ztfr.eu/matrix">Matrix-сообществу Zeitfresser</a> или <a rel="noopener" target="_blank" href="https://look.ztfr.eu/#/#support:ztfr.eu">Development &amp; Support Channel</a>.
   </p>
 
   <h2>Версия</h2>

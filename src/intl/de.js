@@ -13,7 +13,7 @@ export default {
   logIn: 'Anmelden',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/releases">Zocial v{version}</a>
     </p>
   `,
   // Generic UI
@@ -390,11 +390,19 @@ export default {
     Die Übersetzung von Beiträgen basiert auf <a rel="noopener" target="_blank" href="https://libretranslate.com">LibreTranslate</a> — einer Open-Source-Übersetzungsengine ohne Google-Abhängigkeit. Anfragen werden serverseitig weitergeleitet, sodass kein Übersetzungsdienst direkt aus deinem Browser kontaktiert wird. Self-Hosting wird über die Umgebungsvariable <code>TRANSLATE_API</code> unterstützt.
   </p>
 
+  <h2>Einsatz von KI</h2>
+
+  <p>
+    Dieses Projekt wird KI-unterstützt entwickelt. Die Entwicklung folgt jedoch einer strengen <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Architecture.md">Design-Philosophie</a> und strikten Programmierprinzipien, und bei der Umsetzung neuer Funktionen wird mit großer Sorgfalt vorgegangen. Der Code wird regelmäßig überprüft.
+  </p>
+
   <h2>Credits</h2>
 
   <p>
     Icons bereitgestellt von <a rel="noopener" target="_blank" href="http://fontawesome.io/">Font Awesome</a>.
   </p>
+
+  <h2>Lizenz</h2>
 
   <p>
     Zocial ist unter der <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a> lizenziert. Ein <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> Angebot.
@@ -408,6 +416,16 @@ export default {
 
   <p>
     Wenn du das Projekt unterstützen möchtest: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Per PayPal spenden</a>.
+  </p>
+
+  <h2>Support &amp; Entwicklung</h2>
+
+  <p>
+    Im <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/User-Guide.md">Benutzerhandbuch</a> findest du allgemeine Hinweise zur Nutzung, im <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md">Admin-Handbuch</a> Hilfe, falls deine Instanz Verbindungsprobleme hat. Wenn du die zugrunde liegende Architektur und die Designentscheidungen hinter Zocial verstehen möchtest, wirf einen Blick ins <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Architecture.md">Architektur-Handbuch</a>.
+  </p>
+
+  <p>
+    Für weiteren Support oder zur Mitarbeit an der Entwicklung tritt der <a rel="noopener" target="_blank" href="https://ztfr.eu/matrix">Zeitfresser Matrix Community</a> oder dem <a rel="noopener" target="_blank" href="https://look.ztfr.eu/#/#support:ztfr.eu">Development &amp; Support Channel</a> bei.
   </p>
 
   <h2>Version</h2>

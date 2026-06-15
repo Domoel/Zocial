@@ -13,7 +13,7 @@ export default {
   logIn: 'Log in',
   footer: `
     <p>
-      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · Zocial v{version}
+      Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu">Zeitfresser</a> · <a href="/settings/about#donations" rel="prefetch">Donations</a> · <a href="/settings/about#privacy-policy" rel="prefetch">Privacy Policy</a> · <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/releases">Zocial v{version}</a>
     </p>
   `,
   // Manifest
@@ -409,14 +409,22 @@ export default {
     Post translation is powered by <a rel="noopener" target="_blank" href="https://libretranslate.com">LibreTranslate</a> — an open-source translation engine with no Google dependency. Requests are routed through the server, so no translation service is ever contacted directly from your browser. Self-hosting is supported via the <code>TRANSLATE_API</code> environment variable.
   </p>
 
+  <h2>Usage of AI</h2>
+
+  <p>
+    This project is AI supported. However, its development follows a rigorous <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Architecture.md">design philosophy</a> and strict programming principles, and great care is taken when implementing new features. The code is reviewed on a regular basis.
+  </p>
+
   <h2>Credits</h2>
 
   <p>
     Icons provided by <a rel="noopener" target="_blank" href="http://fontawesome.io/">Font Awesome</a>.
   </p>
 
+  <h2>Licence</h2>
+
   <p>
-    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a> 
+    Zocial is licensed under the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/LICENSE">GNU Affero General Public License</a>. Powered by <a rel="noopener" target="_blank" href="https://ztfr.eu/">Zeitfresser</a>
   </p>
 
   <h2 id="donations">Donations</h2>
@@ -427,6 +435,16 @@ export default {
 
   <p>
     If you'd like to support it: <a rel="noopener" target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=QMWFH4FDXN66C">Donate via PayPal</a>.
+  </p>
+
+  <h2>Support &amp; Development</h2>
+
+  <p>
+    See the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/User-Guide.md">user guide</a> for general usage and the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Admin-Guide.md">admin guide</a> if your instance has trouble connecting. If you want to understand the underlying architecture and the decision rationale behind Zocial, just check out the <a rel="noopener" target="_blank" href="https://git.ztfr.eu/Dome/Zocial/src/branch/main/docs/Architecture.md">architecture Handbook</a>.
+  </p>
+
+  <p>
+    For further support or to participate in development, join the <a rel="noopener" target="_blank" href="https://ztfr.eu/matrix">Zeitfresser Matrix Community</a> or the <a rel="noopener" target="_blank" href="https://look.ztfr.eu/#/#support:ztfr.eu">Development &amp; Support Channel</a>.
   </p>
 
   <h2>Version</h2>
