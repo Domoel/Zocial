@@ -1571,6 +1571,25 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
+### [v1.10.0] In-app OS-notification fallback ("System A" revival) — deliberately NOT built
+
+**Background (why the question came up):** Web Push isn't available in every environment — most notably when Zocial runs as an **Electron desktop app** (no FCM credentials, so `pushManager.subscribe()` fails). The proposal was to keep the single existing master toggle ("Enable OS push notifications on this device") but, behind it, automatically and invisibly pick the best available delivery path: try real Web Push first (counting it "available" only if the subscription actually registers, not by feature-detection), and otherwise fall back to firing `new Notification()` from the existing Mastodon **user stream** (`stream=user`), with lightweight `/api/v1/notifications` polling as a secondary fallback — one active path at a time, deduped by notification id. In effect this re-introduces the old **"System A"** foreground-`Notification()` path that was deliberately removed in v1.8.3 (see §18 historical note).
+
+**Decision:** **Not built.** OS notifications stay **push-only** (as documented in §18); where push is unavailable the app continues to fall back cleanly to in-app notifications + sound, and the master toggle stays honest.
+
+**The deciding context — Electron is already solved *outside* the web app.** An Electron build exists and works perfectly: the app sits in the system tray and the **poller lives in the Electron wrapper**, so background notifications arrive reliably even though web Web-Push doesn't function there. The one environment with real value for an in-app fallback is therefore already covered — without touching the web codebase.
+
+**Why rejected (the value is negligible once Electron is excluded):**
+- **It would revive a deliberately-removed path** (System A, dropped in v1.8.3 for being niche + making the toggle dishonest).
+- **A web-context fallback only delivers while the app process is alive *and* the stream/poll is running.** Browsers/PWAs **freeze the streaming socket when the tab/app is backgrounded** (Page Lifecycle API, see §18) — i.e. exactly when an OS notification would matter, it can't fire. The Electron wrapper works only because it keeps its own process alive; a plain PWA cannot.
+- **Shared permission gate.** If push is blocked by a **denied `Notification` permission** (the most common "push blocked" case), `new Notification()` is blocked by the *same* permission — so the fallback can't help there at all.
+- **Foreground is already covered.** While the app is visible/active, notifications already arrive as in-app + sound; the fallback would only add a redundant OS popup.
+- **Net delta** for the only theoretically-remaining case (installed PWA + a server with *no* Web Push + desktop + window open-but-unfocused) is tiny and practically near-zero (desktop PWAs almost always have working push); the known Firefox-mobile push wobble doesn't qualify either (mobile background ⇒ frozen stream). Against that: a second permanent delivery mechanism (lifecycle on the toggle, dedup, teardown, a notification-content builder shared with the SW) plus §18/§20 churn. Cost/benefit is clearly negative.
+
+**If revisited:** the trigger would be a **persistent, non-Electron host without Web Push** becoming a real target. The design is known and recorded here: single active path with clean teardown, dedup by notification id, a per-type title/body + HTML-strip + click-to-focus builder **shared** with the service-worker push handler, path chosen once at enable-time (runtime push→fallback transition as a later TODO hooked on the existing circuit breaker).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
