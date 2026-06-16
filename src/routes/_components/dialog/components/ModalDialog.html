@@ -117,6 +117,7 @@
   .muted-style.modal-dialog-contents {
     border: none;
   }
+  :global(html.modal-open),
   :global(body.modal-open) {
     overflow-y: hidden;
   }
@@ -157,6 +158,22 @@
     popShortcutScope
   } from '../../../_utils/shortcuts.js'
   import { store } from '../../../_store/store.js'
+
+  // Lock the page scroll while any modal is open. The scrollable element is the document root
+  // (<html> = document.scrollingElement), NOT <body> — so the old `body.modal-open` rule never
+  // actually locked anything (you could scroll the timeline behind a dialog). Lock <html> as well,
+  // ref-counted so nested dialogs (e.g. the emoji picker over the compose dialog) don't prematurely
+  // unlock. This also stops the mobile keyboard's caret-scroll from jiggling the timeline behind a
+  // compose dialog on every keystroke (the focused textarea's scrollable ancestor is then the dialog
+  // content, not the now-locked document root).
+  let openModalCount = 0
+  function setPageScrollLock (locked) {
+    openModalCount = Math.max(0, openModalCount + (locked ? 1 : -1))
+    if (!ZOCIAL_IS_BROWSER) return
+    const lock = openModalCount > 0
+    document.documentElement.classList.toggle('modal-open', lock)
+    document.body.classList.toggle('modal-open', lock)
+  }
 
   export default {
     oncreate () {
@@ -203,7 +220,7 @@
           }
           this.refs.node.parentElement.style.display = ''
         }
-        document.body.classList.toggle('modal-open', false)
+        setPageScrollLock(false)
         this.fire('close')
         emit('destroyDialog', id)
       })
@@ -256,7 +273,7 @@
             window.addEventListener('popstate', this.onPopState)
             this.set({ statePushed: true })
             history.pushState({ modalStack: [...history.state.modalStack || [], id] }, null, location.href)
-            document.body.classList.toggle('modal-open', true)
+            setPageScrollLock(true)
             this._a11yDialog.show()
             this.set({ fadedIn: true })
             this.fire('show')
