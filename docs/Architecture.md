@@ -1682,8 +1682,11 @@ A short log of focused review passes — what was reviewed, when, the outcome, a
 
 ### Not yet reviewed — revisit candidates
 
-Every major neuralgic subsystem and every previously-deferred lower-criticality area has now had a focused pass (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters, autosuggest, status actions), and both earlier carry-over notes (`getNotification` by-reference caching, `deleteDatabase` `onblocked`) are resolved. No focused passes are outstanding. Future opportunities only:
+Every major neuralgic subsystem and every previously-deferred lower-criticality area has now had a focused pass (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters, autosuggest, status actions), and both earlier carry-over notes (`getNotification` by-reference caching, `deleteDatabase` `onblocked`) are resolved. The v1.10.x i18n + UX work was followed by its own passes: the runtime-i18n review, the rAF/rPAF + `setTimeout`/`scheduleIdleTask` teardown sweep, the dialog scroll-lock lifecycle, the 5xx-retry verification, and a final `$messages`-store-access check — all clean (see the 2026-06-15/16 rows above). No focused passes are outstanding. Future opportunities only:
 
 - **API/ajax endpoint modules** (`_api/*`): thin wrappers, stable — only revisit if a specific endpoint misbehaves.
+- **Device-dependent mobile / touch / swipe behaviour**: can't be reviewed meaningfully by reading code — only revisit with a real device and a reproducible symptom.
+
+**`$messages` store-access — verified clean (2026-06-17):** swept every component that reads `$messages` in script for a missing store binding. Only four turned up: two are comment-only mentions (`NotLoggedInHome`, `VirtualList` — the latter deliberately uses `getMessage` on its `virtualListStore`, never `$messages`); the other two (`settings/instances/add` `titleName`, `statuses/[...statusParams]` `pageTitle`) are Sapper route pages that inherit `this.store` from `_layout`, so `$messages` resolves (confirmed: `add.html` co-uses `$isUserLoggedIn`, and a broken `pageTitle` would crash every status page's `<Title>` — it doesn't).
 
 The shared action-error logging sweep (`logActionError`) and the i18n polish of hardcoded user-facing strings are done — see the 2026-06-14 rows above.
