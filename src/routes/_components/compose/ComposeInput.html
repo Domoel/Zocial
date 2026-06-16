@@ -284,6 +284,7 @@
           // We only do this for replies (not dialog/home) because for dialog/home we don't want to
           // also focus the textarea, which is a side effect of setting selectionStart.
           requestAnimationFrame(() => {
+            if (!this.refs.textarea) return // input torn down before this (uncancelled) rAF fired
             this.refs.textarea.selectionStart = this.refs.textarea.value.length
           })
         }

@@ -220,7 +220,7 @@
           }
           this.refs.node.parentElement.style.display = ''
         }
-        setPageScrollLock(false)
+        this.releaseScrollLock()
         this.fire('close')
         emit('destroyDialog', id)
       })
@@ -229,6 +229,11 @@
       pushShortcutScope(`modal-${id}`)
     },
     ondestroy () {
+      // Safety net: a teardown that doesn't go through close() (e.g. route navigation while the
+      // dialog is open) never fires a11yDialog's 'hide', so release the scroll lock here too —
+      // otherwise the ref-counter stays incremented and the page stays frozen. Idempotent via the
+      // _scrollLocked flag, so the normal close path (which already released on 'hide') is a no-op.
+      this.releaseScrollLock()
       // avoid a11yDialog cloning emoji picker
       this.refs.node.textContent = ''
       this._a11yDialog.destroy()
@@ -260,6 +265,14 @@
       }
     },
     methods: {
+      // Release this dialog's page scroll lock exactly once, whether teardown came via close()
+      // ('hide') or a direct destroy (ondestroy). The flag guarantees one -1 per +1.
+      releaseScrollLock () {
+        if (this._scrollLocked) {
+          this._scrollLocked = false
+          setPageScrollLock(false)
+        }
+      },
       showDialog (otherId) {
         const { id } = this.get()
         const { reduceMotion } = store.get()
@@ -274,6 +287,7 @@
             this.set({ statePushed: true })
             history.pushState({ modalStack: [...history.state.modalStack || [], id] }, null, location.href)
             setPageScrollLock(true)
+            this._scrollLocked = true
             this._a11yDialog.show()
             this.set({ fadedIn: true })
             this.fire('show')

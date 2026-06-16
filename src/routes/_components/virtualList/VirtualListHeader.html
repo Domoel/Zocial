@@ -50,6 +50,7 @@
         }
         this.set({ heightCalculated: true })
         requestAnimationFrame(() => {
+          if (!this.refs.node) return // header torn down before this (uncancelled) rAF fired
           mark('VirtualListHeader gBCR')
           const rect = this.refs.node.getBoundingClientRect()
           stop('VirtualListHeader gBCR')
