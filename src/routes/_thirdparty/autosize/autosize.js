@@ -19,6 +19,13 @@ function assign (ta) {
 
   // TODO: hack - grab our scroll container so we can maintain the scrollTop
   const container = getScrollContainer()
+  // The scrollTop save/restore below only matters for a textarea that lives in the document's own
+  // scroll flow (e.g. the inline home compose box), where toggling its height reflows the page.
+  // A textarea inside a position:fixed dialog can't reflow the document — so the restore is pointless
+  // there, and on mobile it actively fights the browser's caret-scroll on every keystroke (read
+  // scrollTop → height='' triggers a caret-scroll → we write the old scrollTop back), which jiggles
+  // the timeline behind the dialog per typed character. Skip it for dialog textareas.
+  const skipScrollRestore = !!(ta.closest && ta.closest('.modal-dialog'))
   let heightOffset = null
 
   function init () {
@@ -41,7 +48,7 @@ function assign (ta) {
 
   function _resize () {
     const originalHeight = ta.style.height
-    const scrollTop = container.scrollTop
+    const scrollTop = skipScrollRestore ? 0 : container.scrollTop
 
     ta.style.height = '' // this may change the scrollTop in Firefox
 
@@ -52,7 +59,9 @@ function assign (ta) {
       ta.style.height = originalHeight
     } else {
       ta.style.height = `${endHeight}px`
-      container.scrollTop = scrollTop // Firefox jiggles if we don't reset the scrollTop of the container
+      if (!skipScrollRestore) {
+        container.scrollTop = scrollTop // Firefox jiggles if we don't reset the scrollTop of the container
+      }
     }
   }
 
