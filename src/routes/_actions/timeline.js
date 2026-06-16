@@ -118,12 +118,14 @@ async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken
     return await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
   } catch (e) {
     // List/tag timelines are assembled per-list/-tag server-side; the *first* cold request
-    // frequently times out while the backend warms up (esp. GoToSocial), and a manual page
-    // refresh then succeeds. Do that refresh automatically — once — for transient network
-    // errors (timeout / failed fetch, no HTTP status) when the user is on a blank or stale
+    // frequently times out OR returns a 5xx while the backend warms up (esp. GoToSocial, which
+    // live-queries list feeds rather than materialising them — see §20), and a manual page refresh
+    // then succeeds. Do that refresh automatically — once — when the user is on a blank or stale
     // view, so they recover in seconds instead of waiting for the 60s poll. If the retry also
     // fails, the caller's catch handles the graceful fallback (empty/cached list, no toast).
-    const isTransient = isNetworkNoiseError(e) && !e.status
+    // Retry transient network errors (timeout / failed fetch, no HTTP status) AND 5xx server
+    // errors (the cold-GoToSocial case); 4xx are deterministic and not retried.
+    const isTransient = isNetworkNoiseError(e) && (!e.status || e.status >= 500)
     if (isSlowTimeline && isTransient && shouldRetryTimelineFetch(instanceName, timelineName)) {
       console.warn('slow-timeline fetch failed, retrying once:', timelineName, '·', e.message || e)
       return fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)

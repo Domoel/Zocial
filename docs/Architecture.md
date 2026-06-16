@@ -1590,6 +1590,29 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
+### [v1.10.0] List/tag cold-load auto-retry now also covers 5xx (deliberate 500 refetch)
+
+**Decision:** The single automatic retry for list/tag timeline fetches (`fetchTimelineItemsFromNetworkWithRetry`, see the §22 2026-06-13 row) now fires not only on **status-less transient errors** (timeout / failed fetch) but **also on 5xx server errors** — `isTransient = isNetworkNoiseError(e) && (!e.status || e.status >= 500)`. 4xx stay non-retried (deterministic).
+
+**Rationale:** GoToSocial **live-queries** list/tag feeds instead of materialising them (see the v1.9.2 entry above + §22 list/tag row), so the **first cold request frequently returns a 500** (or times out) while the backend assembles the feed, and a plain refetch then succeeds. We therefore **deliberately refetch 500s once** for list/tag timelines when the view is blank/stale — it turns a "list won't load reliably on GtS" annoyance into a few-seconds self-heal, instead of waiting for the 60s poll. The retry is bounded (once, gated by `shouldRetryTimelineFetch` to blank/stale views), so a genuinely-broken endpoint costs at most one extra request before the graceful empty/cached fallback. The frontend list API itself is unchanged and correct (`GET /api/v1/timelines/list/:id`); this is purely a resilience tweak for the GtS cold-assembly characteristic.
+
+---
+
+### [v1.10.0] Timeline re-mount on scroll-up (preview/media reload) — known limitation, mitigated by buffer, deeper fix backlogged
+
+**Symptom (user-reported):** scrolling **up** in a timeline visibly re-loads preview cards / media images and the content "jumps"; scrolling **down** doesn't. Network panel shows the images come **from cache** (no real re-fetch / data cost).
+
+**Root cause:** Pinafore's **windowed virtualisation** renders only the viewport ± a render buffer (`RENDER_BUFFER_FACTOR` in `virtualListStore.js`) and **removes items from the DOM** once they scroll out of it. Scrolling back **re-mounts** them: the new `<img>` reloads (from cache) and the item async-renders (`makeProps` runs as an idle task; `{#if props}`; image decode), so its height/position is briefly unstable. Because re-mounted items sit **above** the viewport, that instability shifts the content **below** them → the visible jump. Scrolling down mounts items **below** the viewport, so the same reload causes no visible shift. This is inherent to the design, not a bug, and has **no data cost** (cached).
+
+**Mitigation applied:** raised `RENDER_BUFFER_FACTOR` 2.5 → **4** so items stay mounted across typical scroll-ups (fewer re-mounts). Tunable; the trade-off is more mounted DOM on very long timelines. Revert to 2.5 if scroll performance/memory regresses.
+
+**Deeper fixes (backlog — decide later if the buffer isn't enough):**
+1. **Synchronous re-render for already-seen items** — cache `makeProps` output per item id and skip the idle-task gate on re-mount, so a re-entering item renders fully at once (no "empty → filled" gap). Touches the deliberately-tuned lazy-render path (§22 virtual-list reviews).
+2. **Manual scroll anchoring** — when an above-viewport item's measured height changes (`recalculateHeight`), adjust `scrollTop` by the delta so the viewport content stays put. The "correct" fix, but complex/risky in the mature virtual-list internals.
+3. Optionally reserve media height more strictly from Mastodon `meta` dimensions to remove any residual height-change-on-load.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).

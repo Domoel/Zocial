@@ -2,7 +2,12 @@ import { mark, stop } from '../../_utils/marks.js'
 import { RealmStore } from '../../_utils/RealmStore.js'
 import { reselect } from '../../_utils/reselect.js'
 
-const RENDER_BUFFER_FACTOR = 2.5
+// Render this many viewport-heights of items above + below the visible window. Raised from 2.5 → 4
+// to reduce re-mounts when scrolling back up: a re-mounted item above the viewport reloads its
+// (cached) images + async-renders, which shifts the visible content below it (visible only when
+// scrolling up; see §20 "Timeline re-mount on scroll-up"). Larger buffer = fewer re-mounts, at the
+// cost of more mounted DOM on long timelines. Tunable.
+const RENDER_BUFFER_FACTOR = 4
 
 class VirtualListStore extends RealmStore {
   constructor (state) {
