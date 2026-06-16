@@ -1598,7 +1598,7 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
-### [v1.10.0] Timeline re-mount on scroll-up (preview/media reload) — known limitation, mitigated by buffer, deeper fix backlogged
+### [v1.10.1] Timeline re-mount on scroll-up (preview/media reload) — known limitation, mitigated by buffer, deeper fix backlogged
 
 **Symptom (user-reported):** scrolling **up** in a timeline visibly re-loads preview cards / media images and the content "jumps"; scrolling **down** doesn't. Network panel shows the images come **from cache** (no real re-fetch / data cost).
 
