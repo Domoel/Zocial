@@ -62,6 +62,12 @@
             parent.appendChild(this._element) // write
           }
           requestPostAnimationFrame(() => {
+            // requestPostAnimationFrame can't be cancelled, so it may fire after the component was
+            // torn down (e.g. the compose dialog closed during the rAF→rPAF gap). Bail if so —
+            // otherwise we'd read a null anchor and build the autosuggest in a destroyed state.
+            if (!this.refs.anchor) {
+              return
+            }
             const { insetInlineStart, top } = this.calculateInsetInlineStartAndTop()
             this._autosuggest = new ComposeAutosuggestContainer({
               target: this._element,
@@ -95,6 +101,11 @@
       },
       calculateInsetInlineStartAndTop () {
         const { anchor } = this.refs
+        if (!anchor) {
+          // A deferred recalc (rPAF / resize / scroll) can fire after the component was torn down
+          // (dialog closed), when the anchor ref is already gone. Bail with a no-op position.
+          return { insetInlineStart: 0, top: 0 }
+        }
         const { realm } = this.get()
         const { left, right, bottom } = anchor.getBoundingClientRect()
         const yOffset = realm === 'dialog' ? 0 : getScrollContainer().scrollTop
