@@ -1491,20 +1491,6 @@ One lower-severity finding from the same review was also fixed: **(a)** the cach
 
 ---
 
-### [v1.9.1] Remove from followers (`remove_from_followers`) — confirmed, show-then-toast
-
-**Decision:** Support Mastodon's `POST /api/v1/accounts/:id/remove_from_followers` as a `removeFollower` item in the account "⋯" options menu, **gated only on `relationship.followed_by`** (the person follows *you*). This surfaces it exactly where it's useful — every row of the Followers list (where the ⋯ menu now lives) and on the profile of anyone who follows you — and the `followed_by` gate auto-hides it where the person doesn't follow you.
-
-**Why a confirmation dialog (deviating from block/mute, which act immediately):** block/mute/unfollow are all reversible *by the actor*. Removing a follower is **not** — only the removed person can restore it (by following again). A misclick would require contacting them, so a `showTextConfirmationDialog` ("…you can't undo this yourself — only they can follow you again") is warranted here even though the house style is otherwise no-confirm. Opened with the same popstate-wait as `onManageListsClicked` (dialog-from-dialog race).
-
-**Backend handling — deliberately show-then-toast, NOT a capability allowlist.** The endpoint isn't universal (verified June 2026: Mastodon `401`/exists, GoToSocial `404`/absent), and the Fediverse advertises **no capability flag** for it — so the only ways to gate it are (a) a static software/version allowlist or (b) try-then-degrade. We chose **(b)**: the item always shows (where `followed_by`), and the action degrades on **404/501** to a clear `removeFromFollowersNotSupported` toast (the expected 404/501 is **not** `console.error`'d — it's a handled, expected outcome, so it stays out of the red error log). Rationale: a software allowlist would need **ongoing manual maintenance across every backend** (which adds support, in which version) — not sustainable for a solo maintainer, and it would also *hide* the feature on any backend that adds it until the list is updated. Show-then-toast is **self-updating**: it works automatically the moment any backend supports it, at the cost of one harmless "not supported" toast where it doesn't. (An earlier 1.9.1 draft pre-hid via a `software.name` allowlist; reverted for this reason.) On success `updateLocalRelationship` sets `followed_by:false` (the item self-hides) and `emit('refreshAccountsList')` drops the row from the Followers list. Icon `#fa-times` (distinct from Unfollow's `#fa-user-times` and Block's `#fa-ban`).
-
-**If a deterministic capability signal ever appears** (e.g. Mastodon adds it to `/api/v2/instance` `configuration`), switch to pre-hiding on that signal — that would be both clean *and* self-updating. Until then, show-then-toast. Tracked in memory `project_remove_from_followers_capability_backlog`.
-
-**Files:** `_api/follow.js` (`removeFromFollowers`), `_actions/follow.js` (`removeAccountFromFollowers`, 404/501 → not-supported toast), `_components/dialog/components/AccountProfileOptionsDialog.html` (`followedBy` gate, item, confirm handler), `intl/*` (`removeFollowerAccount`/`removeFollowerTitle`/`removeFollowerText`/`removeFollowerConfirm`/`removedFollower`/`removeFromFollowersNotSupported`, all 5 languages).
-
----
-
 ### [v1.9.0] Graded empty-state for account lists (legible "why is this empty?")
 
 **Decision:** `AccountsListPage` no longer renders a **blank page** when a list comes back empty — it shows a reason. Three cases (computed `emptyMessage`, returning a literal `intl.*` key so the loader translates it):
@@ -1517,6 +1503,20 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 **Context — why followers/follows of *other* profiles can look empty (user-reported):** the page was blank, not broken; the client path is correct (`GET /api/v1/accounts/:id/followers` / `:id/following`, empty array handled). A legitimately empty result has several causes, which is why the **count comparison** is the reliable signal rather than guessing one cause: (a) **remote accounts** — your instance doesn't hold a remote account's full social graph, so it returns few/none (confirmed: Mastodon returns the list fine for a *local* account); (b) the account **hides its social graph** (Mastodon setting); (c) **GoToSocial** only exposes followers/following for your *own* account and returns empty for others by design. **Explicit "this profile blocks you" is intentionally NOT detectable** — `blocked_by` isn't reliably exposed by the API — so it falls under the honest "not available" message rather than a false claim.
 
 **Files:** `_components/AccountsListPage.html` (`errored`/`expectedCount`, `emptyMessage`, `partialNotice`, `.accounts-empty`/`.accounts-partial`), `_pages/accounts/[accountId]/{follows,followers}.html` (`expectedCount`), `intl/*` (`couldNotLoadAccounts`, `accountListUnavailable`, `accountListPartial`, all 5 languages).
+
+---
+
+### [v1.9.1] Remove from followers (`remove_from_followers`) — confirmed, show-then-toast
+
+**Decision:** Support Mastodon's `POST /api/v1/accounts/:id/remove_from_followers` as a `removeFollower` item in the account "⋯" options menu, **gated only on `relationship.followed_by`** (the person follows *you*). This surfaces it exactly where it's useful — every row of the Followers list (where the ⋯ menu now lives) and on the profile of anyone who follows you — and the `followed_by` gate auto-hides it where the person doesn't follow you.
+
+**Why a confirmation dialog (deviating from block/mute, which act immediately):** block/mute/unfollow are all reversible *by the actor*. Removing a follower is **not** — only the removed person can restore it (by following again). A misclick would require contacting them, so a `showTextConfirmationDialog` ("…you can't undo this yourself — only they can follow you again") is warranted here even though the house style is otherwise no-confirm. Opened with the same popstate-wait as `onManageListsClicked` (dialog-from-dialog race).
+
+**Backend handling — deliberately show-then-toast, NOT a capability allowlist.** The endpoint isn't universal (verified June 2026: Mastodon `401`/exists, GoToSocial `404`/absent), and the Fediverse advertises **no capability flag** for it — so the only ways to gate it are (a) a static software/version allowlist or (b) try-then-degrade. We chose **(b)**: the item always shows (where `followed_by`), and the action degrades on **404/501** to a clear `removeFromFollowersNotSupported` toast (the expected 404/501 is **not** `console.error`'d — it's a handled, expected outcome, so it stays out of the red error log). Rationale: a software allowlist would need **ongoing manual maintenance across every backend** (which adds support, in which version) — not sustainable for a solo maintainer, and it would also *hide* the feature on any backend that adds it until the list is updated. Show-then-toast is **self-updating**: it works automatically the moment any backend supports it, at the cost of one harmless "not supported" toast where it doesn't. (An earlier 1.9.1 draft pre-hid via a `software.name` allowlist; reverted for this reason.) On success `updateLocalRelationship` sets `followed_by:false` (the item self-hides) and `emit('refreshAccountsList')` drops the row from the Followers list. Icon `#fa-times` (distinct from Unfollow's `#fa-user-times` and Block's `#fa-ban`).
+
+**If a deterministic capability signal ever appears** (e.g. Mastodon adds it to `/api/v2/instance` `configuration`), switch to pre-hiding on that signal — that would be both clean *and* self-updating. Until then, show-then-toast. Tracked in memory `project_remove_from_followers_capability_backlog`.
+
+**Files:** `_api/follow.js` (`removeFromFollowers`), `_actions/follow.js` (`removeAccountFromFollowers`, 404/501 → not-supported toast), `_components/dialog/components/AccountProfileOptionsDialog.html` (`followedBy` gate, item, confirm handler), `intl/*` (`removeFollowerAccount`/`removeFollowerTitle`/`removeFollowerText`/`removeFollowerConfirm`/`removedFollower`/`removeFromFollowersNotSupported`, all 5 languages).
 
 ---
 
@@ -1573,20 +1573,6 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
-### [v1.10.2] First-visit language detection — follow the browser, fall back to English
-
-**Decision:** On a fresh visit (no persisted `store_locale`), start the UI in the **browser's** language if we ship it, instead of always starting in English. Matching is done against `navigator.languages` in preference order: **exact tag** first (`de` / `ru-RU`), then **primary subtag** (`de-DE`→`de`, `ru`→`ru-RU`, `en-GB`→`en-US`), else fall back to `en-US` (`DEFAULT_LOCALE`). Implemented as a small `matchSupportedLocale()` in `_store/store.js`.
-
-**Why this changes the v1.10.0 default.** v1.10.0 deliberately shipped "always start in English" as the worst-case-safe choice while the runtime-i18n engine was new. In practice it meant a German/Spanish/… visitor saw English until they discovered the picker — an avoidable papercut now that all locales are bundled and the fallback chain is proven.
-
-**Why it's safe against the flicker / SSR-mismatch concern that originally blocked it.** The detection runs in `store.js` **before** `setCurrentLocale()` and the first paint, and the only language-dependent **first-paint** surface — the logged-out landing page (`NotLoggedInHome`) — is `HiddenFromSSR`, so the server never commits to a language the client then has to correct. Once logged in, the timeline chrome is client-rendered after the store exists. So there is no server/client locale mismatch and no visible re-render.
-
-**Persistence & precedence.** The detected locale is **not** eagerly written — it becomes the stored preference on the next `save()` (the `LocalStorageStore` flushes dirty keys on lifecycle `'passive'` / tab-blur), so first-visit detection still behaves as "detect once, then stick". An explicit dropdown choice always overrides it immediately and is persisted as `store_locale`, after which detection never runs again. The language dropdowns (`general.html`, `NotLoggedInHome.html`) reflect the result automatically because they bind `defaultValue={$locale}` and the locale is already set before they render.
-
-**Key files:** `_store/store.js` (`matchSupportedLocale` + the first-visit block, guarded by `ZOCIAL_IS_BROWSER && !localStorage.getItem('store_locale')`), `_intl/locales.js` (`AVAILABLE_LOCALES`).
-
----
-
 ### [v1.10.1] In-app OS-notification fallback ("System A" revival) — deliberately NOT built
 
 **Background (why the question came up):** Web Push isn't available in every environment — most notably when Zocial runs as an **Electron desktop app** (no FCM credentials, so `pushManager.subscribe()` fails). The proposal was to keep the single existing master toggle ("Enable OS push notifications on this device") but, behind it, automatically and invisibly pick the best available delivery path: try real Web Push first (counting it "available" only if the subscription actually registers, not by feature-detection), and otherwise fall back to firing `new Notification()` from the existing Mastodon **user stream** (`stream=user`), with lightweight `/api/v1/notifications` polling as a secondary fallback — one active path at a time, deduped by notification id. In effect this re-introduces the old **"System A"** foreground-`Notification()` path that was deliberately removed in v1.8.3 (see §18 historical note).
@@ -1626,6 +1612,20 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 1. **Synchronous re-render for already-seen items** — cache `makeProps` output per item id and skip the idle-task gate on re-mount, so a re-entering item renders fully at once (no "empty → filled" gap). Touches the deliberately-tuned lazy-render path (§22 virtual-list reviews).
 2. **Manual scroll anchoring** — when an above-viewport item's measured height changes (`recalculateHeight`), adjust `scrollTop` by the delta so the viewport content stays put. The "correct" fix, but complex/risky in the mature virtual-list internals.
 3. Optionally reserve media height more strictly from Mastodon `meta` dimensions to remove any residual height-change-on-load.
+
+---
+
+### [v1.10.2] First-visit language detection — follow the browser, fall back to English
+
+**Decision:** On a fresh visit (no persisted `store_locale`), start the UI in the **browser's** language if we ship it, instead of always starting in English. Matching is done against `navigator.languages` in preference order: **exact tag** first (`de` / `ru-RU`), then **primary subtag** (`de-DE`→`de`, `ru`→`ru-RU`, `en-GB`→`en-US`), else fall back to `en-US` (`DEFAULT_LOCALE`). Implemented as a small `matchSupportedLocale()` in `_store/store.js`.
+
+**Why this changes the v1.10.0 default.** v1.10.0 deliberately shipped "always start in English" as the worst-case-safe choice while the runtime-i18n engine was new. In practice it meant a German/Spanish/… visitor saw English until they discovered the picker — an avoidable papercut now that all locales are bundled and the fallback chain is proven.
+
+**Why it's safe against the flicker / SSR-mismatch concern that originally blocked it.** The detection runs in `store.js` **before** `setCurrentLocale()` and the first paint, and the only language-dependent **first-paint** surface — the logged-out landing page (`NotLoggedInHome`) — is `HiddenFromSSR`, so the server never commits to a language the client then has to correct. Once logged in, the timeline chrome is client-rendered after the store exists. So there is no server/client locale mismatch and no visible re-render.
+
+**Persistence & precedence.** The detected locale is **not** eagerly written — it becomes the stored preference on the next `save()` (the `LocalStorageStore` flushes dirty keys on lifecycle `'passive'` / tab-blur), so first-visit detection still behaves as "detect once, then stick". An explicit dropdown choice always overrides it immediately and is persisted as `store_locale`, after which detection never runs again. The language dropdowns (`general.html`, `NotLoggedInHome.html`) reflect the result automatically because they bind `defaultValue={$locale}` and the locale is already set before they render.
+
+**Key files:** `_store/store.js` (`matchSupportedLocale` + the first-visit block, guarded by `ZOCIAL_IS_BROWSER && !localStorage.getItem('store_locale')`), `_intl/locales.js` (`AVAILABLE_LOCALES`).
 
 ---
 
