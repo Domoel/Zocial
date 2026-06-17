@@ -1629,6 +1629,20 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
+### [v1.10.3] Reserve the scrollbar gutter (`scrollbar-gutter: stable`) — no layout shift when a dialog opens
+
+**Decision:** Add `scrollbar-gutter: stable` to the root scroll container (`html`, in `custom-scrollbars.scss`) so opening any dialog no longer shifts the centered layout.
+
+**The problem.** Every dialog — including the status/account "⋯" context menu — is a `ModalDialog`, which locks the page on open via `html.modal-open { overflow-y: hidden }` (the ref-counted `<html>` lock from [v1.10.1], which fixed the mobile keystroke jiggle). On platforms with **classic, space-occupying scrollbars** (Chromium on Linux/Windows — i.e. the **Electron desktop app** — and Linux Firefox), removing the root scrollbar reclaims its ~15 px of width; because `main` is centered with `margin: 0 auto`, the whole page slides ~7.5 px on open and back on close. (Reported against the Electron app: the scrollbar is normally always there, briefly vanishes when a menu opens, and everything nudges.)
+
+**Why `scrollbar-gutter: stable` over the alternatives.** It reserves the gutter **only where the scrollbar actually occupies layout space**: on classic-scrollbar platforms the gutter is always present (and the bar is usually shown there anyway), so the lock no longer changes width → no shift; on **overlay-scrollbar** platforms (macOS, iOS, Android) it has **no visual effect**, so nothing is forced visible. That is strictly better than the two options considered: (1) `overflow-y: scroll` would risk forcing a visible track on overlay platforms (defeating "hidden stays hidden"); (2) "make the context menu consistent with other menus" was a non-fix — all dialogs already use the identical lock, so the shift isn't a per-dialog inconsistency but intrinsic to the overflow toggle. `scrollbar-gutter` is the CSS primitive built for exactly this overflow-toggle shift.
+
+**Trade-off / support.** On classic-scrollbar platforms the gutter is now reserved even on a short, non-scrolling page (a thin empty strip on the inline-end) — in a timeline app there's essentially always scrollable content, so it's effectively never visible. Supported in Chromium 94+ (covers Electron) and Firefox 97+; older Safari (< 18.2) ignores it → no regression, and macOS Safari uses overlay scrollbars so there was no shift there to begin with. The scroll lock itself is unchanged.
+
+**Key files:** `src/scss/custom-scrollbars.scss` (`html { scrollbar-gutter: stable }`); interacts with `_components/dialog/components/ModalDialog.html` (the `html.modal-open` lock).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1666,6 +1680,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.10.0** | 2026-06-15 | **Runtime internationalisation.** All languages (en/de/es/fr/ru) ship in one build and the UI language is chosen in-app (Settings → General + login screen) with an **instant, reload-free** switch; always starts in English with a per-string English fallback. The build-time `LOCALE` variable is **removed** (no more per-language builds / `--build-arg LOCALE`). Live reactivity wired across all script-side label sites; locale-aware date/number/relative-time formatters. Deliberate English-only exceptions: the emoji picker and a few re-mount-per-open dialogs (see §15/§20) |
 | **1.10.1** | 2026-06-16 | Mobile/timeline robustness fixes on top of the runtime-i18n release (dev patch). **Mobile compose fix:** quote/reply dialogs no longer jiggle the timeline behind them on every keystroke — the background scroll lock now targets `<html>` (the real scroll root) not `<body>`, ref-counted and released on dialog destroy as well as close. **Robustness:** autosuggest positioning guarded against a teardown race (uncancelled rPAF after the input is gone), and the list/tag cold-load auto-retry now also covers **5xx** (deliberate single 500 refetch for GoToSocial's live-queried feeds). Timeline scroll-up re-mount jump mitigated by a larger render buffer (deeper fix backlogged). Rejected design recorded: in-app OS-notification fallback ("System A" revival) — see §20 |
 | **1.10.2** | 2026-06-17 | **First-visit language detection** (dev patch / feature). On a fresh visit (no stored preference) the UI now follows the browser language (`navigator.languages` → exact tag → primary subtag → English fallback) instead of always starting in English, with no flicker (the only language-dependent first paint, the logged-out landing page, is `HiddenFromSSR`), and the language picker shows it selected — see §15/§20 |
+| **1.10.3** | 2026-06-17 | **No layout shift when a dialog opens** (dev patch). `scrollbar-gutter: stable` on the root scroll container reserves the scrollbar's width permanently, so the `<html>` scroll lock (from 1.10.1) no longer reclaims ~15 px and slides the centered layout when a dialog/context menu opens or closes. Affects classic space-occupying scrollbars (Electron desktop, Linux/Windows Chromium, Linux Firefox); no effect on overlay-scrollbar platforms (macOS/mobile), so nothing is forced visible — see §20 |
 
 ---
 
