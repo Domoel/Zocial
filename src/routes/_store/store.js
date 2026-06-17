@@ -4,14 +4,15 @@ import { mixins } from './mixins/mixins.js'
 import { LocalStorageStore } from './LocalStorageStore.js'
 import { observe } from 'svelte-extras'
 import { isKaiOS } from '../_utils/userAgent/isKaiOS.js'
-import { DEFAULT_LOCALE } from '../_intl/locales.js'
+import { DEFAULT_LOCALE, AVAILABLE_LOCALES } from '../_intl/locales.js'
 import { setCurrentLocale } from '../_intl/runtime.js'
 
 const persistedState = {
   alwaysShowFocusRing: false,
-  // UI language, switchable at runtime (see _intl/). Always defaults to en-US (matching the static
-  // English prerender — no build-time language option); the persisted value wins on reload and
-  // survives logout (it's a UI preference, not instance state). Read reactively by the i18n resolver.
+  // UI language, switchable at runtime (see _intl/). Default is en-US (matching the static English
+  // prerender), but on the very first visit it's set to the browser's language if supported (see the
+  // boot block below). The persisted value wins on reload and survives logout (it's a UI preference,
+  // not instance state). Read reactively by the i18n resolver.
   locale: DEFAULT_LOCALE,
   autoplayGifs: !(
     !ZOCIAL_IS_BROWSER || matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -155,6 +156,37 @@ export class PinaforeStore extends LocalStorageStore {
 PinaforeStore.prototype.observe = observe
 
 export const store = new PinaforeStore(state)
+
+// Map browser language tags (navigator.languages, in preference order) to one of our supported
+// locales — exact match first, then primary-subtag ("de-DE"→"de", "ru"→"ru-RU", "en-GB"→"en-US"),
+// else null.
+function matchSupportedLocale (preferred) {
+  const codes = AVAILABLE_LOCALES.map(l => l.code)
+  for (const tag of preferred) {
+    if (!tag) continue
+    const lower = tag.toLowerCase()
+    const exact = codes.find(c => c.toLowerCase() === lower)
+    if (exact) return exact
+    const primary = lower.split('-')[0]
+    const byPrimary = codes.find(c => c.toLowerCase().split('-')[0] === primary)
+    if (byPrimary) return byPrimary
+  }
+  return null
+}
+
+// First visit only (no persisted `store_locale`): start in the browser's language if we support it,
+// else English — so e.g. a German visitor lands in German without touching settings. Done BEFORE
+// setCurrentLocale + the first render, so the initial paint is already in the right language (no
+// flicker — the translatable UI is client-rendered/HiddenFromSSR) and the language dropdowns show it
+// selected (they bind defaultValue={$locale}). It becomes the stored preference from the next save
+// on; an explicit dropdown choice always overrides it.
+if (ZOCIAL_IS_BROWSER && !localStorage.getItem('store_locale')) {
+  const preferred = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language]
+  const match = matchSupportedLocale(preferred)
+  if (match) {
+    store.set({ locale: match })
+  }
+}
 
 // Keep the imperative i18n resolver (getMessage/formatIntl called from component scripts and
 // actions) in sync with the selected locale. Templates react via the `messages` computed; this
