@@ -13,6 +13,8 @@ A beautifully refined fediverse client — built for the edges of the Mastodon e
 <p align="center">
   <a href="https://zocial.social">🌐 Live Instance</a>
   ·
+  <a href="https://git.ztfr.eu/Dome/Zocial-Desktop-Electron-App">🧩 Zocial Desktop App</a>
+  ·
   <a href="https://ztfr.eu">🏰 Website</a>
   ·
   <a href="https://ztfr.eu/matrix">📰 Matrix Community</a>
