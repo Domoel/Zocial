@@ -105,8 +105,10 @@ function isHomeKey (key) {
 // notifications and age out via cleanup). For a boost the stored wrapper's ACCOUNT_ID is the booster,
 // so this drops the account's own posts + their boosts, and keeps boosts of their content made by
 // accounts you still follow (different ACCOUNT_ID).
-// `{ homeOnly: true }` purges just the home feed (exclusive-list: members leave home but stay in the
-// list). `{ homeAndListsOnly: true }` purges home + every list (unfollow). Neither → ALL timelines (block).
+// Scope options (mutually exclusive): `{ timelineName }` purges only that one timeline (e.g.
+// `list/123` — removing an account from a single list); `{ homeOnly }` just the home feed
+// (exclusive-list: members leave home but stay in the list); `{ homeAndListsOnly }` home + every
+// list (unfollow). None → ALL timelines (block).
 export async function deleteTimelineItemsForAccount (instanceName, accountId, options) {
   if (!accountId) {
     return
@@ -117,11 +119,13 @@ export async function deleteTimelineItemsForAccount (instanceName, accountId, op
 // Plural form: purge several accounts in a SINGLE store scan. Used when a list is made exclusive,
 // where every member must leave home at once — doing one full `status_timelines` cursor scan per
 // member would be O(members × store size). One scan checks each in-scope entry against the id set.
-export async function deleteTimelineItemsForAccounts (instanceName, accountIds, { homeAndListsOnly = false, homeOnly = false } = {}) {
+export async function deleteTimelineItemsForAccounts (instanceName, accountIds, { homeAndListsOnly = false, homeOnly = false, timelineName = null } = {}) {
   const ids = new Set(accountIds || [])
   if (!ids.size) {
     return
   }
+  // A status-timeline key is `<timelineName>\u0000<reverseId>`, so scope to one timeline by its prefix.
+  const timelinePrefix = timelineName ? timelineName + '\u0000' : null
   const db = await getDatabase(instanceName)
   await dbPromise(db, [STATUS_TIMELINES_STORE, STATUSES_STORE], 'readwrite', (stores) => {
     const [statusTimelinesStore, statusesStore] = stores
@@ -132,9 +136,14 @@ export async function deleteTimelineItemsForAccounts (instanceName, accountIds, 
       }
       const timelineKey = cursor.key
       // Skip out-of-scope feeds cheaply (no status lookup) when a scope is given.
-      const outOfScope = homeOnly
-        ? !isHomeKey(timelineKey)
-        : (homeAndListsOnly && !isHomeOrListKey(timelineKey))
+      let outOfScope = false
+      if (timelinePrefix) {
+        outOfScope = !(typeof timelineKey === 'string' && timelineKey.startsWith(timelinePrefix))
+      } else if (homeOnly) {
+        outOfScope = !isHomeKey(timelineKey)
+      } else if (homeAndListsOnly) {
+        outOfScope = !isHomeOrListKey(timelineKey)
+      }
       if (outOfScope) {
         cursor.continue()
         return

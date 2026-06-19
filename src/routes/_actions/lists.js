@@ -2,7 +2,7 @@ import { store } from '../_store/store.js'
 import { getLists, createList, updateList, deleteList, getListAccounts, addAccountToList, removeAccountFromList } from '../_api/lists.js'
 import { cacheFirstUpdateAfter, cacheFirstUpdateOnlyIfNotInCache } from '../_utils/sync.js'
 import { database } from '../_database/database.js'
-import { removeAccountFromHomeTimeline, removeAccountsFromHomeTimeline } from './timeline.js'
+import { removeAccountFromHomeTimeline, removeAccountsFromHomeTimeline, removeAccountFromSingleTimeline } from './timeline.js'
 
 // A list is exclusive when the server echoes exclusive:true on its List entity. Looked up from the
 // cached lists so callers don't need to pass it around.
@@ -132,12 +132,12 @@ export async function deleteListById (listId, wasExclusive) {
   await updateListsForInstance(currentInstance)
 }
 
-// Membership changes that must respect exclusivity. Adding an account to an exclusive list hides it
-// from home → purge it now; removing it from an exclusive list un-hides it → mark home stale so it
-// re-appears. On a non-exclusive list neither applies (the API call is all that's needed).
+// Membership changes that keep the cached timelines correct (the union-only cache + cache-first
+// prefill won't drop/add posts on a refetch on their own).
 export async function addAccountToListAndPurge (listId, accountId) {
   const { currentInstance, accessToken } = store.get()
   await addAccountToList(currentInstance, accessToken, listId, accountId)
+  // Adding to an exclusive list hides the account from home → purge it from home now.
   if (isListExclusive(currentInstance, listId)) {
     await removeAccountFromHomeTimeline(currentInstance, accountId)
   }
@@ -146,6 +146,11 @@ export async function addAccountToListAndPurge (listId, accountId) {
 export async function removeAccountFromListAndRestore (listId, accountId) {
   const { currentInstance, accessToken } = store.get()
   await removeAccountFromList(currentInstance, accessToken, listId, accountId)
+  // The removed account's posts must leave THIS list's feed. The list cache is union-only and
+  // cache-first prefills from IDB, so a plain refetch keeps the stale entries — purge them (the
+  // long-standing reason a removed account lingered in the list since cache-first reached lists).
+  await removeAccountFromSingleTimeline(currentInstance, 'list/' + listId, accountId)
+  // If the list was exclusive, the account is no longer hidden from home → bring it back.
   if (isListExclusive(currentInstance, listId)) {
     markHomeStale(currentInstance)
   }

@@ -25,7 +25,7 @@ A beautifully refined fediverse client — built for the edges of the Mastodon e
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.11.0-blue?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.10.8-blue?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--v3-green?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/PWA-ready-purple?style=flat-square" alt="PWA">
   <img src="https://img.shields.io/badge/GoToSocial-supported-orange?style=flat-square" alt="GoToSocial">

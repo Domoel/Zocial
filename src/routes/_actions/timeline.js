@@ -330,6 +330,21 @@ export async function removeAccountsFromHomeTimeline (instanceName, accountIds) 
   }
 }
 
+// Purge an account's posts from ONE specific timeline (in-memory + that timeline's IDB pointers).
+// Used when an account is removed from a list: its posts must leave that list's feed, which the
+// union-only cache + cache-first prefill would otherwise keep until age-cleanup.
+export async function removeAccountFromSingleTimeline (instanceName, timelineName, accountId) {
+  if (!accountId || !timelineName) {
+    return
+  }
+  purgeAccountFromTimelineInMemory(instanceName, timelineName, accountId)
+  try {
+    await database.deleteTimelineItemsForAccounts(instanceName, [accountId], { timelineName })
+  } catch (e) {
+    console.warn('failed to purge account posts from timeline cache', timelineName, '·', (e && e.message) || e)
+  }
+}
+
 // Block: nothing from this account anywhere — purge EVERY cached timeline (home/local/federated/
 // tag/list/account + open threads), in-memory and from IndexedDB.
 export async function removeAccountFromAllTimelines (instanceName, accountId) {
