@@ -29,7 +29,7 @@
       </h2>
 
       <PageList label="{'intl.lists'}">
-        {#each $lists as list, i}
+        {#each sortedLists as list, i}
           <PageListItem
             href="/lists/{list.id}"
             label={list.title}
@@ -86,12 +86,6 @@
           icon="#fa-clock"
         />
 
-        <PageListItem
-          href="/followed-tags"
-          label="{'intl.followedHashtags'}"
-          icon="#fa-hashtag"
-        />
-
         {#if $listsSupported !== false && listsLength > 0}
           <PageListItem
             href="/manage-lists"
@@ -99,6 +93,12 @@
             icon="#fa-bars"
           />
         {/if}
+
+        <PageListItem
+          href="/followed-tags"
+          label="{'intl.followedHashtags'}"
+          icon="#fa-hashtag"
+        />
       </PageList>
     </div>
 
@@ -194,6 +194,12 @@
 
       listsLength: ({ $lists }) =>
         $lists ? $lists.length : 0,
+
+      // Sort lists alphabetically by title so the settings menu matches the Manage-lists page
+      // (which sorts the same way). There is no server-side list order to honour, so a stable
+      // alphabetical order is the predictable choice across both views.
+      sortedLists: ({ $lists }) =>
+        ($lists || []).slice().sort((a, b) => a.title.localeCompare(b.title)),
 
       staticPinnablesLength: ({ staticPinnables }) =>
         staticPinnables.length,
