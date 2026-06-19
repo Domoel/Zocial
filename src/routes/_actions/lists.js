@@ -1,7 +1,27 @@
 import { store } from '../_store/store.js'
-import { getLists, createList } from '../_api/lists.js'
+import { getLists, createList, updateList, deleteList } from '../_api/lists.js'
 import { cacheFirstUpdateAfter, cacheFirstUpdateOnlyIfNotInCache } from '../_utils/sync.js'
 import { database } from '../_database/database.js'
+
+// Exclusive-list support (Mastodon 3.3+, GoToSocial) is detected without a software allowlist: a
+// backend that supports it returns an `exclusive` key on every List entity. So if we have at least
+// one list and any of them carries the key, the feature is supported; if none do, it isn't. With
+// zero lists we can't tell, so leave the flag unchanged (null/unknown → treated optimistically).
+function listHasExclusiveField (list) {
+  return list && typeof list.exclusive !== 'undefined'
+}
+
+function updateExclusiveSupportFromLists (instanceName, lists) {
+  if (!lists || !lists.length) {
+    return // can't tell from zero lists
+  }
+  const supported = lists.some(listHasExclusiveField)
+  const { instanceListsExclusiveSupported } = store.get()
+  if (instanceListsExclusiveSupported[instanceName] !== supported) {
+    instanceListsExclusiveSupported[instanceName] = supported
+    store.set({ instanceListsExclusiveSupported })
+  }
+}
 
 async function syncLists (instanceName, syncMethod) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
@@ -16,6 +36,7 @@ async function syncLists (instanceName, syncMethod) {
             instanceLists[instanceName] = lists
             store.set({ instanceLists })
           })
+          updateExclusiveSupportFromLists(instanceName, lists)
         }
       )
       const { instanceListsSupported } = store.get()
@@ -45,8 +66,40 @@ export async function setupListsForInstance (instanceName) {
   await syncLists(instanceName, cacheFirstUpdateOnlyIfNotInCache)
 }
 
-export async function createNewList (title) {
+// Returns the created List entity so the caller can verify whether `exclusive` was honoured
+// (a backend without support silently ignores the field — we surface that as a toast).
+export async function createNewList (title, exclusive) {
   const { currentInstance, accessToken } = store.get()
-  await createList(currentInstance, accessToken, title)
+  const created = await createList(currentInstance, accessToken, title, exclusive)
+  // A single fresh entity is enough to learn support (it carries `exclusive` iff supported).
+  updateExclusiveSupportFromLists(currentInstance, [created])
+  await updateListsForInstance(currentInstance)
+  return created
+}
+
+export async function renameList (listId, title) {
+  const { currentInstance, accessToken } = store.get()
+  await updateList(currentInstance, accessToken, listId, { title })
+  await updateListsForInstance(currentInstance)
+}
+
+export async function setListExclusive (listId, exclusive) {
+  const { currentInstance, accessToken } = store.get()
+  const updated = await updateList(currentInstance, accessToken, listId, { exclusive: !!exclusive })
+  updateExclusiveSupportFromLists(currentInstance, [updated])
+  await updateListsForInstance(currentInstance)
+  return updated
+}
+
+export async function deleteListById (listId, wasExclusive) {
+  const { currentInstance, accessToken } = store.get()
+  await deleteList(currentInstance, accessToken, listId)
+  // Deleting an exclusive list ends the server-side home exclusion for its members. The home cache
+  // is union-only and won't pull them back on its own, so mark it stale → the next setupTimeline
+  // (poll / navigate) re-fetches and the members reappear. Consistent with the §20 [v1.9.2] model
+  // (server-driven; a refresh surfaces them, no retroactive cache rebuild).
+  if (wasExclusive) {
+    store.setForTimeline(currentInstance, 'home', { timelineItemSummariesAreStale: true })
+  }
   await updateListsForInstance(currentInstance)
 }

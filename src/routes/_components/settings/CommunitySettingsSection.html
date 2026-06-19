@@ -91,6 +91,14 @@
           label="{'intl.followedHashtags'}"
           icon="#fa-hashtag"
         />
+
+        {#if $listsSupported !== false && listsLength > 0}
+          <PageListItem
+            href="/manage-lists"
+            label="{'intl.manageLists'}"
+            icon="#fa-bars"
+          />
+        {/if}
       </PageList>
     </div>
 

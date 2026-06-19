@@ -1,0 +1,314 @@
+<div class="manage-lists-page">
+  {#if lists.length}
+    <ul class="lists-list">
+      {#each lists as list (list.id)}
+        <li class="lists-list-item">
+          {#if editingListId === list.id}
+            <form class="rename-form" on:submit="saveRename(event)">
+              <input
+                class="rename-input"
+                type="text"
+                bind:value=editingTitle
+                aria-label="{'intl.listTitle'}"
+                autocomplete="off"
+                ref:renameInput
+              />
+              <button type="submit" class="rename-save" disabled={!editingTitle.trim()}>{'intl.save'}</button>
+              <button type="button" class="rename-cancel" on:click="cancelRename()">{'intl.cancel'}</button>
+            </form>
+          {:else}
+            <div class="lists-list-row">
+              <a href="/lists/{list.id}" rel="prefetch" class="list-link">
+                <SvgIcon className="list-icon" href="#fa-bars" />
+                {list.title}
+              </a>
+              <div class="list-actions">
+                <button type="button" class="list-action-button" on:click="startRename(list)">
+                  {'intl.rename'}
+                </button>
+                <button type="button" class="list-action-button list-delete-button" on:click="onDelete(list)">
+                  {'intl.delete'}
+                </button>
+              </div>
+            </div>
+            {#if exclusiveSupported}
+              <label class="list-exclusive" title="{'intl.listExclusiveHelp'}">
+                <input
+                  type="checkbox"
+                  checked={list.exclusive}
+                  on:change="onToggleExclusive(list, event)"
+                />
+                <span class="list-exclusive-text">
+                  <span class="list-exclusive-label">{'intl.listExclusive'}</span>
+                  <span class="list-exclusive-help">{'intl.listExclusiveHelp'}</span>
+                </span>
+              </label>
+            {/if}
+          {/if}
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="empty-state">{'intl.nothingToShow'}</p>
+  {/if}
+
+  <form class="add-list-form" on:submit="onCreateSubmit(event)">
+    <input
+      class="add-list-input"
+      type="text"
+      bind:value=newTitle
+      placeholder="{'intl.listTitle'}"
+      aria-label="{'intl.createList'}"
+      autocomplete="off"
+    />
+    <button type="submit" class="add-button" disabled={!newTitle.trim()}>{'intl.createList'}</button>
+  </form>
+
+  {#if errorMessage}
+    <p class="lists-error">{errorMessage}</p>
+  {/if}
+</div>
+<style>
+  .manage-lists-page {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .lists-list {
+    list-style: none;
+    margin: 0 0 20px 0;
+    padding: 0;
+    border: 1px solid var(--main-border);
+    border-radius: 2px;
+    box-sizing: border-box;
+  }
+  .lists-list-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--main-border);
+    box-sizing: border-box;
+  }
+  .lists-list-item:last-child {
+    border-bottom: none;
+  }
+  .lists-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .list-link {
+    font-size: 1.15em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--anchor-text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .list-link:hover {
+    text-decoration: underline;
+  }
+  :global(.list-icon) {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    fill: var(--deemphasized-text-color);
+    flex-shrink: 0;
+  }
+  .list-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .list-action-button {
+    font-size: 0.85em;
+    padding: 5px 12px;
+    background: none;
+    border: 1px solid var(--main-border);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--deemphasized-text-color);
+    white-space: nowrap;
+  }
+  .list-action-button:hover {
+    border-color: var(--anchor-text);
+    color: var(--body-text-color);
+  }
+  .list-delete-button:hover {
+    border-color: var(--warning-color);
+    color: var(--warning-color);
+  }
+  .list-exclusive {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 12px;
+    cursor: pointer;
+  }
+  .list-exclusive input {
+    margin-top: 3px;
+  }
+  .list-exclusive-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .list-exclusive-label {
+    font-size: 0.95em;
+  }
+  .list-exclusive-help {
+    font-size: 0.82em;
+    color: var(--deemphasized-text-color);
+  }
+  .rename-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .rename-input {
+    flex: 1;
+    min-width: 0;
+    font-size: 1em;
+    padding: 5px 8px;
+  }
+  .rename-save, .rename-cancel {
+    font-size: 0.85em;
+    padding: 5px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .add-list-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .add-list-input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85em;
+  }
+  .add-button {
+    font-size: 0.85em;
+    font-weight: bold;
+    padding: 5px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .lists-error {
+    margin: 10px 0 0 0;
+    color: var(--warning-color);
+    font-size: 0.9em;
+  }
+  @media (max-width: 767px) {
+    .manage-lists-page {
+      padding: 20px 10px;
+    }
+    .lists-list-item {
+      padding: 12px 10px;
+    }
+  }
+</style>
+<script>
+  import { store } from '../../../_store/store.js'
+  import { formatIntl } from '../../../_utils/formatIntl.js'
+  import SvgIcon from '../../SvgIcon.html'
+  import { toast } from '../../../_components/toast/toast.js'
+  import {
+    updateListsForInstance,
+    createNewList,
+    renameList,
+    setListExclusive,
+    deleteListById
+  } from '../../../_actions/lists.js'
+  import { importShowTextConfirmationDialog } from '../../dialog/asyncDialogs/importShowTextConfirmationDialog.js'
+
+  export default {
+    components: { SvgIcon },
+    store: () => store,
+    data: () => ({
+      newTitle: '',
+      errorMessage: '',
+      editingListId: null,
+      editingTitle: ''
+    }),
+    computed: {
+      lists: ({ $lists }) =>
+        ($lists || []).slice().sort((a, b) => a.title.localeCompare(b.title)),
+      // Show the exclusive toggle unless support is confirmed false (null/unknown → optimistic).
+      exclusiveSupported: ({ $listsExclusiveSupported }) => $listsExclusiveSupported !== false
+    },
+    async oncreate () {
+      const { currentInstance } = this.store.get()
+      if (currentInstance) {
+        try {
+          await updateListsForInstance(currentInstance)
+        } catch (e) { /* keep whatever is cached */ }
+      }
+    },
+    methods: {
+      async onCreateSubmit (event) {
+        event.preventDefault()
+        const { newTitle } = this.get()
+        const title = newTitle.trim()
+        if (!title) return
+        this.set({ errorMessage: '' })
+        try {
+          await createNewList(title, false)
+          this.set({ newTitle: '' })
+        } catch (e) {
+          this.set({ errorMessage: formatIntl('intl.unableToCreateList', { error: (e.message || '') }) })
+        }
+      },
+      startRename (list) {
+        this.set({ editingListId: list.id, editingTitle: list.title, errorMessage: '' })
+        requestAnimationFrame(() => {
+          if (this.refs.renameInput) {
+            this.refs.renameInput.focus()
+          }
+        })
+      },
+      cancelRename () {
+        this.set({ editingListId: null, editingTitle: '' })
+      },
+      async saveRename (event) {
+        event.preventDefault()
+        const { editingListId, editingTitle } = this.get()
+        const title = editingTitle.trim()
+        if (!title) return
+        try {
+          await renameList(editingListId, title)
+          this.set({ editingListId: null, editingTitle: '' })
+        } catch (e) {
+          /* no await */ toast.say(formatIntl('intl.unableToRenameList', { error: (e.message || '') }))
+        }
+      },
+      async onToggleExclusive (list, event) {
+        const checked = event.target.checked
+        try {
+          await setListExclusive(list.id, checked)
+        } catch (e) {
+          /* no await */ toast.say(formatIntl('intl.unableToUpdateList', { error: (e.message || '') }))
+          // Re-sync so the checkbox reflects the real server state again after a failed toggle.
+          const { currentInstance } = this.store.get()
+          /* no await */ updateListsForInstance(currentInstance).catch(() => {})
+        }
+      },
+      async onDelete (list) {
+        const showTextConfirmationDialog = await importShowTextConfirmationDialog()
+        showTextConfirmationDialog({
+          title: formatIntl('intl.deleteListTitle', { title: list.title }),
+          text: formatIntl('intl.deleteListConfirm', { title: list.title }),
+          positiveText: 'intl.delete'
+        }).on('positive', async () => {
+          try {
+            await deleteListById(list.id, !!list.exclusive)
+            /* no await */ toast.say('intl.deletedList')
+          } catch (e) {
+            /* no await */ toast.say(formatIntl('intl.unableToDeleteList', { error: (e.message || '') }))
+          }
+        })
+      }
+    }
+  }
+</script>

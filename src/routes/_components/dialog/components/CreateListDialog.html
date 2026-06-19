@@ -17,6 +17,19 @@
       autocomplete="off"
       on:input="onInput(event)"
     />
+    {#if exclusiveSupported}
+      <label class="create-list-exclusive">
+        <input
+          type="checkbox"
+          checked={exclusive}
+          on:change="onExclusiveChange(event)"
+        />
+        <span class="create-list-exclusive-text">
+          <span class="create-list-exclusive-label">{'intl.listExclusive'}</span>
+          <span class="create-list-exclusive-help">{'intl.listExclusiveHelp'}</span>
+        </span>
+      </label>
+    {/if}
   </div>
 </GenericConfirmationDialog>
 <style>
@@ -37,9 +50,31 @@
     color: var(--body-text-color);
     border-radius: 2px;
   }
+  .create-list-exclusive {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 6px;
+    cursor: pointer;
+  }
+  .create-list-exclusive input {
+    margin-top: 3px;
+  }
+  .create-list-exclusive-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .create-list-exclusive-label {
+    font-size: 1em;
+  }
+  .create-list-exclusive-help {
+    font-size: 0.85em;
+    color: var(--deemphasized-text-color);
+  }
 </style>
 <script>
   import GenericConfirmationDialog from './GenericConfirmationDialog.html'
+  import { store } from '../../../_store/store.js'
   import { show } from '../helpers/showDialog.js'
   import { close } from '../helpers/closeDialog.js'
   import { createNewList } from '../../../_actions/lists.js'
@@ -54,11 +89,17 @@
         }
       })
     },
+    store: () => store,
     data: () => ({
-      title: ''
+      title: '',
+      exclusive: false
     }),
     computed: {
-      confirmationButtonDisabled: ({ title }) => !title.trim()
+      confirmationButtonDisabled: ({ title }) => !title.trim(),
+      // Show the checkbox unless support is confirmed false (null/unknown → optimistic). A backend
+      // that doesn't support it surfaces via the read-back toast in onCreate, after which the flag
+      // is false and the checkbox hides.
+      exclusiveSupported: ({ $listsExclusiveSupported }) => $listsExclusiveSupported !== false
     },
     methods: {
       show,
@@ -66,11 +107,19 @@
       onInput (e) {
         this.set({ title: e.target.value })
       },
+      onExclusiveChange (e) {
+        this.set({ exclusive: e.target.checked })
+      },
       async onCreate () {
-        const { title } = this.get()
+        const { title, exclusive } = this.get()
         if (!title.trim()) return
         try {
-          await createNewList(title.trim())
+          const created = await createNewList(title.trim(), exclusive)
+          // The backend silently ignores `exclusive` if it doesn't support it: we asked for it but
+          // it didn't come back true. Tell the user (the list is still created, just not exclusive).
+          if (exclusive && !(created && created.exclusive)) {
+            /* no await */ toast.say('intl.listExclusiveNotSupported')
+          }
           this.close()
         } catch (e) {
           // The GenericConfirmationDialog already closed itself on the positive click
