@@ -2,7 +2,7 @@ import { store } from '../_store/store.js'
 import { getLists, createList, updateList, deleteList, getListAccounts, addAccountToList, removeAccountFromList } from '../_api/lists.js'
 import { cacheFirstUpdateAfter, cacheFirstUpdateOnlyIfNotInCache } from '../_utils/sync.js'
 import { database } from '../_database/database.js'
-import { removeAccountFromHomeTimeline } from './timeline.js'
+import { removeAccountFromHomeTimeline, removeAccountsFromHomeTimeline } from './timeline.js'
 
 // A list is exclusive when the server echoes exclusive:true on its List entity. Looked up from the
 // cached lists so callers don't need to pass it around.
@@ -111,9 +111,7 @@ export async function setListExclusive (listId, exclusive) {
   if (updated && updated.exclusive) {
     try {
       const accounts = await getListAccounts(currentInstance, accessToken, listId)
-      for (const account of (accounts || [])) {
-        await removeAccountFromHomeTimeline(currentInstance, account.id)
-      }
+      await removeAccountsFromHomeTimeline(currentInstance, (accounts || []).map(a => a.id))
     } catch (e) {
       console.warn('failed to purge exclusive-list members from home', (e && e.message) || e)
     }

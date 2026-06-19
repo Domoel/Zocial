@@ -107,8 +107,19 @@ function isHomeKey (key) {
 // accounts you still follow (different ACCOUNT_ID).
 // `{ homeOnly: true }` purges just the home feed (exclusive-list: members leave home but stay in the
 // list). `{ homeAndListsOnly: true }` purges home + every list (unfollow). Neither → ALL timelines (block).
-export async function deleteTimelineItemsForAccount (instanceName, accountId, { homeAndListsOnly = false, homeOnly = false } = {}) {
+export async function deleteTimelineItemsForAccount (instanceName, accountId, options) {
   if (!accountId) {
+    return
+  }
+  return deleteTimelineItemsForAccounts(instanceName, [accountId], options)
+}
+
+// Plural form: purge several accounts in a SINGLE store scan. Used when a list is made exclusive,
+// where every member must leave home at once — doing one full `status_timelines` cursor scan per
+// member would be O(members × store size). One scan checks each in-scope entry against the id set.
+export async function deleteTimelineItemsForAccounts (instanceName, accountIds, { homeAndListsOnly = false, homeOnly = false } = {}) {
+  const ids = new Set(accountIds || [])
+  if (!ids.size) {
     return
   }
   const db = await getDatabase(instanceName)
@@ -131,7 +142,7 @@ export async function deleteTimelineItemsForAccount (instanceName, accountId, { 
       const statusId = cursor.value
       statusesStore.get(statusId).onsuccess = ev => {
         const status = ev.target.result
-        if (status && status[ACCOUNT_ID] === accountId) {
+        if (status && ids.has(status[ACCOUNT_ID])) {
           statusTimelinesStore.delete(timelineKey)
         }
       }

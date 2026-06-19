@@ -36,6 +36,7 @@
                 <input
                   type="checkbox"
                   checked={list.exclusive}
+                  disabled={togglingListId === list.id}
                   on:change="onToggleExclusive(list, event)"
                 />
                 <span class="list-exclusive-text">
@@ -234,7 +235,8 @@
       newTitle: '',
       errorMessage: '',
       editingListId: null,
-      editingTitle: ''
+      editingTitle: '',
+      togglingListId: null
     }),
     computed: {
       lists: ({ $lists }) =>
@@ -288,7 +290,14 @@
         }
       },
       async onToggleExclusive (list, event) {
+        // Ignore a second toggle while one is in flight (turning exclusive on fetches members and
+        // purges home, which can take a moment); revert the checkbox the user just flipped.
+        if (this.get().togglingListId) {
+          event.target.checked = !!list.exclusive
+          return
+        }
         const checked = event.target.checked
+        this.set({ togglingListId: list.id })
         try {
           await setListExclusive(list.id, checked)
         } catch (e) {
@@ -296,6 +305,8 @@
           // Re-sync so the checkbox reflects the real server state again after a failed toggle.
           const { currentInstance } = this.store.get()
           /* no await */ updateListsForInstance(currentInstance).catch(() => {})
+        } finally {
+          this.set({ togglingListId: null })
         }
       },
       async onDelete (list) {

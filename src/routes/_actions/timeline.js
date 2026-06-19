@@ -310,9 +310,21 @@ export async function removeAccountFromHomeTimeline (instanceName, accountId) {
   if (!accountId) {
     return
   }
-  purgeAccountFromTimelineInMemory(instanceName, 'home', accountId)
+  return removeAccountsFromHomeTimeline(instanceName, [accountId])
+}
+
+// Batch form: purge several accounts from home in ONE IDB scan (used when a whole list is made
+// exclusive — one scan instead of one per member). In-memory filtering is cheap, so it loops.
+export async function removeAccountsFromHomeTimeline (instanceName, accountIds) {
+  const ids = (accountIds || []).filter(Boolean)
+  if (!ids.length) {
+    return
+  }
+  for (const accountId of ids) {
+    purgeAccountFromTimelineInMemory(instanceName, 'home', accountId)
+  }
   try {
-    await database.deleteTimelineItemsForAccount(instanceName, accountId, { homeOnly: true })
+    await database.deleteTimelineItemsForAccounts(instanceName, ids, { homeOnly: true })
   } catch (e) {
     console.warn('failed to purge account posts from home timeline cache', (e && e.message) || e)
   }
