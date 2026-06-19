@@ -1643,6 +1643,23 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 ---
 
+### [v1.10.4] Harden the streaming gap-fill for slow (list/tag) timelines
+
+**Context — why list timelines fail far more than e.g. federated, despite both streaming + polling.** Investigated from a Mastodon user's prod log (`Uncaught (in promise): NetworkError …` ×2, `background refresh failed`). The federated read (`GET /timelines/public`) is a cheap, often-materialised query; a **list read (`GET /timelines/list/:id`) is assembled per list** (join over the list's member accounts) and is much heavier — on a busy instance it can run past the server/proxy timeout, which **drops the connection mid-response**, so the browser reports a status-less `NetworkError` rather than a clean 5xx. That makes lists structurally far more failure-prone than the public timelines.
+
+**Root cause of the *uncaught* errors specifically: `fillStreamingGap`.** When a stream **opens or reconnects** (`streaming.js` → `onOpen`/`onReconnect` → `fillGap`), `fillStreamingGap` loops up to **15 sequential requests** to backfill the gap since the last-seen item. For a list that's up to 15 slow queries back-to-back, and the function was (a) invoked **fire-and-forget** (`/* no await */`) with **no try/catch**, so any rejection became an uncaught promise rejection (the user's log), (b) **not** classified network-noise-vs-bug like the main fetch path, and (c) hard-coded to a 20-item batch (ignoring the smaller list batch). A flaky connection compounds it: every reconnect re-fires the gap-fill against the slow endpoint exactly when the network is worst.
+
+**Decision (this is distinct from the already-hardened *main* fetch path — `fetchTimelineItems`, see §20 [v1.10.1] + §22):**
+1. **Wrap the gap-fill in try/catch** → a failed catch-up degrades gracefully (recovered by ongoing streaming + the 60s poll) instead of an uncaught rejection; transient network noise → `warn`, genuine bug → `error` (via `isNetworkNoiseError`, matching the main path).
+2. **Cap the request count for slow timelines** (`list/`, `tag/`) at **2** (vs 15 for others) — a list rarely needs a 300-item catch-up; streaming/scroll/poll fill the rest. This kills the "15 slow queries in a row" amplification at the root.
+3. **Use the smaller list batch** (`LIST_BATCH_SIZE`) for `list/` gap-fills (cheaper per-list query; the 40 s `SLOW_READ_TIMEOUT` already applies automatically inside `getTimeline` by timeline name).
+
+**Deliberately deferred (the reconnect-specific option).** A further idea — on **reconnect** (vs open) do only a single-batch gap-fill, or skip it entirely (rely on streaming + poll) — was considered but **not** taken: cap = 2 already defuses the reconnect-storm case, and the WebSocket backoff bounds reconnect frequency, so the marginal gain is small against the cost (an incomplete catch-up after a longer disconnection, since the 60s poll only fetches the newest batch, not a multi-batch hole). Revisit only if logs still show reconnect-driven list failures after this patch.
+
+**Key files:** `_actions/stream/fillStreamingGap.js` (try/catch + per-timeline batch/cap), `_static/timelines.js` (`LIST_BATCH_SIZE`), `_utils/isNetworkError.js` (`isNetworkNoiseError`); triggered from `_actions/stream/streaming.js`.
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1681,6 +1698,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.10.1** | 2026-06-16 | Mobile/timeline robustness fixes on top of the runtime-i18n release (dev patch). **Mobile compose fix:** quote/reply dialogs no longer jiggle the timeline behind them on every keystroke — the background scroll lock now targets `<html>` (the real scroll root) not `<body>`, ref-counted and released on dialog destroy as well as close. **Robustness:** autosuggest positioning guarded against a teardown race (uncancelled rPAF after the input is gone), and the list/tag cold-load auto-retry now also covers **5xx** (deliberate single 500 refetch for GoToSocial's live-queried feeds). Timeline scroll-up re-mount jump mitigated by a larger render buffer (deeper fix backlogged). Rejected design recorded: in-app OS-notification fallback ("System A" revival) — see §20 |
 | **1.10.2** | 2026-06-17 | **First-visit language detection** (dev patch / feature). On a fresh visit (no stored preference) the UI now follows the browser language (`navigator.languages` → exact tag → primary subtag → English fallback) instead of always starting in English, with no flicker (the only language-dependent first paint, the logged-out landing page, is `HiddenFromSSR`), and the language picker shows it selected — see §15/§20 |
 | **1.10.3** | 2026-06-17 | **No layout shift when a dialog opens** (dev patch). `scrollbar-gutter: stable` on the root scroll container reserves the scrollbar's width permanently, so the `<html>` scroll lock (from 1.10.1) no longer reclaims ~15 px and slides the centered layout when a dialog/context menu opens or closes. Affects classic space-occupying scrollbars (Electron desktop, Linux/Windows Chromium, Linux Firefox); no effect on overlay-scrollbar platforms (macOS/mobile), so nothing is forced visible — see §20 |
+| **1.10.4** | 2026-06-19 | **List timeline reliability — streaming gap-fill hardened** (dev patch). The stream's catch-up fetch (`fillStreamingGap`, fired on open/reconnect) was an unguarded, fire-and-forget loop of up to 15 sequential requests — brutal on the slow, per-list `GET /timelines/list/:id` query and the source of the `Uncaught (in promise): NetworkError` users saw. It now: wraps the fetch in try/catch (graceful degrade + warn-vs-error), caps slow list/tag catch-ups at 2 requests (vs 15), and uses the smaller list batch. Explains why lists fail where federated doesn't (heavy per-list query vs cheap public read) — see §20 |
 
 ---
 
