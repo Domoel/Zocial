@@ -59,25 +59,27 @@
         })
       }
       registerResizeListener(this.onResize)
-      // A cold list/timeline (no cache to prefill) mounts empty and only receives its items once the
-      // slow fetch resolves. The viewport/scroll metrics measured above ran against the empty layout,
-      // and nothing re-measures them when content lands later — which can leave the visible-items
-      // window wrong until a manual scroll/resize. Re-measure once when items first appear so the list
-      // renders without needing a scroll. (doubleRAF: wait for the items to lay out first.)
+      // The synchronous measurement above can run before the freshly-navigated route's list / footer
+      // are laid out, leaving the viewport + scroll metrics stale. Then nothing re-measures them, so
+      // the visible-items window stays wrong and the list shows nothing — not even its loading footer
+      // or empty state — until a manual scroll/resize "unsticks" it (the exact reported symptom, most
+      // visible on a brand-new/empty list). Re-measure once the layout has settled (doubleRAF), and
+      // again the first time items arrive (a slow fetch can resolve after that initial settle). Both
+      // just re-read the live DOM metrics into the store; guarded so a deferred run after teardown
+      // can't write into a stale realm.
+      const remeasure = () => {
+        if (this._destroyed) {
+          return
+        }
+        this.onResize() // offsetHeight + scrollHeight
+        this.store.setForRealm({ scrollTop: getScrollContainer().scrollTop })
+      }
+      doubleRAF(remeasure)
       let measuredWithContent = false
       this.observe('length', length => {
         if (length > 0 && !measuredWithContent) {
           measuredWithContent = true
-          doubleRAF(() => {
-            if (this._destroyed) {
-              return
-            }
-            // Re-read the viewport height and the scroll position from the now-populated DOM and
-            // push them into the store, so the visible-items window recomputes against real metrics
-            // (this is what a manual scroll/resize was doing to "unstick" the list).
-            this.onResize()
-            this.onScroll()
-          })
+          doubleRAF(remeasure)
         }
       })
       stop('onCreate VirtualListContainer')
