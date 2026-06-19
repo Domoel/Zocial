@@ -28,6 +28,13 @@
       this.onResize = this.onResize.bind(this)
       const { scrollTop } = this.store.get()
       const scrollContainer = getScrollContainer()
+      // Measure the viewport (offsetHeight) at mount in ALL cases. Previously this only ran in the
+      // scrollTop===0 branch below (and on window-resize), so opening a timeline with a saved scroll
+      // position — or any cold list whose slow fetch resolves after mount — could leave offsetHeight
+      // at its realm default of 0. With offsetHeight 0 the render buffer collapses (4 * 0) and the
+      // visible-items window shrinks to ~the first item, so the list looked unloaded until a manual
+      // scroll/resize forced a re-measure. Measuring here makes the first render use the real height.
+      this.onResize()
       if (scrollTop > 0) {
         this.observe('allVisibleItemsHaveHeight', allVisibleItemsHaveHeight => {
           const { initializedScrollTop } = this.get()
@@ -50,7 +57,6 @@
             this.fire('initialized')
           }
         })
-        this.onResize()
       }
       registerResizeListener(this.onResize)
       stop('onCreate VirtualListContainer')
