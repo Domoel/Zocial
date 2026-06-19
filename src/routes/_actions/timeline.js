@@ -302,6 +302,22 @@ export async function removeAccountFromFollowGatedTimelines (instanceName, accou
   }
 }
 
+// Exclusive list: a member's posts must leave the HOME feed (but stay in the list itself). Same
+// union-only-cache problem as unfollow, so purge the account from home (in-memory + IDB home
+// pointers) — home only, never the list timelines. The reverse (made non-exclusive / removed /
+// list deleted) just marks home stale so a refetch brings them back, server-filtered.
+export async function removeAccountFromHomeTimeline (instanceName, accountId) {
+  if (!accountId) {
+    return
+  }
+  purgeAccountFromTimelineInMemory(instanceName, 'home', accountId)
+  try {
+    await database.deleteTimelineItemsForAccount(instanceName, accountId, { homeOnly: true })
+  } catch (e) {
+    console.warn('failed to purge account posts from home timeline cache', (e && e.message) || e)
+  }
+}
+
 // Block: nothing from this account anywhere — purge EVERY cached timeline (home/local/federated/
 // tag/list/account + open threads), in-memory and from IndexedDB.
 export async function removeAccountFromAllTimelines (instanceName, accountId) {

@@ -91,6 +91,12 @@ function isHomeOrListKey (key) {
   return typeof key === 'string' && (key.startsWith('home\u0000') || key.startsWith('list/'))
 }
 
+// Only the home feed (not lists). Used when making a list "exclusive": its members are hidden from
+// home but must stay in the list itself, so we purge home only — never the list timelines.
+function isHomeKey (key) {
+  return isHomeOrListKey(key) && !key.startsWith('list/')
+}
+
 // Remove a given account's entries from the cached status timelines after unfollow/block, so their
 // already-cached posts don't linger (the timeline merge is union-only and never unmerges). With
 // `{ homeAndListsOnly: true }` only the follow-gated feeds (home + every list, loaded or not) are
@@ -99,7 +105,9 @@ function isHomeOrListKey (key) {
 // notifications and age out via cleanup). For a boost the stored wrapper's ACCOUNT_ID is the booster,
 // so this drops the account's own posts + their boosts, and keeps boosts of their content made by
 // accounts you still follow (different ACCOUNT_ID).
-export async function deleteTimelineItemsForAccount (instanceName, accountId, { homeAndListsOnly = false } = {}) {
+// `{ homeOnly: true }` purges just the home feed (exclusive-list: members leave home but stay in the
+// list). `{ homeAndListsOnly: true }` purges home + every list (unfollow). Neither → ALL timelines (block).
+export async function deleteTimelineItemsForAccount (instanceName, accountId, { homeAndListsOnly = false, homeOnly = false } = {}) {
   if (!accountId) {
     return
   }
@@ -112,8 +120,11 @@ export async function deleteTimelineItemsForAccount (instanceName, accountId, { 
         return
       }
       const timelineKey = cursor.key
-      // Skip out-of-scope feeds cheaply (no status lookup) when limited to home + lists.
-      if (homeAndListsOnly && !isHomeOrListKey(timelineKey)) {
+      // Skip out-of-scope feeds cheaply (no status lookup) when a scope is given.
+      const outOfScope = homeOnly
+        ? !isHomeKey(timelineKey)
+        : (homeAndListsOnly && !isHomeOrListKey(timelineKey))
+      if (outOfScope) {
         cursor.continue()
         return
       }

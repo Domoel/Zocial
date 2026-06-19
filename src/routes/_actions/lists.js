@@ -1,7 +1,25 @@
 import { store } from '../_store/store.js'
-import { getLists, createList, updateList, deleteList } from '../_api/lists.js'
+import { getLists, createList, updateList, deleteList, getListAccounts, addAccountToList, removeAccountFromList } from '../_api/lists.js'
 import { cacheFirstUpdateAfter, cacheFirstUpdateOnlyIfNotInCache } from '../_utils/sync.js'
 import { database } from '../_database/database.js'
+import { removeAccountFromHomeTimeline } from './timeline.js'
+
+// A list is exclusive when the server echoes exclusive:true on its List entity. Looked up from the
+// cached lists so callers don't need to pass it around.
+function isListExclusive (instanceName, listId) {
+  const { instanceLists } = store.get()
+  const lists = (instanceLists && instanceLists[instanceName]) || []
+  const list = lists.find(l => l.id === listId)
+  return !!(list && list.exclusive)
+}
+
+// Mark the home feed stale so the next setupTimeline (poll/navigate) re-fetches it. Used when an
+// account should re-appear in home (a list became non-exclusive, a member was removed, or an
+// exclusive list was deleted): the server filters home correctly, but our union-only cache won't
+// pull them back on its own — a refetch does (§20 [v1.9.2] model).
+function markHomeStale (instanceName) {
+  store.setForTimeline(instanceName, 'home', { timelineItemSummariesAreStale: true })
+}
 
 // Exclusive-list support (Mastodon 3.3+, GoToSocial) is detected without a software allowlist: a
 // backend that supports it returns an `exclusive` key on every List entity. So if we have at least
@@ -87,6 +105,21 @@ export async function setListExclusive (listId, exclusive) {
   const { currentInstance, accessToken } = store.get()
   const updated = await updateList(currentInstance, accessToken, listId, { exclusive: !!exclusive })
   updateExclusiveSupportFromLists(currentInstance, [updated])
+  // Honour the exclusive promise for already-cached posts (mark-stale alone can't — the home merge
+  // is union-only). Turning ON: purge every current member from home. Turning OFF: mark home stale
+  // so they re-appear. Only act if the server actually applied exclusive (updated.exclusive).
+  if (updated && updated.exclusive) {
+    try {
+      const accounts = await getListAccounts(currentInstance, accessToken, listId)
+      for (const account of (accounts || [])) {
+        await removeAccountFromHomeTimeline(currentInstance, account.id)
+      }
+    } catch (e) {
+      console.warn('failed to purge exclusive-list members from home', (e && e.message) || e)
+    }
+  } else {
+    markHomeStale(currentInstance)
+  }
   await updateListsForInstance(currentInstance)
   return updated
 }
@@ -94,12 +127,28 @@ export async function setListExclusive (listId, exclusive) {
 export async function deleteListById (listId, wasExclusive) {
   const { currentInstance, accessToken } = store.get()
   await deleteList(currentInstance, accessToken, listId)
-  // Deleting an exclusive list ends the server-side home exclusion for its members. The home cache
-  // is union-only and won't pull them back on its own, so mark it stale → the next setupTimeline
-  // (poll / navigate) re-fetches and the members reappear. Consistent with the §20 [v1.9.2] model
-  // (server-driven; a refresh surfaces them, no retroactive cache rebuild).
+  // Deleting an exclusive list ends the server-side home exclusion for its members → bring them back.
   if (wasExclusive) {
-    store.setForTimeline(currentInstance, 'home', { timelineItemSummariesAreStale: true })
+    markHomeStale(currentInstance)
   }
   await updateListsForInstance(currentInstance)
+}
+
+// Membership changes that must respect exclusivity. Adding an account to an exclusive list hides it
+// from home → purge it now; removing it from an exclusive list un-hides it → mark home stale so it
+// re-appears. On a non-exclusive list neither applies (the API call is all that's needed).
+export async function addAccountToListAndPurge (listId, accountId) {
+  const { currentInstance, accessToken } = store.get()
+  await addAccountToList(currentInstance, accessToken, listId, accountId)
+  if (isListExclusive(currentInstance, listId)) {
+    await removeAccountFromHomeTimeline(currentInstance, accountId)
+  }
+}
+
+export async function removeAccountFromListAndRestore (listId, accountId) {
+  const { currentInstance, accessToken } = store.get()
+  await removeAccountFromList(currentInstance, accessToken, listId, accountId)
+  if (isListExclusive(currentInstance, listId)) {
+    markHomeStale(currentInstance)
+  }
 }

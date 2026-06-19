@@ -24,6 +24,13 @@ export function deleteList (instanceName, accessToken, listId) {
   return del(url, auth(accessToken), { timeout: WRITE_TIMEOUT })
 }
 
+// All accounts in a list. `limit=0` is a Mastodon/GtS peculiarity that returns every member
+// without pagination headers — exactly what we need to purge an exclusive list's members from home.
+export function getListAccounts (instanceName, accessToken, listId) {
+  const url = `${basename(instanceName)}/api/v1/lists/${listId}/accounts?limit=0`
+  return get(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })
+}
+
 export function getListsForAccount (instanceName, accessToken, accountId) {
   const url = `${basename(instanceName)}/api/v1/accounts/${accountId}/lists`
   return get(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })

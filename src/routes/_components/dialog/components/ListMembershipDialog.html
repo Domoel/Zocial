@@ -7,7 +7,8 @@
   import { store } from '../../../_store/store.js'
   import { show } from '../helpers/showDialog.js'
   import { close } from '../helpers/closeDialog.js'
-  import { getListsForAccount, addAccountToList, removeAccountFromList } from '../../../_api/lists.js'
+  import { getListsForAccount } from '../../../_api/lists.js'
+  import { addAccountToListAndPurge, removeAccountFromListAndRestore } from '../../../_actions/lists.js'
   import { toast } from '../../toast/toast.js'
   import { formatIntl } from '../../../_utils/formatIntl.js'
 
@@ -64,16 +65,16 @@
         if (pendingListId) return // another toggle in progress
 
         const { memberListIds, accountId } = this.get()
-        const { currentInstance, loggedInInstances } = this.store.get()
-        const accessToken = loggedInInstances[currentInstance].access_token
         const isMember = memberListIds.has(item.key)
 
         this.set({ pendingListId: item.key })
         try {
+          // Route through the actions so exclusive lists keep the home timeline in sync (purge on
+          // add, restore on remove); a non-exclusive list behaves exactly as before.
           if (isMember) {
-            await removeAccountFromList(currentInstance, accessToken, item.key, accountId)
+            await removeAccountFromListAndRestore(item.key, accountId)
           } else {
-            await addAccountToList(currentInstance, accessToken, item.key, accountId)
+            await addAccountToListAndPurge(item.key, accountId)
           }
           const newMemberListIds = new Set(memberListIds)
           if (isMember) {
