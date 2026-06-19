@@ -59,9 +59,31 @@
         })
       }
       registerResizeListener(this.onResize)
+      // A cold list/timeline (no cache to prefill) mounts empty and only receives its items once the
+      // slow fetch resolves. The viewport/scroll metrics measured above ran against the empty layout,
+      // and nothing re-measures them when content lands later — which can leave the visible-items
+      // window wrong until a manual scroll/resize. Re-measure once when items first appear so the list
+      // renders without needing a scroll. (doubleRAF: wait for the items to lay out first.)
+      let measuredWithContent = false
+      this.observe('length', length => {
+        if (length > 0 && !measuredWithContent) {
+          measuredWithContent = true
+          doubleRAF(() => {
+            if (this._destroyed) {
+              return
+            }
+            // Re-read the viewport height and the scroll position from the now-populated DOM and
+            // push them into the store, so the visible-items window recomputes against real metrics
+            // (this is what a manual scroll/resize was doing to "unstick" the list).
+            this.onResize()
+            this.onScroll()
+          })
+        }
+      })
       stop('onCreate VirtualListContainer')
     },
     ondestroy () {
+      this._destroyed = true
       this.teardownScroll()
       this.teardownFullscreen()
       this.store.setCurrentRealm(null)
@@ -120,7 +142,8 @@
     },
     computed: {
       // TODO: bug in svelte/store – the observer in oncreate() never get removed without this hack
-      allVisibleItemsHaveHeight: ({ $allVisibleItemsHaveHeight }) => $allVisibleItemsHaveHeight
+      allVisibleItemsHaveHeight: ({ $allVisibleItemsHaveHeight }) => $allVisibleItemsHaveHeight,
+      length: ({ $length }) => $length
     }
   }
 </script>
