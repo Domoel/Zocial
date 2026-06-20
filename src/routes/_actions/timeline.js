@@ -13,6 +13,7 @@ import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
 import { addStatusesOrNotifications, insertUpdatesIntoTimeline } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { isNetworkNoiseError } from '../_utils/isNetworkError.js'
+import { SLOW_READ_TIMEOUT_FIRST } from '../_utils/ajax.js'
 import { sortItemSummariesForThread, sortItemSummariesForNotificationBatch } from '../_utils/sortItemSummaries.ts'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
 import li from 'li'
@@ -88,13 +89,13 @@ async function fetchThreadFromNetwork (instanceName, accessToken, timelineName) 
   return concat(context.ancestors, status, context.descendants)
 }
 
-async function fetchTimelineItemsFromNetwork (instanceName, accessToken, timelineName, lastTimelineItemId) {
+async function fetchTimelineItemsFromNetwork (instanceName, accessToken, timelineName, lastTimelineItemId, timeoutOverride) {
   if (timelineName.startsWith('status/')) { // special case - this is a list of descendents and ancestors
     return fetchThreadFromNetwork(instanceName, accessToken, timelineName)
   } else { // normal timeline
     // List timelines use a smaller batch so the per-list server query is cheaper/faster.
     const limit = timelineName.startsWith('list/') ? LIST_BATCH_SIZE : TIMELINE_BATCH_SIZE
-    const { items } = await getTimeline(instanceName, accessToken, timelineName, lastTimelineItemId, null, limit)
+    const { items } = await getTimeline(instanceName, accessToken, timelineName, lastTimelineItemId, null, limit, timeoutOverride)
     return items
   }
 }
@@ -115,7 +116,11 @@ function shouldRetryTimelineFetch (instanceName, timelineName) {
 async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken, timelineName, lastTimelineItemId) {
   const isSlowTimeline = timelineName.startsWith('list/') || timelineName.startsWith('tag/')
   try {
-    return await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId)
+    // The first cold attempt at a slow list/tag read fails fast at the normal read timeout; the
+    // retry below then gets the full SLOW_READ_TIMEOUT headroom (the backend has had a chance to
+    // warm up by then). Caps a hanging cold list at ~20 s + 40 s instead of 40 s + 40 s.
+    const firstTimeout = isSlowTimeline ? SLOW_READ_TIMEOUT_FIRST : undefined
+    return await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId, firstTimeout)
   } catch (e) {
     // List/tag timelines are assembled per-list/-tag server-side; the *first* cold request
     // frequently times out OR returns a 5xx while the backend warms up (esp. GoToSocial, which

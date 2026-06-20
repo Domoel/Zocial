@@ -31,7 +31,7 @@ function getTimelineUrlPath (timeline) {
   throw new Error(`Invalid timeline type: ${timeline}`)
 }
 
-export async function getTimeline (instanceName, accessToken, timeline, maxId, since, limit) {
+export async function getTimeline (instanceName, accessToken, timeline, maxId, since, limit, timeoutOverride) {
   const timelineUrlName = getTimelineUrlPath(timeline)
   let url = `${basename(instanceName)}/api/v1/${timelineUrlName}`
 
@@ -75,9 +75,11 @@ export async function getTimeline (instanceName, accessToken, timeline, maxId, s
   url += '?' + paramsString(params)
 
   // List and tag timelines are assembled per-list/-tag server-side and are often much slower than
-  // the cheap public/home reads, so give them more headroom before timing out.
+  // the cheap public/home reads, so give them more headroom before timing out. A caller may pass an
+  // explicit `timeoutOverride` (e.g. the fail-fast first cold attempt — see
+  // fetchTimelineItemsFromNetworkWithRetry); otherwise pick by timeline type.
   const isSlowTimeline = timeline.startsWith('list/') || timeline.startsWith('tag/')
-  const timeout = isSlowTimeline ? SLOW_READ_TIMEOUT : DEFAULT_TIMEOUT
+  const timeout = timeoutOverride || (isSlowTimeline ? SLOW_READ_TIMEOUT : DEFAULT_TIMEOUT)
 
   let { json: items, headers } = await getWithHeaders(url, auth(accessToken), { timeout })
 

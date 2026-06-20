@@ -4,6 +4,11 @@ export const DEFAULT_TIMEOUT = 20000
 // regenerating). Give those reads more headroom so a slow-but-working response isn't aborted at
 // 20 s. With cache-first rendering the user already sees content, so this longer wait is invisible.
 export const SLOW_READ_TIMEOUT = 40000
+// The *first* cold attempt at a slow (list/tag) read fails fast at the normal read timeout; only the
+// single automatic retry gets the full SLOW_READ_TIMEOUT headroom (by then the backend has had a
+// chance to warm up). This caps the worst case for a hanging cold list at ~20 s + 40 s instead of
+// 40 s + 40 s, while still giving a genuinely slow-but-working response its full headroom on retry.
+export const SLOW_READ_TIMEOUT_FIRST = DEFAULT_TIMEOUT
 export const MEDIA_WRITE_TIMEOUT = 90000 // media uploads can take awhile
 export const WRITE_TIMEOUT = 45000 // allow more time if the user did a write action
 
