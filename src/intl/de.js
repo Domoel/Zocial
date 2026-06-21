@@ -258,6 +258,7 @@ export default {
   manageLists: 'Listen verwalten',
   listMembers: 'Mitglieder',
   tabReordered: '{label} — Position {position} von {total}',
+  tabReorderHint: 'Mit Alt + Umschalt + Pfeiltasten verschieben',
   rename: 'Umbenennen',
   listExclusive: 'Beiträge nur in dieser Liste anzeigen',
   listExclusiveHelp: 'Mitglieder dieser Liste erscheinen nicht in deiner Home-Timeline.',

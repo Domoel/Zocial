@@ -818,6 +818,7 @@ export default {
   manageLists: 'Gestionar listas',
   listMembers: 'Miembros',
   tabReordered: '{label} — posición {position} de {total}',
+  tabReorderHint: 'Reordenar con Alt + Mayús + teclas de flecha',
   rename: 'Renombrar',
   listExclusive: 'Mostrar las publicaciones solo en esta lista',
   listExclusiveHelp: 'Los miembros de esta lista no aparecerán en tu línea de inicio.',

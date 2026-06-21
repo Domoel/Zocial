@@ -277,6 +277,7 @@ export default {
   manageLists: 'Manage lists',
   listMembers: 'Members',
   tabReordered: '{label} — position {position} of {total}',
+  tabReorderHint: 'Reorder with Alt + Shift + arrow keys',
   rename: 'Rename',
   listExclusive: 'Show posts only in this list',
   listExclusiveHelp: 'Members of this list won’t appear in your home timeline.',

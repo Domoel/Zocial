@@ -756,6 +756,7 @@ export default {
   manageLists: 'Gérer les listes',
   listMembers: 'Membres',
   tabReordered: '{label} — position {position} sur {total}',
+  tabReorderHint: 'Réorganiser avec Alt + Maj + touches fléchées',
   rename: 'Renommer',
   listExclusive: 'Afficher les publications uniquement dans cette liste',
   listExclusiveHelp: 'Les membres de cette liste n’apparaîtront pas dans votre fil d’accueil.',

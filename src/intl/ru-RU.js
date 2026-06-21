@@ -788,6 +788,7 @@ export default {
   manageLists: 'Управление списками',
   listMembers: 'Участники',
   tabReordered: '{label} — позиция {position} из {total}',
+  tabReorderHint: 'Переместить с помощью Alt + Shift + стрелки',
   rename: 'Переименовать',
   listExclusive: 'Показывать записи только в этом списке',
   listExclusiveHelp: 'Участники этого списка не будут показываться в вашей домашней ленте.',
