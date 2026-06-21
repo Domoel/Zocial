@@ -98,6 +98,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    /* with three action controls (Members / Rename / Delete) the row can't fit on a narrow
+       screen; let the actions wrap below the (truncating) list name instead of crushing it */
+    flex-wrap: wrap;
+    row-gap: 8px;
   }
   .list-link {
     font-size: 1.15em;
