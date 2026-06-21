@@ -91,24 +91,14 @@ function isHomeOrListKey (key) {
   return typeof key === 'string' && (key.startsWith('home\u0000') || key.startsWith('list/'))
 }
 
-// Only the home feed (not lists). Used when making a list "exclusive": its members are hidden from
-// home but must stay in the list itself, so we purge home only — never the list timelines.
-function isHomeKey (key) {
-  return isHomeOrListKey(key) && !key.startsWith('list/')
-}
-
-// Remove a given account's entries from the cached status timelines after unfollow/block, so their
-// already-cached posts don't linger (the timeline merge is union-only and never unmerges). With
-// `{ homeAndListsOnly: true }` only the follow-gated feeds (home + every list, loaded or not) are
-// touched (unfollow); otherwise ALL status timelines are purged (block — nothing from them anywhere).
-// Only the timeline *pointers* are removed; status bodies stay (they may be referenced by threads/
-// notifications and age out via cleanup). For a boost the stored wrapper's ACCOUNT_ID is the booster,
-// so this drops the account's own posts + their boosts, and keeps boosts of their content made by
-// accounts you still follow (different ACCOUNT_ID).
-// Scope options (mutually exclusive): `{ timelineName }` purges only that one timeline (e.g.
-// `list/123` — removing an account from a single list); `{ homeOnly }` just the home feed
-// (exclusive-list: members leave home but stay in the list); `{ homeAndListsOnly }` home + every
-// list (unfollow). None → ALL timelines (block).
+// Remove given accounts' entries from the cached status timelines so their already-cached posts
+// don't linger (the timeline merge is union-only and never unmerges). Only the timeline *pointers*
+// are removed; status bodies stay (they may be referenced by threads/notifications and age out via
+// cleanup). For a boost the stored wrapper's ACCOUNT_ID is the booster, so this drops the account's
+// own posts + their boosts, and keeps boosts of their content made by other accounts (different
+// ACCOUNT_ID). Scope options (mutually exclusive): `{ timelineName }` → just that one timeline
+// (e.g. `'home'` for exclusive-list home sync, or `'list/123'` for list-membership removal);
+// `{ homeAndListsOnly }` → home + every list (unfollow); none → ALL status timelines (block).
 export async function deleteTimelineItemsForAccount (instanceName, accountId, options) {
   if (!accountId) {
     return
@@ -119,7 +109,7 @@ export async function deleteTimelineItemsForAccount (instanceName, accountId, op
 // Plural form: purge several accounts in a SINGLE store scan. Used when a list is made exclusive,
 // where every member must leave home at once — doing one full `status_timelines` cursor scan per
 // member would be O(members × store size). One scan checks each in-scope entry against the id set.
-export async function deleteTimelineItemsForAccounts (instanceName, accountIds, { homeAndListsOnly = false, homeOnly = false, timelineName = null } = {}) {
+export async function deleteTimelineItemsForAccounts (instanceName, accountIds, { homeAndListsOnly = false, timelineName = null } = {}) {
   const ids = new Set(accountIds || [])
   if (!ids.size) {
     return
@@ -139,8 +129,6 @@ export async function deleteTimelineItemsForAccounts (instanceName, accountIds, 
       let outOfScope = false
       if (timelinePrefix) {
         outOfScope = !(typeof timelineKey === 'string' && timelineKey.startsWith(timelinePrefix))
-      } else if (homeOnly) {
-        outOfScope = !isHomeKey(timelineKey)
       } else if (homeAndListsOnly) {
         outOfScope = !isHomeOrListKey(timelineKey)
       }

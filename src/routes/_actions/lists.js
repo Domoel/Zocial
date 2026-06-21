@@ -2,7 +2,7 @@ import { store } from '../_store/store.js'
 import { getLists, createList, updateList, deleteList, getListAccounts, addAccountToList, removeAccountFromList } from '../_api/lists.js'
 import { cacheFirstUpdateAfter, cacheFirstUpdateOnlyIfNotInCache } from '../_utils/sync.js'
 import { database } from '../_database/database.js'
-import { removeAccountFromHomeTimeline, removeAccountsFromHomeTimeline, removeAccountFromSingleTimeline } from './timeline.js'
+import { removeAccountsFromTimeline } from './timeline.js'
 
 // A list is exclusive when the server echoes exclusive:true on its List entity. Looked up from the
 // cached lists so callers don't need to pass it around.
@@ -111,7 +111,7 @@ export async function setListExclusive (listId, exclusive) {
   if (updated && updated.exclusive) {
     try {
       const accounts = await getListAccounts(currentInstance, accessToken, listId)
-      await removeAccountsFromHomeTimeline(currentInstance, (accounts || []).map(a => a.id))
+      await removeAccountsFromTimeline(currentInstance, 'home', (accounts || []).map(a => a.id))
     } catch (e) {
       console.warn('failed to purge exclusive-list members from home', (e && e.message) || e)
     }
@@ -139,7 +139,7 @@ export async function addAccountToListAndPurge (listId, accountId) {
   await addAccountToList(currentInstance, accessToken, listId, accountId)
   // Adding to an exclusive list hides the account from home → purge it from home now.
   if (isListExclusive(currentInstance, listId)) {
-    await removeAccountFromHomeTimeline(currentInstance, accountId)
+    await removeAccountsFromTimeline(currentInstance, 'home', accountId)
   }
 }
 
@@ -149,7 +149,7 @@ export async function removeAccountFromListAndRestore (listId, accountId) {
   // The removed account's posts must leave THIS list's feed. The list cache is union-only and
   // cache-first prefills from IDB, so a plain refetch keeps the stale entries — purge them (the
   // long-standing reason a removed account lingered in the list since cache-first reached lists).
-  await removeAccountFromSingleTimeline(currentInstance, 'list/' + listId, accountId)
+  await removeAccountsFromTimeline(currentInstance, 'list/' + listId, accountId)
   // If the list was exclusive, the account is no longer hidden from home → bring it back.
   if (isListExclusive(currentInstance, listId)) {
     markHomeStale(currentInstance)

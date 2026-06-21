@@ -307,44 +307,21 @@ export async function removeAccountFromFollowGatedTimelines (instanceName, accou
   }
 }
 
-// Exclusive list: a member's posts must leave the HOME feed (but stay in the list itself). Same
-// union-only-cache problem as unfollow, so purge the account from home (in-memory + IDB home
-// pointers) — home only, never the list timelines. The reverse (made non-exclusive / removed /
-// list deleted) just marks home stale so a refetch brings them back, server-filtered.
-export async function removeAccountFromHomeTimeline (instanceName, accountId) {
-  if (!accountId) {
-    return
-  }
-  return removeAccountsFromHomeTimeline(instanceName, [accountId])
-}
-
-// Batch form: purge several accounts from home in ONE IDB scan (used when a whole list is made
-// exclusive — one scan instead of one per member). In-memory filtering is cheap, so it loops.
-export async function removeAccountsFromHomeTimeline (instanceName, accountIds) {
-  const ids = (accountIds || []).filter(Boolean)
-  if (!ids.length) {
+// Purge one or more accounts' posts from a SINGLE timeline — in-memory summaries + that timeline's
+// IDB pointers, in one scan. Used for exclusive-list home sync (`'home'`: members leave home but
+// stay in the list) and list-membership removal (`'list/<id>'`: a removed account leaves that list).
+// The union-only cache + cache-first prefill would otherwise keep these posts until age-cleanup; the
+// reverse direction (un-hide / re-add) is handled by mark-stale + a refetch, not here.
+export async function removeAccountsFromTimeline (instanceName, timelineName, accountIds) {
+  const ids = (Array.isArray(accountIds) ? accountIds : [accountIds]).filter(Boolean)
+  if (!ids.length || !timelineName) {
     return
   }
   for (const accountId of ids) {
-    purgeAccountFromTimelineInMemory(instanceName, 'home', accountId)
+    purgeAccountFromTimelineInMemory(instanceName, timelineName, accountId)
   }
   try {
-    await database.deleteTimelineItemsForAccounts(instanceName, ids, { homeOnly: true })
-  } catch (e) {
-    console.warn('failed to purge account posts from home timeline cache', (e && e.message) || e)
-  }
-}
-
-// Purge an account's posts from ONE specific timeline (in-memory + that timeline's IDB pointers).
-// Used when an account is removed from a list: its posts must leave that list's feed, which the
-// union-only cache + cache-first prefill would otherwise keep until age-cleanup.
-export async function removeAccountFromSingleTimeline (instanceName, timelineName, accountId) {
-  if (!accountId || !timelineName) {
-    return
-  }
-  purgeAccountFromTimelineInMemory(instanceName, timelineName, accountId)
-  try {
-    await database.deleteTimelineItemsForAccounts(instanceName, [accountId], { timelineName })
+    await database.deleteTimelineItemsForAccounts(instanceName, ids, { timelineName })
   } catch (e) {
     console.warn('failed to purge account posts from timeline cache', timelineName, '·', (e && e.message) || e)
   }
