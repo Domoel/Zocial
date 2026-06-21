@@ -815,6 +815,7 @@ export default {
   unableToCreateList: 'No se pudo crear la lista: {error}',
   listTitle: 'Título de la lista',
   manageLists: 'Gestionar listas',
+  listMembers: 'Miembros',
   rename: 'Renombrar',
   listExclusive: 'Mostrar las publicaciones solo en esta lista',
   listExclusiveHelp: 'Los miembros de esta lista no aparecerán en tu línea de inicio.',

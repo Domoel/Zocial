@@ -255,6 +255,7 @@ export default {
   unableToCreateList: 'Liste konnte nicht erstellt werden: {error}',
   listTitle: 'Listentitel',
   manageLists: 'Listen verwalten',
+  listMembers: 'Mitglieder',
   rename: 'Umbenennen',
   listExclusive: 'Beiträge nur in dieser Liste anzeigen',
   listExclusiveHelp: 'Mitglieder dieser Liste erscheinen nicht in deiner Home-Timeline.',

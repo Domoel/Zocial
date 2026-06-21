@@ -1,0 +1,32 @@
+<ScrollToTopButton thresholdSelector=".dynamic-page-banner" label="{'intl.scrollToTop'}" />
+<DynamicPageBanner title={pageTitle} icon="#fa-users" />
+{#if $isUserLoggedIn}
+  <AccountsListPage {accountsFetcher} manageFollows={true} assumeFollowing={true} />
+{/if}
+<script>
+  import { getListAccountsPaged } from '../../../_api/lists.js'
+  import AccountsListPage from '../../../_components/AccountsListPage.html'
+  import { store } from '../../../_store/store.js'
+  import DynamicPageBanner from '../../../_components/DynamicPageBanner.html'
+  import ScrollToTopButton from '../../../_components/timeline/ScrollToTopButton.html'
+
+  export default {
+    store: () => store,
+    computed: {
+      listId: ({ params }) => params.listId,
+      // Members are always accounts you follow (you can only add followed accounts to a list), so
+      // assumeFollowing avoids a "Follow"→"Unfollow" flash; the real relationships still load and
+      // correct any edge case. The list title (from the cached lists) labels the page.
+      list: ({ $lists, listId }) => ($lists || []).find(l => l.id === listId),
+      pageTitle: ({ list, $messages }) => (list && list.title) || ($messages && $messages.listMembers),
+      accountsFetcher: ({ $currentInstance, $accessToken, listId }) => (
+        (maxId) => getListAccountsPaged($currentInstance, $accessToken, listId, maxId)
+      )
+    },
+    components: {
+      AccountsListPage,
+      DynamicPageBanner,
+      ScrollToTopButton
+    }
+  }
+</script>

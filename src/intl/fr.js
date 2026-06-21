@@ -753,6 +753,7 @@ export default {
   unableToCreateList: 'Impossible de créer la liste : {error}',
   listTitle: 'Titre de la liste',
   manageLists: 'Gérer les listes',
+  listMembers: 'Membres',
   rename: 'Renommer',
   listExclusive: 'Afficher les publications uniquement dans cette liste',
   listExclusiveHelp: 'Les membres de cette liste n’apparaîtront pas dans votre fil d’accueil.',

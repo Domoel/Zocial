@@ -785,6 +785,7 @@ export default {
   unableToCreateList: 'Не удалось создать список: {error}',
   listTitle: 'Название списка',
   manageLists: 'Управление списками',
+  listMembers: 'Участники',
   rename: 'Переименовать',
   listExclusive: 'Показывать записи только в этом списке',
   listExclusiveHelp: 'Участники этого списка не будут показываться в вашей домашней ленте.',

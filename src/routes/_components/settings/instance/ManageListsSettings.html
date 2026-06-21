@@ -23,6 +23,9 @@
                 {list.title}
               </a>
               <div class="list-actions">
+                <a href="/lists/{list.id}/members" rel="prefetch" class="list-action-button list-action-link">
+                  {'intl.listMembers'}
+                </a>
                 <button type="button" class="list-action-button" on:click="startRename(list)">
                   {'intl.rename'}
                 </button>
@@ -136,6 +139,12 @@
   .list-action-button:hover {
     border-color: var(--anchor-text);
     color: var(--body-text-color);
+  }
+  /* anchor variant of .list-action-button (the "Members" link) */
+  a.list-action-link {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
   }
   .list-delete-button:hover {
     border-color: var(--warning-color);

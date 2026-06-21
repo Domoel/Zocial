@@ -1692,6 +1692,18 @@ Membership changes are routed through `addAccountToListAndPurge` / `removeAccoun
 
 ---
 
+### [v1.11.3] List members overview page
+
+**Decision:** Add a per-list **Members** link on the Manage-lists page → a new `/lists/:listId/members` route that lists the list's members with the same **follow/unfollow** controls as the profile Follows/Followers pages.
+
+**Built almost entirely from existing parts** (low risk, no new UI patterns): the page renders the shared `AccountsListPage` with `manageFollows={true}` (the §20 [v1.9.0] follow-button mode) and a list-members `accountsFetcher`. New API `getListAccountsPaged` mirrors `getFollows` — Link-header pagination, returns `{ accounts, nextMaxId }` (distinct from the existing `limit=0` `getListAccounts`, which fetches *all* members in one shot for the exclusive-home purge). `assumeFollowing={true}` is correct here because list members are by definition accounts you follow (you can only add followed accounts to a list), so each row shows **Unfollow** immediately with no "Follow"→"Unfollow" flash; the real relationships still load and would correct any edge case.
+
+**Notes:** the List entity carries no member count, so `expectedCount` is omitted (empty → plain "nothing to show", no "unavailable" guess). Unfollowing a member here behaves like the Follows page — the button flips in place, the row stays until the next visit, and the existing unfollow purge (§20 [v1.9.2]) drops that account from the home + list caches.
+
+**Key files:** `_api/lists.js` (`getListAccountsPaged`), `_pages/lists/[listId]/members.html` + `routes/lists/[listId]/members.html` (new), `_components/settings/instance/ManageListsSettings.html` (the Members link), `_components/AccountsListPage.html` (reused), `intl/*` (`listMembers`).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1738,6 +1750,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.11.0** | 2026-06-20 | **Production release** rolling up the 1.10.1–1.10.8 dev line. Two features — **exclusive lists** + a *Manage lists* page (rename/delete/exclusive toggle), and **first-visit language detection** (follow the browser, fall back to English) — plus timeline-reliability and rendering fixes: streaming gap-fill hardened for slow Mastodon/GtS lists, list/tag 5xx cold-load retry, timelines render immediately on open, list-membership-removal clears the list cache, mobile compose scroll-lock on `<html>`, no layout shift on dialog open (`scrollbar-gutter`). Full notes: [`docs/release-notes/1.11.0.md`](release-notes/1.11.0.md) |
 | **1.11.1** | 2026-06-21 | **Faster recovery on a hanging cold list/tag** (dev patch). The first cold list/tag fetch now fails fast at the normal read timeout (~20 s); only the single automatic retry gets the full 40 s headroom (the backend has had a chance to warm up by then). Caps a genuinely hanging cold list at ~60 s instead of ~80 s before the graceful fallback, without losing headroom for a slow-but-working response. See §22 |
 | **1.11.2** | 2026-06-21 | **Push-notification icon fallback + internal cleanup** (dev patch). OS push notifications already show the triggering account's avatar; they now fall back to the app logo (and, in the rich path, to the fetched account avatar) so a notification never shows the browser's blank default icon. Internal: consolidated three redundant timeline-purge helpers into one and removed a redundant DB scope option (no behaviour change) — see §22 |
+| **1.11.3** | 2026-06-21 | **List members overview** (dev patch / feature). The Manage-lists page gains a **Members** link per list → a new `/lists/:id/members` page that lists the list's members with the same follow/unfollow controls as the Follows/Followers pages (reuses `AccountsListPage`). Paginated; members assume-followed (no button flash). See §20 |
 
 ---
 

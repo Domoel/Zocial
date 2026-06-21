@@ -1,4 +1,4 @@
-import { get, DEFAULT_TIMEOUT, post, put, del, delWithBody, WRITE_TIMEOUT } from '../_utils/ajax.js'
+import { get, getWithHeaders, paramsString, parseNextMaxId, DEFAULT_TIMEOUT, post, put, del, delWithBody, WRITE_TIMEOUT } from '../_utils/ajax.js'
 import { auth, basename } from './utils.js'
 
 export function getLists (instanceName, accessToken) {
@@ -29,6 +29,22 @@ export function deleteList (instanceName, accessToken, listId) {
 export function getListAccounts (instanceName, accessToken, listId) {
   const url = `${basename(instanceName)}/api/v1/lists/${listId}/accounts?limit=0`
   return get(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })
+}
+
+// Paginated members of a list — for the "Members" overview page (mirrors getFollows: returns
+// `{ accounts, nextMaxId }`, paging by the Link header). Distinct from getListAccounts (limit=0,
+// all-at-once, used to purge an exclusive list's members from home).
+export async function getListAccountsPaged (instanceName, accessToken, listId, maxId) {
+  const params = { limit: 80 }
+  if (maxId) {
+    params.max_id = maxId
+  }
+  const url = `${basename(instanceName)}/api/v1/lists/${listId}/accounts?${paramsString(params)}`
+  const { json, headers } = await getWithHeaders(url, auth(accessToken), { timeout: DEFAULT_TIMEOUT })
+  return {
+    accounts: Array.isArray(json) ? json : [],
+    nextMaxId: parseNextMaxId(headers.get('Link'))
+  }
 }
 
 export function getListsForAccount (instanceName, accessToken, accountId) {

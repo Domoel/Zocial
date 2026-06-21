@@ -274,6 +274,7 @@ export default {
   unableToCreateList: 'Unable to create list: {error}',
   listTitle: 'List title',
   manageLists: 'Manage lists',
+  listMembers: 'Members',
   rename: 'Rename',
   listExclusive: 'Show posts only in this list',
   listExclusiveHelp: 'Members of this list won’t appear in your home timeline.',
