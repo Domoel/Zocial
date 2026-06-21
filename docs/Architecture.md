@@ -2,6 +2,8 @@
 
 Developer reference for the Zocial codebase. Covers the full "lay of the land" — structure, data flow, non-obvious behaviour, and the reasoning behind deliberate design decisions. Inline code comments cover single-line WHYs; this document covers everything that needs more than one sentence.
 
+*This handbook tracks the development line; the latest version it reflects is the most recent row in [§21 Version History](#21-version-history).*
+
 ---
 
 ## Table of Contents
@@ -51,6 +53,7 @@ Developer reference for the Zocial codebase. Covers the full "lay of the land" �
 20. [Design Decisions Log](#20-design-decisions-log)
 21. [Version History](#21-version-history)
 22. [Code Review Log](#22-code-review-log)
+23. [Lists](#23-lists)
 
 ---
 
@@ -988,29 +991,11 @@ This is the most counter-intuitive part of the whole system and the source of a 
 
 > **Verified against current Mastodon API + this codebase (June 2026).** Folding into any rework: (1) the VAPID public key is now exposed at `GET /api/v2/instance` → `configuration.vapid.public_key` (**Mastodon 4.3.0**), so the historical "dummy-subscribe to read back `server_key`" dance (`mastodon#8785`, still in `updateAlerts`) is only needed as a fallback for older servers / GoToSocial. (2) At the Mastodon-*protocol* level the VAPID key is per-instance, so multiple accounts on one instance *could* share push — **but Zocial forbids two accounts on one instance** (`addInstance.js`), so its multi-account is always cross-instance and the hard limit always applies; the practical model is one push *account* per device. (3) The hard cross-instance limit itself is a Web-Platform fact (W3C Push API + RFC 8292) and is unchanged.
 
-#### Decision aid — behaviour per path, single vs. multi usage
+#### Why C + C+ over D (rationale, kept brief)
 
-> **Resolved (v1.8.6): C + C+ shipped.** The comparison below is retained as the *rationale* that led there — read "D" as the prior interim state, not the current one. The "Is D a good compromise? / Should we move to C?" discussion is the original decision reasoning.
+> Resolved in **v1.8.6** — C + C+ shipped (the options table above compares all four; see also §20 [v1.8.5]/[v1.8.6]). Kept here only as the reasoning that led there. "Multi-account" means accounts on **different instances** (the only multi-account Zocial allows).
 
-Complements the options table above with a usage-scenario view. "Multi-account" here means accounts on **different instances** (the only multi-account Zocial allows).
-
-| Path | Effort / infra | **Single account** | **Multi-account (different instances)** | UI honesty |
-|---|---|---|---|---|
-| **D — prior interim (v1.8.5)** — per-instance maps + lifecycle guards | ✅ done, no infra | **Perfect.** Push works, rich notifications, nothing to improve | **Only one instance gets through — non-deterministically** (whichever last re-keyed). And even that one shows a **bare** notification (title/body only, no deep-links/actions), because the SW doesn't enrich with >1 instance. The guards do prevent friendly-fire & the logout leak | ⚠️ the toggle can read "on" for **several** accounts while only one actually delivers |
-| **C — honest single-account** | 🟢 small (~½ day), no infra | **Identical to D** (invisible to single-account users) | **Deterministic:** the user *picks* the one push account; enabling a second re-keys + shows a clear message. No more race. *But* the notification stays **bare** while the other account is logged in (C doesn't fix routing) | ✅ only one account can be "on" — the toggle tells the truth |
-| **C+ — fix SW routing** *(with C)* | 🟡 small–moderate, no infra¹ | identical | **Best client-only state:** deterministic push account **+ rich notifications** for it, even with other accounts logged in. The second account still isn't pushed (platform limit), but the chosen one is fully functional | ✅ as C |
-| **B — push relay (self-hosted)** | 🔴 large (server project) | works, but a relay sits in the path (metadata/latency) — **no benefit** over D | **The only path to true parallel push:** *both* accounts pushed, correctly routed & enriched | ✅ honest (real parallelism) |
-
-¹ *C+ needs one prerequisite: the service worker must resolve the payload's `access_token` → instance origin (store per-account tokens in IndexedDB), otherwise it can't call the right API to enrich.*
-
-**Is D a good compromise?** **Yes — as an interim state.** For **single-account use** (likely the large majority) D is **completely fine** — there is nothing to improve, and the real bugs (friendly-fire teardown, logout leak) are fixed. Zero risk, zero infra. Its weaknesses are **exclusively** in the multi-account / different-instance case:
-
-1. **Non-determinism** — which account actually pushes is unpredictable.
-2. **Residual dishonesty** — the toggle can show "on" for two accounts while only one delivers.
-3. **Degraded notifications** — even the working account drops to bare title/body once a second account is logged in.
-4. **The per-instance illusion remains** — it invites future changes to re-introduce the same class of bugs (exactly why this section exists).
-
-**Should we move to C?** **Recommendation: yes — C together with C+, but low urgency.** **C** fixes weaknesses 1 + 2 for very little code, no infra, and makes the model *simpler* (`otherInstancesWantPush` falls away); it's invisible to single-account users. **C+** additionally fixes weakness 3 (rich notifications for the chosen account). Together they are the **clean, fully client-side end state** — only **B** could ever deliver the second account, and that's a server project you likely don't want to take on for a client PWA. **The only reason to stay on D** is if multi-account-across-different-instances is practically irrelevant for the user base *and* the residual dishonesty (#2) doesn't bother us — then D is "fixed & fine" and C is just cosmetics + cleanup. Honest call: **C + C+ is the right, cheap investment in determinism and an honest, simpler model — but it is not an emergency; D is fine to ship in the meantime.**
+For **single-account use** (the majority) the prior interim **D** was already completely fine — push works, rich notifications, and the real bugs (friendly-fire teardown, logout leak) were fixed; zero risk, zero infra. D's weaknesses were **exclusively** in the multi-account / different-instance case: (1) **non-determinism** — which account actually pushes is unpredictable; (2) **residual dishonesty** — the toggle could read "on" for two accounts while only one delivered; (3) **degraded notifications** — even the working account dropped to a bare title/body once a second account was logged in; (4) the per-instance **illusion** invited re-introducing the same bug class. **C** fixed 1 + 2 for very little code (and simplified the model — `otherInstancesWantPush` fell away); **C+** fixed 3 (rich notifications for the chosen account). Only **B** (relay) could ever deliver the *second* account — a server project, out of scope. C + C+ were the clean, fully client-side end state and shipped together in v1.8.6.
 
 #### Target UX plan — C + C+ *(implemented in v1.8.6)*
 
@@ -1169,6 +1154,16 @@ It also matches our own ajax layer's `Timed out after N seconds` and `Request fa
 ## 20. Design Decisions Log
 
 This section captures significant design decisions, feature choices, and architectural tradeoffs as they are made. Add a new entry whenever a non-obvious or deliberate choice is made — during feature implementations, bug fixes, or API compatibility work. **Convention for future decisions: briefly discuss with the user whether the decision is worth documenting here before moving on.**
+
+**Index** — entries appear in version order below; this groups them by topic (Ctrl+F the version tag to jump):
+
+- **Notifications & push** — 1.8.0 (unified device notifications), 1.8.1 (visible-tab dedup), 1.8.2 (self-healing, VAPID-compare fix, sound section, re-prompt, System-A filter), 1.8.3 (push-only + System-A removed), 1.8.4 (per-instance flag), 1.8.5 + 1.8.6 (single-account model + SW routing), 1.10.1 (in-app OS-notification fallback rejected)
+- **Timelines & lists** — 1.4.0 (list management), 1.7.0 (list-error fallback, 60 s poll gate, `alwaysStreaming`), 1.8.3 (list reliability), 1.8.4 (cache-first everywhere), 1.9.2 (unfollow/block cache purge), 1.10.1 (5xx cold-load retry, scroll-up re-mount), 1.10.4 (gap-fill hardening), 1.10.5 + 1.10.7 (exclusive lists + Manage-lists page + home purge), 1.11.3 (members overview) — see also §23
+- **i18n & translation** — 1.6.0 (LibreTranslate backend), 1.6.1/1.7.1 (language detection), 1.10.0 (runtime i18n), 1.10.2 (first-visit language)
+- **Accounts & social** — 1.3.0 (in-app profile editing), 1.9.0 (manage follows, graded empty-state), 1.9.1 (remove from followers)
+- **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes)
+- **UI, UX & accessibility** — 1.1.0 (profile stats bar), 1.8.2 (word-filter shortcut), 1.10.3 (`scrollbar-gutter`), 1.11.4 (keyboard tab reordering)
+- **Logs & auth** — 1.7.0 (log persistence), 1.7.1 (expected conditions as warnings), 1.8.11 (OAuth `state` CSRF)
 
 ---
 
@@ -1773,6 +1768,8 @@ Brief changelog for understanding when features and architectural choices were i
 
 A short log of focused review passes — what was reviewed, when, the outcome, and what's still open — so we can see at a glance where to dig next. "Outcome" lists only what was actioned or accepted; full mechanics live in the relevant section above.
 
+> **Note:** these are point-in-time records. Function/file names reflect the code **as it was on that date** and may have since been renamed or consolidated (e.g. the single-timeline purge helpers were later folded into `removeAccountsFromTimeline` in v1.11.2). Treat the dated rows as history, not as a current API reference — for current names see the relevant section above and §20.
+
 | Date | Area | Scope | Outcome |
 |---|---|---|---|
 | 2026-06-12 | **Notification & Push system** | D lifecycle (N1 shared-sub teardown, O1 logout backend-unsubscribe, T1 `currentTimeline` guard), then full C + C+ implementation | N1/O1/T1 fixed (v1.8.5); C + C+ shipped (v1.8.6); a `pushTokenObservers` reconcile race was found and fixed (serialized + fresh-read); in-app verified. ✅ |
@@ -1814,3 +1811,43 @@ Every major neuralgic subsystem and every previously-deferred lower-criticality 
 **`$messages` store-access — verified clean (2026-06-17):** swept every component that reads `$messages` in script for a missing store binding. Only four turned up: two are comment-only mentions (`NotLoggedInHome`, `VirtualList` — the latter deliberately uses `getMessage` on its `virtualListStore`, never `$messages`); the other two (`settings/instances/add` `titleName`, `statuses/[...statusParams]` `pageTitle`) are Sapper route pages that inherit `this.store` from `_layout`, so `$messages` resolves (confirmed: `add.html` co-uses `$isUserLoggedIn`, and a broken `pageTitle` would crash every status page's `<Title>` — it doesn't).
 
 The shared action-error logging sweep (`logActionError`) and the i18n polish of hardcoded user-facing strings are done — see the 2026-06-14 rows above.
+
+---
+
+## 23. Lists
+
+Lists have grown into a subsystem of their own (CRUD, members, exclusivity, ordering, cache semantics) spread across the API/actions/DB/UI layers. This section is the map; the *why* behind each behaviour lives in the §20 entries linked inline.
+
+### Data model
+
+A Mastodon/GoToSocial **List** entity carries `id`, `title`, and (where supported) `exclusive` (hide its members from home). There is **no member count** on the entity. Per-instance list state in the store:
+
+- `instanceLists[instance]` → the list objects (computed `$lists`), cached in IndexedDB meta (`getLists`/`setLists`).
+- `instanceListsSupported[instance]` (`$listsSupported`) — whether the backend implements lists at all.
+- `instanceListsExclusiveSupported[instance]` (`$listsExclusiveSupported`) — whether it supports the `exclusive` field.
+- `navTabOrder[instance]` — the nav-bar order (lists can be pinned as tabs); see §10/§18-adjacent nav notes and [v1.11.4] for keyboard reordering.
+
+### Capability detection (no software allowlist)
+
+- **Lists supported?** `syncLists` marks `instanceListsSupported=false` only on a definitive `403/404/501` from `GET /api/v1/lists`; transient errors (429/5xx/network) never hide the UI. Mirrors the §20 [v1.9.1] show-then-toast philosophy.
+- **Exclusive supported?** Detected from the **presence of the `exclusive` key** on fetched List entities (`instanceListsExclusiveSupported`); unknown (zero lists) is treated optimistically. The create-dialog reads the field back off the created list and toasts if the server ignored it. See §20 [v1.10.5].
+
+### API (`_api/lists.js`)
+
+`getLists`, `createList(title, exclusive)`, `updateList(id, {title, exclusive})` (PUT), `deleteList` (DELETE); membership `addAccountToList` / `removeAccountFromList`; members `getListAccounts` (`limit=0`, all-at-once — used to purge an exclusive list's members from home) and `getListAccountsPaged` (Link-header pagination, `{accounts, nextMaxId}` — used by the members page).
+
+### Actions (`_actions/lists.js`)
+
+`syncLists` (cache-first sync + capability flags), `createNewList`, `renameList`, `setListExclusive`, `deleteListById`, and membership wrappers `addAccountToListAndPurge` / `removeAccountFromListAndRestore`. **Exclusivity ↔ home/list cache** is kept consistent here (the union-only timeline cache won't self-correct): making a list exclusive (or adding a member to one) purges those accounts from **home** via `removeAccountsFromTimeline(instance, 'home', ids)`; making it non-exclusive / deleting it marks home **stale** so members reappear; removing a member purges that account from **that list's** timeline. See §20 [v1.10.7] and [v1.9.2] for the purge model.
+
+### Timelines
+
+A list timeline (`list/<id>`) is a normal cache-first timeline, but server-assembled and often slow → it gets the `SLOW_READ_TIMEOUT` (fail-fast first attempt + full-headroom retry, §20 [v1.10.1]/[v1.11.1]), a capped streaming gap-fill (§20 [v1.10.4]), and a 5xx cold-load retry. Full timeline mechanics: §12.
+
+### UI surfaces
+
+- **Community settings** (`CommunitySettingsSection`) — lists appear as pinnable tabs (alphabetical, §20 [v1.10.7]) + a "Create list" action; a **Manage lists** entry appears once ≥1 list exists.
+- **Manage lists page** (`ManageListsSettings` via `/manage-lists`) — rename (inline), delete (confirm dialog), exclusive toggle (with in-flight guard), an inline create field, and a **Members** link per list.
+- **Create-list dialog** (`CreateListDialog`) — title + exclusive checkbox (gated on support).
+- **List membership dialog** (`ListMembershipDialog`, from a profile's "⋯") — add/remove the account to/from lists, routed through the exclusivity-aware actions.
+- **Members overview** (`/lists/:id/members`, `_pages/lists/[listId]/members.html`) — reuses `AccountsListPage` with `manageFollows` for follow/unfollow per member; §20 [v1.11.3].
