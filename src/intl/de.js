@@ -133,6 +133,7 @@ export default {
     </li>
     <li><kbd>7</kbd> oder <kbd>c</kbd> zum Erstellen eines neuen Beitrags</li>
     <li><kbd>s</kbd> oder <kbd>/</kbd> zum Suchen</li>
+    <li><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd> verschiebt den fokussierten Tab</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> zur Startseite gehen</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> zu den Benachrichtigungen gehen</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> zur lokalen Zeitleiste gehen</li>
@@ -256,6 +257,7 @@ export default {
   listTitle: 'Listentitel',
   manageLists: 'Listen verwalten',
   listMembers: 'Mitglieder',
+  tabReordered: '{label} — Position {position} von {total}',
   rename: 'Umbenennen',
   listExclusive: 'Beiträge nur in dieser Liste anzeigen',
   listExclusiveHelp: 'Mitglieder dieser Liste erscheinen nicht in deiner Home-Timeline.',

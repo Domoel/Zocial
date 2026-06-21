@@ -120,6 +120,7 @@ export default {
     </li>
     <li><kbd>7</kbd> или <kbd>c</kbd> создать запись</li>
     <li><kbd>s</kbd> или <kbd>/</kbd> искать</li>
+    <li><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd> переместить выбранную вкладку</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> главная</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> уведомления</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> локальная лента</li>
@@ -786,6 +787,7 @@ export default {
   listTitle: 'Название списка',
   manageLists: 'Управление списками',
   listMembers: 'Участники',
+  tabReordered: '{label} — позиция {position} из {total}',
   rename: 'Переименовать',
   listExclusive: 'Показывать записи только в этом списке',
   listExclusiveHelp: 'Участники этого списка не будут показываться в вашей домашней ленте.',

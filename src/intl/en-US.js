@@ -135,6 +135,7 @@ export default {
     </li>
     <li><kbd>7</kbd> or <kbd>c</kbd> to compose a new post</li>
     <li><kbd>s</kbd> or <kbd>/</kbd> to search</li>
+    <li><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd> to move the focused tab</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> to go home</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> to go to notifications</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> to go to the local timeline</li>
@@ -275,6 +276,7 @@ export default {
   listTitle: 'List title',
   manageLists: 'Manage lists',
   listMembers: 'Members',
+  tabReordered: '{label} — position {position} of {total}',
   rename: 'Rename',
   listExclusive: 'Show posts only in this list',
   listExclusiveHelp: 'Members of this list won’t appear in your home timeline.',

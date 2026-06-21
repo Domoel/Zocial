@@ -134,6 +134,7 @@ export default {
     </li>
     <li><kbd>7</kbd> o <kbd>c</kbd> para redactar un nuevo toot</li>
     <li><kbd>s</kbd> o <kbd>/</kbd> para buscar</li>
+    <li><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd> para mover la pestaña enfocada</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> para ir a inicio</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> para ir a notificaciones</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> para ir a la cronología local</li>
@@ -816,6 +817,7 @@ export default {
   listTitle: 'Título de la lista',
   manageLists: 'Gestionar listas',
   listMembers: 'Miembros',
+  tabReordered: '{label} — posición {position} de {total}',
   rename: 'Renombrar',
   listExclusive: 'Mostrar las publicaciones solo en esta lista',
   listExclusiveHelp: 'Los miembros de esta lista no aparecerán en tu línea de inicio.',

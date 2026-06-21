@@ -13,6 +13,7 @@
         on:touchmove="onTouchMove(event)"
         on:touchend="onTouchEnd(event)"
         on:touchcancel="onTouchCancel()"
+        on:keydown="onKeydown(event, i)"
       >
         <NavItem
           {page}
@@ -85,6 +86,8 @@
   import NavItem from './NavItem.html'
   import { importNavShortcuts } from '../_utils/asyncModules/importNavShortcuts.js'
   import { store } from '../_store/store.js'
+  import { announceAriaLivePolite } from '../_utils/announceAriaLivePolite.js'
+  import { formatIntl } from '../_utils/formatIntl.js'
 
   export default {
     async oncreate () {
@@ -194,6 +197,50 @@
         this._touchDragActive = false
         this._touchDragIndex = null
         this.set({ touchHeld: null, overIndex: null })
+      },
+
+      // Keyboard tab reordering (accessibility): with a nav tab focused, Alt+Shift+ArrowLeft/Right
+      // moves it one position — drag/touch alone aren't usable with a screen reader. Each move is
+      // announced via the aria-live region ("<label> — position N of M") so the user knows where the
+      // tab landed. preventDefault stops the browser's Alt+Arrow back/forward navigation.
+      onKeydown (event, index) {
+        if (!event.altKey || !event.shiftKey) {
+          return
+        }
+        const { key } = event
+        let toIndex
+        if (key === 'ArrowLeft') {
+          toIndex = index - 1
+        } else if (key === 'ArrowRight') {
+          toIndex = index + 1
+        } else {
+          return
+        }
+        event.preventDefault()
+        event.stopPropagation()
+        const { navPages } = store.get()
+        const total = navPages.length
+        const moved = navPages[index]
+        if (!moved) {
+          return
+        }
+        if (toIndex < 0 || toIndex >= total) {
+          // already at an edge — re-announce the unchanged position so the keypress still gives feedback
+          announceAriaLivePolite(formatIntl('intl.tabReordered', { label: moved.label, position: index + 1, total }))
+          return
+        }
+        this._reorderTabs(index, toIndex)
+        announceAriaLivePolite(formatIntl('intl.tabReordered', { label: moved.label, position: toIndex + 1, total }))
+        // Keep focus on the moved tab at its new position. The keyed {#each} reuses the node, but
+        // refocus defensively after the re-render; preventScroll avoids a jump on the nav bar.
+        const href = moved.href
+        requestAnimationFrame(() => {
+          const nav = document.getElementById('main-nav')
+          const link = nav && nav.querySelector(`a[href="${href}"]`)
+          if (link) {
+            link.focus({ preventScroll: true })
+          }
+        })
       },
 
       _reorderTabs (fromIndex, toIndex) {

@@ -132,6 +132,7 @@ export default {
     </li>
     <li><kbd>7</kbd> ou <kbd>c</kbd> pour écrire une nouvelle publication</li>
     <li><kbd>s</kbd> ou <kbd>/</kbd> pour rechercher</li>
+    <li><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd> pour déplacer l’onglet sélectionné</li>
     <li><kbd>g</kbd> + <kbd>h</kbd> pour aller à l’accueil</li>
     <li><kbd>g</kbd> + <kbd>n</kbd> pour aller aux notifications</li>
     <li><kbd>g</kbd> + <kbd>l</kbd> pour aller au fil local</li>
@@ -754,6 +755,7 @@ export default {
   listTitle: 'Titre de la liste',
   manageLists: 'Gérer les listes',
   listMembers: 'Membres',
+  tabReordered: '{label} — position {position} sur {total}',
   rename: 'Renommer',
   listExclusive: 'Afficher les publications uniquement dans cette liste',
   listExclusiveHelp: 'Les membres de cette liste n’apparaîtront pas dans votre fil d’accueil.',

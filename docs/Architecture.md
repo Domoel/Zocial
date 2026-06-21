@@ -1704,6 +1704,20 @@ Membership changes are routed through `addAccountToListAndPurge` / `removeAccoun
 
 ---
 
+### [v1.11.4] Keyboard tab reordering (accessibility)
+
+**Decision:** Make nav-tab reordering — previously drag-and-drop / long-press-drag only, i.e. unusable with a screen reader or keyboard — operable from the keyboard. With a nav tab focused, **Alt+Shift+ArrowLeft/Right** moves it one position; each move is **announced** via the aria-live region ("‹label› — position N of M") so a blind user knows where the tab landed.
+
+**Why this pattern (requested by a blind user).** The accessible solution to reordering is *not* emulating drag — it's a discrete move command plus a **positional announcement** (the WAI-ARIA approach for reorderable lists). A bare hotkey alone doesn't convey the resulting order; the live-region announcement is what makes it usable without sight. Reuses the existing `_reorderTabs(from, to)` (identical semantics to drag, so the two stay consistent) and `announceAriaLivePolite`. At an edge (already first/last) the unchanged position is still announced, so the keypress always gives feedback.
+
+**Discoverability.** Each nav link carries `aria-keyshortcuts="Alt+Shift+ArrowLeft Alt+Shift+ArrowRight"` (announced by supporting screen readers), and the shortcut is listed in the in-app **hotkey help** (`globalHotkeys`, all 5 locales). `preventDefault` suppresses the browser's Alt+Arrow back/forward; focus is kept on the moved tab (the keyed `{#each}` reuses the node; a defensive `preventScroll` refocus follows the re-render).
+
+**Considered, not built:** a separate "move up/down buttons" reorder panel in settings (more discoverable for screen-reader users who don't know the shortcut, and the WAI-ARIA "buttons" variant). Deferred as overkill — it would need its own settings surface; the in-nav hotkey + `aria-keyshortcuts` + help entry covers the need in place. Could be added later if the shortcut proves hard to discover.
+
+**Key files:** `_components/Nav.html` (`onKeydown` → `_reorderTabs` + `announceAriaLivePolite`), `_components/NavItem.html` (`aria-keyshortcuts`), `_utils/announceAriaLivePolite.js` (reused), `intl/*` (`tabReordered` announcement + a `globalHotkeys` line).
+
+---
+
 ## 21. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1751,6 +1765,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.11.1** | 2026-06-21 | **Faster recovery on a hanging cold list/tag** (dev patch). The first cold list/tag fetch now fails fast at the normal read timeout (~20 s); only the single automatic retry gets the full 40 s headroom (the backend has had a chance to warm up by then). Caps a genuinely hanging cold list at ~60 s instead of ~80 s before the graceful fallback, without losing headroom for a slow-but-working response. See §22 |
 | **1.11.2** | 2026-06-21 | **Push-notification icon fallback + internal cleanup** (dev patch). OS push notifications already show the triggering account's avatar; they now fall back to the app logo (and, in the rich path, to the fetched account avatar) so a notification never shows the browser's blank default icon. Internal: consolidated three redundant timeline-purge helpers into one and removed a redundant DB scope option (no behaviour change) — see §22 |
 | **1.11.3** | 2026-06-21 | **List members overview** (dev patch / feature). The Manage-lists page gains a **Members** link per list → a new `/lists/:id/members` page that lists the list's members with the same follow/unfollow controls as the Follows/Followers pages (reuses `AccountsListPage`). Paginated; members assume-followed (no button flash). See §20 |
+| **1.11.4** | 2026-06-21 | **Keyboard tab reordering (accessibility)** (dev patch / feature). Nav tabs could only be reordered by drag/long-press — unusable with a screen reader. With a tab focused, **Alt+Shift+←/→** now moves it, and each move is announced via the live region ("‹tab› — position N of M") so blind users know where it landed. Listed in the hotkey help + `aria-keyshortcuts` on each tab. Requested by a blind user. See §20 |
 
 ---
 
