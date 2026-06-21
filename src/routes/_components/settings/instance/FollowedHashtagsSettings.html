@@ -29,7 +29,7 @@
       autocapitalize="off"
       spellcheck="false"
     />
-    <button type="submit" class="add-button">{followButtonLabel}</button>
+    <button type="submit" class="add-button" disabled={!newTag.trim()}>{followButtonLabel}</button>
   </form>
 
   {#if errorMessage}
