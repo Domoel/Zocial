@@ -21,7 +21,7 @@ export async function cacheFirstUpdateAfter (networkFetcher, dbFetcher, dbUpdate
       // cached data was already shown, so the network refresh is best-effort: swallow failures
       // (e.g. a NetworkError on a flaky mobile connection) instead of letting the fire-and-forget
       // promise surface as an uncaught rejection
-      fetchAndUpdatePromise.catch(err => console.warn('background refresh failed', err))
+      fetchAndUpdatePromise.catch(err => console.warn('background refresh failed', (err && err.message) || err))
     }
   }
 }

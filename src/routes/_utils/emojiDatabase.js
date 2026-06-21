@@ -37,22 +37,34 @@ export function setCustomEmoji (customEmoji) {
 
 export async function findByUnicodeOrName (unicodeOrName) {
   init()
-  const variants = [unicodeOrName.replace(/\ufe0f$/, '')]
-  variants.push(variants[0] + '\ufe0f')
-  const results = variants.map((variant) => database.getEmojiByUnicodeOrName(variant))
-  for (const promise of results) {
-    const result = await promise
-    if (result) return result
+  try {
+    const variants = [unicodeOrName.replace(/\ufe0f$/, '')]
+    variants.push(variants[0] + '\ufe0f')
+    const results = variants.map((variant) => database.getEmojiByUnicodeOrName(variant))
+    for (const promise of results) {
+      const result = await promise
+      if (result) return result
+    }
+  } catch (err) {
+    // emoji data source briefly unavailable (e.g. a non-2xx on /emoji-en-US.json mid-deploy) \u2014
+    // degrade gracefully instead of surfacing an uncaught rejection; self-heals on the next call
+    console.warn('emoji lookup failed', err && err.message)
   }
 }
 
 export async function findBySearchQuery (query) {
   init()
-  const [emojis, skinTone] = await Promise.all([
-    database.getEmojiBySearchQuery(query),
-    database.getPreferredSkinTone()
-  ])
-  return emojis.map(emoji => applySkinToneToEmoji(emoji, skinTone))
+  try {
+    const [emojis, skinTone] = await Promise.all([
+      database.getEmojiBySearchQuery(query),
+      database.getPreferredSkinTone()
+    ])
+    return emojis.map(emoji => applySkinToneToEmoji(emoji, skinTone))
+  } catch (err) {
+    // see findByUnicodeOrName: tolerate a transient emoji-data-source failure
+    console.warn('emoji search failed', err && err.message)
+    return []
+  }
 }
 
 if (ZOCIAL_IS_BROWSER) {
