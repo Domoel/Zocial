@@ -197,7 +197,7 @@ self.addEventListener('push', event => {
         // No or malformed payload. Still show something: silently dropping a userVisibleOnly push
         // makes the browser show its own generic message and, if repeated, can revoke the push
         // subscription entirely.
-        await self.registration.showNotification('Zocial', { badge: '/icon-push-badge.png' })
+        await self.registration.showNotification('Zocial', { badge: '/icon-push-badge.png', icon: NOTIFICATION_ICON_FALLBACK })
         return
       }
       // We have a valid payload — from here on, guarantee at least a simple notification even if
@@ -232,10 +232,14 @@ self.addEventListener('push', event => {
   )
 })
 
+// The push payload's `icon` is the triggering account's avatar (Mastodon/GtS set it). Fall back to
+// the app logo when it's missing, so a notification never shows the browser's blank default icon.
+const NOTIFICATION_ICON_FALLBACK = '/icons/icon-192.png'
+
 async function showSimpleNotification (data) {
   await self.registration.showNotification(data.title, {
     badge: '/icon-push-badge.png',
-    icon: data.icon,
+    icon: data.icon || NOTIFICATION_ICON_FALLBACK,
     body: data.body,
     tag: data.notification_id,
     data: {
@@ -245,7 +249,11 @@ async function showSimpleNotification (data) {
 }
 
 async function showRichNotification (data, notification, instanceOrigin) {
-  const { icon, body } = data
+  const { body } = data
+  // Prefer the push payload's avatar; fall back to the fetched account's avatar, then the app logo.
+  const icon = data.icon ||
+    (notification.account && (notification.account.avatar_static || notification.account.avatar)) ||
+    NOTIFICATION_ICON_FALLBACK
   const tag = notification.id
   const { origin } = self.location
   const badge = '/icon-push-badge.png'
