@@ -124,7 +124,7 @@ async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken
   } catch (e) {
     // List/tag timelines are assembled per-list/-tag server-side; the *first* cold request
     // frequently times out OR returns a 5xx while the backend warms up (esp. GoToSocial, which
-    // live-queries list feeds rather than materialising them — see §20), and a manual page refresh
+    // live-queries list feeds rather than materialising them — see §21), and a manual page refresh
     // then succeeds. Do that refresh automatically — once — when the user is on a blank or stale
     // view, so they recover in seconds instead of waiting for the 60s poll. If the retry also
     // fails, the caller's catch handles the graceful fallback (empty/cached list, no toast).

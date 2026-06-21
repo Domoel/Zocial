@@ -16,7 +16,7 @@ function isListExclusive (instanceName, listId) {
 // Mark the home feed stale so the next setupTimeline (poll/navigate) re-fetches it. Used when an
 // account should re-appear in home (a list became non-exclusive, a member was removed, or an
 // exclusive list was deleted): the server filters home correctly, but our union-only cache won't
-// pull them back on its own — a refetch does (§20 [v1.9.2] model).
+// pull them back on its own — a refetch does (§21 [v1.9.2] model).
 function markHomeStale (instanceName) {
   store.setForTimeline(instanceName, 'home', { timelineItemSummariesAreStale: true })
 }
