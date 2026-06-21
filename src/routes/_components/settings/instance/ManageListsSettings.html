@@ -98,10 +98,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    /* with three action controls (Members / Rename / Delete) the row can't fit on a narrow
-       screen; let the actions wrap below the (truncating) list name instead of crushing it */
-    flex-wrap: wrap;
-    row-gap: 8px;
   }
   .list-link {
     font-size: 1.15em;
@@ -224,6 +220,16 @@
     }
     .lists-list-item {
       padding: 12px 10px;
+    }
+    /* Three action controls (Members / Rename / Delete) don't fit next to the name on a phone —
+       stack them onto their own line below it so the name keeps the full width. */
+    .lists-list-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .list-link {
+      max-width: 100%;
     }
   }
 </style>
