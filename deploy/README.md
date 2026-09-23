@@ -51,6 +51,10 @@ Pull `git.ztfr.eu/dome/zocial:latest` under *Container Manager → Image* (add t
 *Registry → Settings* first if the package is private) and rebuild the project. Updating is then a
 manual "pull image, rebuild project".
 
+Outside the Synology, the generic [docker/docker-compose.yaml](../docker/docker-compose.yaml) +
+[docker/.env.example](../docker/.env.example) pull the same image with plain `docker compose`
+(host port `PORT`, default 80).
+
 ## Docker Hub (backup)
 
 [.gitea/workflows/build-image.yml](../.gitea/workflows/build-image.yml) still builds and pushes

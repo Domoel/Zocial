@@ -183,27 +183,28 @@ Zocial ships as a Docker image and can be deployed in minutes. Images are built 
 
 ### Docker Compose
 
-A ready-made project (Synology Container Manager or plain `docker compose`) lives in [`deploy/synology/`](deploy/synology/); [`deploy/README.md`](deploy/README.md) covers the pipeline and automatic updates via Watchtower.
+A minimal compose file and `.env` template live in [`docker/`](docker/):
 
 ```yaml
-# docker-compose.yml (minimal)
+# docker/docker-compose.yaml
 services:
   zocial:
     image: git.ztfr.eu/dome/zocial:latest
-    container_name: zocial
-    environment:
-      SINGLE_INSTANCE: ${SINGLE_INSTANCE:-}
-      TRANSLATE_API: ${TRANSLATE_API:-}
+    env_file: .env
     ports:
-      - "6666:80"
+      - "${PORT:-80}:80"
+    restart: unless-stopped
 ```
 
 ```bash
-cp deploy/synology/example.env .env
+cd docker
+cp .env.example .env
 # edit .env — set SINGLE_INSTANCE=your.server.com to lock to one instance,
 # or leave it empty to let users log in to any server.
 docker compose up -d
 ```
+
+**Synology with automatic updates:** [`deploy/synology/`](deploy/synology/) holds a Container Manager project that is kept up to date by Watchtower; [`deploy/README.md`](deploy/README.md) covers the build pipeline and the setup.
 
 The instance hostname is injected at container startup — **no rebuild required** to switch instances. Change `.env`, restart, done.
 
@@ -235,7 +236,7 @@ npm run dev          # dev server at http://localhost:4002
 | Variable | Default | Description |
 |---|---|---|
 | `SINGLE_INSTANCE` | *(unset)* | Lock the client to a specific instance hostname |
-| `ZOCIAL_PORT` | `6666` | Host port exposed by the Docker container (compose file in `deploy/synology/`) |
+| `PORT` | `80` | Host port exposed by the Docker container (`ZOCIAL_PORT` in the Synology compose file) |
 | `TRANSLATE_API` | `https://translate.zocial.social` | Base URL of a [LibreTranslate](https://libretranslate.com)-compatible translation backend |
 
 ### Interface language
@@ -244,7 +245,7 @@ All shipped languages (currently English, German, Spanish, French, Russian) are 
 
 ### Post translation
 
-Zocial routes translation requests through the nginx container so no credentials are ever exposed to the browser and no CORS headers are required. **Default backend:** a self-hosted LibreTranslate instance operated by Zocial, available to users of [zocial.social](https://zocial.social). Admins running their own deployment should point `TRANSLATE_API` at their own LibreTranslate instance — see `deploy/synology/example.env` for details.
+Zocial routes translation requests through the nginx container so no credentials are ever exposed to the browser and no CORS headers are required. **Default backend:** a self-hosted LibreTranslate instance operated by Zocial, available to users of [zocial.social](https://zocial.social). Admins running their own deployment should point `TRANSLATE_API` at their own LibreTranslate instance — see `docker/.env.example` for details.
 
 ---
 
