@@ -55,6 +55,9 @@ Developer reference for the Zocial codebase. Covers the full "lay of the land" �
 22. [Version History](#22-version-history)
 23. [Code Review Log](#23-code-review-log)
 
+**Appendix**
+- [A. Mastodon 4.6 / 4.7 API roadmap](#appendix-a-mastodon-46--47-api-roadmap)
+
 ---
 
 ## 1. Technology Stack
@@ -426,6 +429,8 @@ The compose state (`composeData`) is persisted to localStorage so an unsent draf
 - `EmojiDialog.html` — Emoji picker (wraps `emoji-picker-element` custom element).
 
 `emoji-picker-element` uses Svelte 3, which is incompatible with Svelte 2. It is loaded as a **bundled custom element** (not a Svelte component) to work around this.
+
+Outside the picker, `_utils/emojiDatabase.js` uses the library's `Database` directly (emoji tooltips, autosuggest, reactions). It must survive a briefly unreachable data source (`/emoji-en-US.json` returning non-2xx mid-deploy), which fails in two different places inside the library: on a **returning visit** (data already in IDB) the ETag update check (`HEAD`) runs as a fire-and-forget `_lazyUpdate` promise the library only awaits on close — no caller can catch it, so `whenReady()` attaches a handler to it once `ready()` resolves (relies on that library-internal field; tolerated if absent); on a **first visit** (empty IDB) `ready()` itself rejects and the library caches that rejection forever, so the instance is marked failed and `init()` re-creates it after `RETRY_AFTER_FAILURE_MS` (30 s — lookups in between fail fast, no request storm). Lookups swallow failures (warn + empty result). See §23 (2026-09-23).
 
 ---
 
@@ -1633,7 +1638,7 @@ A related **partial-list notice** (`accountListPartial`, `partialNotice` compute
 
 **Rationale:** GoToSocial **live-queries** list/tag feeds instead of materialising them (see the v1.9.2 entry above + §23 list/tag row), so the **first cold request frequently returns a 500** (or times out) while the backend assembles the feed, and a plain refetch then succeeds. We therefore **deliberately refetch 500s once** for list/tag timelines when the view is blank/stale — it turns a "list won't load reliably on GtS" annoyance into a few-seconds self-heal, instead of waiting for the 60s poll. The retry is bounded (once, gated by `shouldRetryTimelineFetch` to blank/stale views), so a genuinely-broken endpoint costs at most one extra request before the graceful empty/cached fallback. The frontend list API itself is unchanged and correct (`GET /api/v1/timelines/list/:id`); this is purely a resilience tweak for the GtS cold-assembly characteristic.
 
-**Refinement (v1.11.1) — fail-fast first attempt.** The first cold attempt now uses the normal read timeout (`SLOW_READ_TIMEOUT_FIRST` = `DEFAULT_TIMEOUT`, 20 s) instead of the full 40 s; only the retry keeps the 40 s headroom. A genuinely *hanging* cold list previously blocked ~80 s (both attempts at 40 s) before the graceful fallback; now it's ~60 s, and the common warm-up case is unchanged or faster (the retry starts sooner against a now-warming backend). See §23.
+**Refinement (v1.11.1) — fail-fast first attempt.** The first cold attempt now uses the normal read timeout (`SLOW_READ_TIMEOUT_FIRST` = `DEFAULT_TIMEOUT`, 20 s) instead of the full 40 s; only the retry keeps the 40 s headroom. A genuinely *hanging* cold list previously blocked ~80 s (both attempts at 40 s) before the graceful fallback; now it's ~60 s, and the common warm-up case is unchanged or faster (the retry starts sooner against a now-warming backend). See §23. **Scoped in the 1.12.0 pre-release review:** the 20 s first attempt applies only when a retry can actually follow (`shouldRetryTimelineFetch` — blank or stale view), evaluated *before* the attempt. As shipped in v1.11.1 it applied to every list/tag read, so pagination ("load more") and refreshes over fresh content — which are never retried — lost their 40 s headroom and a slow-but-working list (20–40 s) failed where it used to succeed.
 
 ---
 
@@ -1805,6 +1810,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.11.4** | 2026-06-21 | **Keyboard tab reordering (accessibility)** (dev patch / feature). Nav tabs could only be reordered by drag/long-press — unusable with a screen reader. With a tab focused, **Alt+Shift+←/→** now moves it, and each move is announced via the live region ("‹tab› — position N of M") so blind users know where it landed. Listed in the hotkey help + `aria-keyshortcuts` on each tab. Requested by a blind user. See §21 |
 | **1.11.5** | 2026-06-21 | **Emoji-data robustness (dev patch / fix).** Source-map triage of dev v1.11.4 console logs: the recurring `NetworkError` / `Timed out after 20 s` warnings on home + background refresh were the fail-fast timeout (§21 [v1.10.1]/[v1.11.1]) and best-effort swallow (§21 [v1.7.1]) working as designed during a brief dev-server rebuild. The one real gap was an **uncaught promise rejection** from emoji-picker-element's ETag `HEAD /emoji-en-US.json` hitting a transient non-2xx mid-deploy — `findByUnicodeOrName` / `findBySearchQuery` (and their fire-and-forget caller `addEmojiTooltips`) didn't catch it. Both now swallow a data-source failure (warn + empty result) so a momentarily unavailable emoji set degrades gracefully and self-heals on the next call; `sync.js` background-refresh log tidied to `err.message`. See §23 |
 | **1.11.6** | 2026-06-21 | **Tab-reorder screen-reader order fix (dev patch / a11y).** Follow-up to [v1.11.4] from the same blind tester: NVDA in browse mode announced the nav tab's `aria-keyshortcuts` **before** the tab name ("Alt+Shift+Right Alt+Shift+Left, Notifications"). Replaced `aria-keyshortcuts` on each nav link with a single shared `aria-describedby` hint (`#nav-reorder-hint`, `tabReorderHint` in all 5 locales) — descriptions are announced **after** the name, so the tab name now comes first. Key binding unchanged. See §21 [v1.11.4] |
+| **1.12.0** | 2026-09-23 | **Production release** rolling up the 1.11.1–1.11.6 dev line. Features — **list members overview** (`/lists/:id/members` with follow/unfollow), **keyboard tab reordering** with screen-reader announcements (Alt+Shift+←/→, name-first announcement), **app-logo fallback** for push-notification icons — plus faster recovery on hanging cold list/tag loads and a robust emoji data source. Pre-release review fixed two issues in the 1.11.x line (fail-fast timeout also hit pagination; the 1.11.5 emoji fix missed the library's fire-and-forget update check) — see §23. Full notes: [`docs/release-notes/1.12.0.md`](release-notes/1.12.0.md) |
 
 ---
 
@@ -1845,6 +1851,7 @@ A short log of focused review passes — what was reviewed, when, the outcome, a
 | 2026-06-21 | **[v1.11.2] Purge-helper consolidation + push-notification icon fallback** — code-cleanup pass (consolidate redundant helpers, pull imports together) + a small notification enhancement | `_actions/timeline.js`, `_actions/lists.js`, `_database/timelines/deletion.js`, `src/service-worker.js` | **Cleanup:** folded the three single-timeline purge helpers (`removeAccountFromHomeTimeline` / `removeAccountsFromHomeTimeline` / `removeAccountFromSingleTimeline`) into one `removeAccountsFromTimeline(instance, timelineName, ids)` (accepts a single id or an array); dropped the now-redundant `homeOnly` option + `isHomeKey` from `deleteTimelineItemsForAccounts` since `{ timelineName: 'home' }` covers it identically — fewer exports, `lists.js`'s timeline import 3→1; no behaviour change. Also removed a stray NUL byte that had crept into this handbook file (it made `grep` treat the doc as binary). **Push icon:** OS push notifications already used the triggering account's avatar (Mastodon/GtS send it as the payload `icon`); added a fallback chain — payload `icon` → the fetched `notification.account.avatar_static`/`avatar` (rich path) → the app logo (`/icons/icon-192.png`, `NOTIFICATION_ICON_FALLBACK`) — so a notification never falls back to the browser's blank default, incl. the malformed-payload path. ✅ |
 | 2026-06-21 | **[v1.11.3] List members overview** — review of the new feature | `_api/lists.js` (`getListAccountsPaged`), `_pages/lists/[listId]/members.html` + route, the `lists/[listId].html` → `[listId]/index.html` route conversion, `AccountsListPage` reuse, `ManageListsSettings` link | Clean — almost entirely reuse: `AccountsListPage` already normalises an array-or-`{accounts,nextMaxId}` fetcher (so the new `getListAccountsPaged` fits), primes relationships, and (via `oncreate`'s `.catch`) shows the `errored` state on a failed fetch, so the members page inherits the proven Follows/Followers error handling and `loadMore`. `assumeFollowing` is correct (list members are by definition followed). **Route conversion verified:** file + same-named dir (`lists/[listId].html` + `lists/[listId]/`) isn't used anywhere in the repo, so the timeline route was moved to the proven directory form (`lists/[listId]/index.html`, like `accounts/[accountId]/`); import depths adjusted, no dangling references, and `_pages/` file+dir coexistence is fine (plain ES-module imports, not Sapper routes). List title is rendered as text (auto-escaped); no `expectedCount` (the List entity has no member count → plain empty state). **Polish applied:** the row now has three action controls (Members / Rename / Delete); on phones (`≤767px`) `.lists-list-row` stacks to a column so the actions sit on their own line below the name (a `flex-wrap` attempt didn't help — the name's `min-width: 0` lets it crush to nothing instead of forcing a wrap). **Minor, accepted:** a direct deep-link/reload of `/lists/:id/members` before the lists metadata is cached shows the generic "Members" title until `$lists` loads (members themselves load independently). No footguns, no NUL. **Verified on dev:** members overview + follow/unfollow work; the converted `/lists/:id` timeline route still works; mobile row stacking confirmed. ✅ |
 | 2026-06-21 | **dev v1.11.4 console-log triage** | source-map resolution of minified frames (`_utils/ajax.js`, `emoji-picker-element/database.js`), `_utils/emojiDatabase.js`, `_utils/sync.js`, `addEmojiTooltips` callers (`Status.html`, `AccountProfile.html`) | Resolved every minified frame via the shipped `.map` files. **Benign/expected:** `home · NetworkError` → `Timed out after 20 s` is the §21 [v1.10.1]/[v1.11.1] fail-fast timeout (`ajax.js` `fetchWithTimeout`); `background refresh failed …` is the §21 [v1.7.1] best-effort swallow in `sync.js`. Both fired during a dev rebuild (the emoji JSON's `last-modified` was that same minute) and self-healed when the server returned — confirms the timeout/swallow paths work. **Real fix (→ v1.11.5):** the `⛔ Uncaught (in promise)` was emoji-picker-element's `getETag` doing `HEAD /emoji-en-US.json` and throwing on a transient non-2xx; the emoji-DB helpers ran fire-and-forget from `addEmojiTooltips` with no catch. Now caught + degraded. The data source is a local build artifact (verified 200 on GET **and** HEAD with an ETag), so the non-2xx was deploy-transient, not systematic. **Verified on dev:** no uncaught rejection after rebuild; emoji tooltips/search work. ✅ |
+| 2026-09-23 | **Pre-release review for 1.12.0** — the whole 1.11.1–1.11.6 dev line (`git diff 1.11.0..dev`, ~240 lines) | `_actions/timeline.js` (fail-fast retry), `_api/timelines.js`, `_utils/ajax.js`, purge-helper consolidation (`_actions/lists.js`, `_database/timelines/deletion.js`), list members page + route conversion, `Nav.html`/`NavItem.html` keyboard reorder + `aria-describedby`, `service-worker.js` icon fallback, `_utils/emojiDatabase.js` (checked against emoji-picker-element 1.26.1 `database.js`), i18n keys in all 5 locales | **Fixed (1) — v1.11.1 fail-fast hit pagination:** `SLOW_READ_TIMEOUT_FIRST` was applied to *every* list/tag read, but the retry only runs on a blank/stale view — so "load more" and refreshes over fresh content got a single 20 s attempt instead of 40 s (a slow-but-working list failed where it used to succeed). Now gated on `shouldRetryTimelineFetch` evaluated before the attempt (§21 [v1.10.1] refinement). **Fixed (2) — v1.11.5 emoji fix covered the wrong path:** the reported `HEAD /emoji-en-US.json` rejection comes from the library's fire-and-forget `_lazyUpdate` (returning visit), which the lookup try/catch can't reach; on a first visit a failed `ready()` is cached forever (the "self-heals" claim didn't hold); and `findByUnicodeOrName` awaited its two parallel lookups one by one, leaving the second rejection unhandled. Now: handler on `_lazyUpdate`, failed instance re-created after 30 s, `Promise.all`, and `close()` on page-freeze caught (§10). Verified with a mocked `Database` in Node (returning/first visit, cooldown, recovery — 0 unhandled rejections). **Verified clean:** purge consolidation (`timelineName + '\u0000'` prefix can't match `list/12` for `list/1`), members page (`AccountsListPage` reuse, `$lists` title, pagination via Link), route move (no other references), keyboard reorder (edge re-announce, rAF refocus null-guarded), SW icon (`/icons/icon-192.png` generated by `bin/build-svg.js`), i18n parity. **Revisit candidate (perf, not a bug):** the single-timeline purge still scans the whole `status_timelines` store with a prefix filter — an `IDBKeyRange` bound on the prefix would touch only that timeline. |
 
 ### Not yet reviewed — revisit candidates
 
@@ -1856,3 +1863,98 @@ Every major neuralgic subsystem and every previously-deferred lower-criticality 
 **`$messages` store-access — verified clean (2026-06-17):** swept every component that reads `$messages` in script for a missing store binding. Only four turned up: two are comment-only mentions (`NotLoggedInHome`, `VirtualList` — the latter deliberately uses `getMessage` on its `virtualListStore`, never `$messages`); the other two (`settings/instances/add` `titleName`, `statuses/[...statusParams]` `pageTitle`) are Sapper route pages that inherit `this.store` from `_layout`, so `$messages` resolves (confirmed: `add.html` co-uses `$isUserLoggedIn`, and a broken `pageTitle` would crash every status page's `<Title>` — it doesn't).
 
 The shared action-error logging sweep (`logActionError`) and the i18n polish of hardcoded user-facing strings are done — see the 2026-06-14 rows above.
+
+
+---
+
+## Appendix A. Mastodon 4.6 / 4.7 API roadmap
+
+*Researched 2026-09-23 against Mastodon v4.6.0–v4.7.2 source, docs.joinmastodon.org, live mastodon.social and GoToSocial v0.22.1. Nothing here is implemented yet. This is the working basis for the 1.12.x dev line. Move each item into its proper section (and §21) once it ships.*
+
+### A.1 Capability gate: `api_versions.mastodon`
+
+`GET /api/v2/instance` → `api_versions.mastodon`. **4.7 did not bump it**, so nothing can be gated on "4.7":
+
+| API version | First release | Trigger |
+|---|---|---|
+| 7 | 4.5.0 | quotes |
+| 8 / 9 | 4.6.0 nightlies | `exclude_direct`, Profile API, annual-report state/generate / `avatar_description` on `PATCH /api/v1/profile` |
+| **10** | **4.6.0** | Collections under `/api/v1` |
+| **11** | **4.6.1** | `avatar_description` / `header_description` accepted by `update_credentials` |
+| 11 | 4.6.2 – 4.7.2, 4.8.0-alpha | no bump |
+
+- **Rule:** `>= 10` for every 4.6 feature; `>= 11` only for the alt-text params on `update_credentials`. Always `>=`, never `==`. A missing value (GoToSocial, Pleroma, v1 instance fallback) counts as `0`.
+- **Plumbing already exists:** `getInstanceInfo` (`_api/instance.js`) fetches v2 (falls back to v1) and the whole object is persisted (`instanceInfos` store key + IDB meta), so `api_versions` is already there. Nothing reads it yet. Add one `mastodonApiVersion` computed next to `currentInstanceInfo` in `instanceComputations.js` (Svelte 2: `&&` chain, no `?.`, §14).
+- **GoToSocial** exposes no `api_versions` and none of the 4.6 features below *except* those marked "GtS ✓".
+
+### A.2 What 4.7 changed for clients (full list)
+
+Diffed controllers, REST serializers, routes, streaming and push between v4.6.0 and v4.7.2:
+
+- **`Account.invalid_handle`** (optional bool, only present when true). The handle can no longer be verified; the server rewrites `username` to the account id and `acct` to `<id>@handle.invalid`. Don't offer @mention for such accounts; show the handle as unverifiable.
+- **Accounts pending deletion are hidden.** `GET /accounts/:id`, `/lookup`, `/statuses`, `POST /accounts/:id/note` and the collection endpoints return **404**. Such accounts drop out of `/accounts?id[]=` and `/accounts/relationships`. `Account.suspended: true` is now sent for any unavailable account. The profile page must handle a 404 cleanly.
+- **FEP-8967 link previews:** the first `Link` attachment becomes the post's `card`. Server-side only; the PreviewCard shape is unchanged.
+- **Unchanged:** notification types, instance/configuration, streaming events, push payload. The `/api/v1_alpha/collections…` aliases send `Deprecation` headers, so use `/api/v1` only.
+- **Unreleased (main, still API 11, don't build on it yet):** `exclude_direct` / `exclude_reblogs` / `exclude_quotes` / `exclude_replies` on `timelines/home`; `ref` on follow.
+
+### A.3 Fallback notifications (v10)
+
+- **`supported_types[]`** is accepted **on REST only**: `GET /api/v1/notifications`, `/api/v1/notifications/:id`, `/api/v2/notifications`, `/api/v2/notifications/:group_key`. It is kept in Link pagination. It never filters anything out. **Streaming and Web Push never carry a `fallback`.**
+- The server adds `notification.fallback` only for a **non-baseline** type the client didn't list. Baseline types (never a fallback): `mention`, `status`, `reblog`, `follow`, `follow_request`, `favourite`, `poll`, `update`, `quote`, `quoted_update`, `annual_report`. Fallback-capable types: `severed_relationships`, `moderation_warning`, `admin.sign_up`, `admin.report`, `added_to_collection`, `collection_update`.
+- **Shape as emitted:** `{ title: HTML, summary: HTML|null, description: null }`. ⚠ The docs say `details`; the code sends `description` (always null). **Treat all fields as untrusted HTML and sanitize.** Titles contain mention links, the `severed_relationships` title isn't escaped, and `summary` links to the server's web UI.
+- **New types:** 4.5: `quote`, `quoted_update`. 4.6: `added_to_collection`, `collection_update` (these also carry `collection`). 4.7: none.
+- Push alerts accept every type key (e.g. `data[alerts][quote]`), but the push *title* for the collection types is probably a missing-translation string upstream (unverified). The SW should build its own text for them.
+
+### A.4 Profile API (v8/v9) and profile limits (4.6.0)
+
+- **`GET/PATCH /api/v1/profile`** returns a **Profile**: raw `note`/`fields` plus `formatted_note`/`formatted_fields` (HTML), `avatar_description`, `header_description`, `show_media`, `show_media_replies`, `show_featured`, `attribution_domains[]`, `featured_tags[]`, `hide_collections`, `discoverable`, `indexable`, `locked`, `bot`. Image fields are `null` when unset. PATCH has **no** `source[...]` posting defaults.
+- **`update_credentials` is NOT deprecated.** 4.6.1 (v11) added `avatar_description`/`header_description` to it specifically as the easy path for clients (**GtS ✓** has long had them). Unknown params are silently ignored by older servers. Only the `show_media*` / `show_featured` toggles *require* the Profile API.
+- We don't need the Profile API for raw-vs-HTML editing: `EditProfileDialog` already edits `verifyCredentials.source.note/fields`.
+- **Limits** under `configuration.accounts` in `/api/v2/instance` (mastodon.social values): `max_display_name_length` 40 · `max_note_length` 500 · `max_avatar_description_length` 150 · `max_header_description_length` 150 · `max_profile_fields` 4 · `profile_field_name_limit` 255 · `profile_field_value_limit` 255. **GtS ✓ only `max_profile_fields` (= 6), same name**, so it's readable without a gate.
+- 4.6 Account additions (always present): `show_media`, `show_media_replies`, `show_featured`, `avatar_description`, `header_description` (`''` when unavailable).
+
+### A.5 Collections (v10, scopes `read:collections`/`write:collections`, covered by our `read write`)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST / PATCH / DELETE | `/api/v1/collections[/:id]` | owner; `name` ≤ 40 (required), `description` ≤ 100, `language`, `tag_name`, `sensitive`, `discoverable`, `account_ids[]` (create only) |
+| GET | `/api/v1/collections/:id` | public; → `{ collection, accounts[] }` (CollectionWithAccounts) |
+| POST / DELETE | `/api/v1/collections/:id/items[/:item_id]` | owner; `account_id` |
+| POST | `/api/v1/collections/:id/items/:item_id/revoke` | the featured account removes itself |
+| GET | `/api/v1/accounts/:id/collections` | public; `limit` (≤ 80) + `offset`; others see only `discoverable` |
+| GET | `/api/v1/accounts/:id/in_collections` | **own id only** (403 otherwise): where *I* am featured |
+
+- **Collection:** `id`, `uri`, `url`, `name`, `description`, `language`, `account_id`, `local`, `sensitive`, `discoverable`, `item_count`, `tag` (`{name,url}`|null), `items[]` (`{ id, state: pending|accepted|rejected|revoked, account_id? }`), timestamps. ⚠ `description` is **plain text for local** collections and sanitized HTML for remote ones (docs say HTML). Escape it.
+- **Consent has no "accept" endpoint.** It is a policy check: a local target is accepted immediately if `discoverable && (!locked || curator follows target)`, otherwise **403**. Remote targets stay `pending` until their server authorizes over ActivityPub. The featured user's only action is **revoke**. Check `Account.feature_approval.current_user` (`automatic`|`manual`|`denied`|`unknown`|`missing`; treat the last two as denied) before offering "add to collection".
+- **Limits:** 25 items per collection, `role.collection_limit` (default 10) from `verify_credentials`.
+- ⚠ **Upstream bug (live on mastodon.social, v4.6.0–main):** the `Link` header of `/accounts/:id/collections` uses the *username* in the path → 404. Page with `offset` ourselves.
+- Related: `Status.tagged_collections[]`, `Search.collections[]`, `collection_ids[]` on reports.
+
+### A.6 Smaller items
+
+- **Personal note** `POST /api/v1/accounts/:id/note {comment}` → Relationship (since 3.2, unchanged; **GtS ✓**). `relationship.note` already arrives via `_api/relationships.js` but is never read. 4.6 also adds `Relationship.muting_expires_at`.
+- `exclude_direct=true` on `GET /accounts/:id/statuses` (v8, undocumented upstream). Belongs in the `account/` branch of `_api/timelines.js`.
+- `PreviewCard.missing_attribution` (with user token) → `StatusCard.html` hint.
+- Media + poll in one post is allowed from 4.6 (docs still say otherwise); older servers answer 422.
+- `Mastodon-Async-Refresh` is now CORS-exposed, so a browser client can poll for remote replies after `/context`.
+- Annual reports (`/api/v1/annual_reports/:year/state|generate`, v8) only matter 10–31 December (`Instance.wrapstodon`).
+
+### A.7 Existing issues found during the research (independent of 4.6)
+
+- **Mentions tab leaks newer types (REST).** `notMentions` (`_static/notifications.ts`) is built from the keys we know, so `quote`, `quoted_update`, `severed_relationships`, `moderation_warning`, `added_to_collection` and `collection_update` are not excluded and appear in the Mentions tab on REST loads (the streaming path correctly adds only `mention`). Fix: request `types[]=mention` (Mastodon ≥ 3.5, **GtS ✓**, Pleroma unverified).
+- **`quote` / `quoted_update` render as "Unhandled notification type".** They are baseline types, so the server will never send a fallback for them. They need native `notificationInfos` entries.
+- **Profile fields can be lost on GtS (code-read, verify on a GtS account).** `EditProfileDialog` hard-codes `FIELD_SLOTS = 4`, and `fields_attributes` replaces *all* fields. GtS allows 6, so saving would likely drop fields 5–6. Fix: read `configuration.accounts.max_profile_fields`.
+- **Push alert subset.** `PUSH_ALERT_OPTIONS` (`_static/pushAlerts.js`) subscribes only `follow`, `favourite`, `reblog`, `mention`, `poll`, `status`. `follow_request`, `update`, `quote` etc. are never pushed, although the SW already renders `follow_request`.
+
+### A.8 Recommended order (1.12.x dev patches)
+
+1. **Capability gate:** the `mastodonApiVersion` computed (tiny; everything below depends on it).
+2. **Notification cleanup:** Mentions via `types[]=mention`, native `quote`/`quoted_update`, `supported_types[]` (≥ 10) on the list fetch *and* the SW's single fetch, and sanitized `fallback` rendering in `unhandled`. This fixes bugs every Mastodon 4.5+ user already sees.
+3. **Profile edit limits + alt text:** `configuration.accounts` limits and `max_profile_fields` (fixes the GtS data-loss risk, no gate), `avatar_description`/`header_description` via `update_credentials` (Mastodon ≥ 11, GtS).
+4. **Profile display + personal note:** avatar/header alt text, hide the Media tab on `show_media === false`, `exclude_direct` (≥ 10), personal note (show-then-toast, GtS ✓).
+5. **Collections phase 1 (read-only, ≥ 10):** profile section with manual `offset` paging, a collection page from CollectionWithAccounts (reuse `AccountsListPage`), native `added_to_collection`/`collection_update` notifications.
+6. **Collections phase 2 (CRUD, ≥ 10):** settings page, `feature_approval` check, 25-item and role limits.
+7. **Collections phase 3:** "featured in" list (`in_collections`, own id) with revoke. There is no accept step to build.
+8. **Nice-to-haves:** Profile-API tab toggles, `missing_attribution`, `muting_expires_at`, report `collection_ids`, `invalid_handle` display, async-refresh polling, annual reports.
+
+**Unverified:** push titles for the collection types, the malformed `collection_update` fallback title, the GtS field loss at runtime, and Pleroma/Akkoma support for `types[]`, `supported_types` and `exclude_direct`.
