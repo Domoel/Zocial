@@ -1,4 +1,7 @@
-name: Build and Push Zocial Image
+# BACKUP ONLY — the regular pipeline is docker.yml (Gitea container registry + Watchtower).
+# Manually builds the image and pushes it to Docker Hub (domoel/zocial), e.g. if the Gitea registry
+# is unavailable. Needs the repository secrets DOCKER_USERNAME / DOCKER_PASSWORD.
+name: Docker Hub image (backup)
 
 on:
   workflow_dispatch:
@@ -11,7 +14,6 @@ on:
         options:
           - main
           - dev
-          - nodejs
 
 jobs:
   build:
@@ -34,8 +36,6 @@ jobs:
         run: |
           if [ "${{ inputs.branch }}" = "dev" ]; then
             echo "IMAGE_TAG=dev" >> $GITHUB_ENV
-          elif [ "${{ inputs.branch }}" = "nodejs" ]; then
-            echo "IMAGE_TAG=nodejs" >> $GITHUB_ENV
           else
             echo "IMAGE_TAG=latest" >> $GITHUB_ENV
           fi
@@ -48,10 +48,15 @@ jobs:
             echo "CHANNEL=dev" >> $GITHUB_ENV
           fi
 
+      # Secrets via env, not interpolated into the script text: `${{ secrets… }}` in `run:` is
+      # substituted before the shell runs, so the runner would write it in plain text to a temp file.
       - name: Login to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
-            -u "${{ secrets.DOCKER_USERNAME }}" \
+          printf '%s' "$DOCKER_PASSWORD" | docker login \
+            -u "$DOCKER_USERNAME" \
             --password-stdin
 
       - name: Build image

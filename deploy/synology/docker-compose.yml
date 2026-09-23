@@ -1,0 +1,33 @@
+# Compose project for Synology Container Manager.
+# Put this file and a filled-in .env (copy of example.env) into the project folder. The ${...}
+# placeholders are resolved from that .env. Run one project per environment (e.g. production on
+# :latest and dev on :dev) with different ZOCIAL_CONTAINER_NAME / ZOCIAL_PORT.
+services:
+  zocial:
+    image: ${ZOCIAL_IMAGE:?set ZOCIAL_IMAGE in .env}
+    container_name: ${ZOCIAL_CONTAINER_NAME:-zocial}
+    restart: unless-stopped
+    ports:
+      - '${ZOCIAL_PORT:-6666}:80'
+    # Passed explicitly (not env_file) so registry credentials in .env never reach this container.
+    # Read by docker/entrypoint.sh at container start, no rebuild needed.
+    environment:
+      SINGLE_INSTANCE: ${SINGLE_INSTANCE:-}
+      TRANSLATE_API: ${TRANSLATE_API:-}
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Optional — only start this if NO Watchtower runs on the NAS yet (enable it with
+  # COMPOSE_PROFILES=watchtower in .env). One Watchtower updates every container carrying the
+  # label above, across all projects; a second, unscoped instance would stop the first on startup.
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: zocial-watchtower
+    restart: unless-stopped
+    profiles: ['watchtower']
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '${WATCHTOWER_PORT:-8080}:8080'

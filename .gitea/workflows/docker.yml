@@ -1,0 +1,91 @@
+# Builds the Zocial Docker image and pushes it to the container registry of this Gitea instance
+# (git.ztfr.eu/dome/zocial). Watchtower on the Synology polls the registry and recreates a container
+# as soon as the tag it runs gets a new image — see deploy/README.md.
+#
+#   push to main   -> :latest + :main       release channel prod
+#   push to dev    -> :dev                  release channel dev
+#   release tag    -> :<tag> (e.g. :1.12.0) release channel prod, a fixed rollback point
+#   every build    -> :sha-<short sha>      rollback points, pruned by cleanup.yml
+#
+# Required repository secret (Settings -> Actions -> Secrets):
+#   REGISTRY_TOKEN   personal access token of the pushing user with "write:package"
+name: Docker image
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ['*']
+    # Docs never reach the image (.dockerignore drops *.md, nothing in docs/ is part of the build
+    # output), so a docs-only push would just rebuild and restart the container for nothing.
+    # Tag pushes are not path-filtered.
+    paths-ignore: ['docs/**', '**/*.md']
+  workflow_dispatch:
+
+# Serialise builds per ref: two quick pushes must not overwrite :latest / :dev in the wrong order
+# (Watchtower rolls out whatever was pushed last). The second run waits instead of cancelling the
+# first, so no half-pushed image.
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and push
+    runs-on: ubuntu-latest
+    # A hanging build would otherwise block every later deploy of this ref for hours.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve registry, image name and release channel
+        id: image
+        run: |
+          registry="${{ github.server_url }}"
+          registry="${registry#https://}"
+          registry="${registry#http://}"
+          image="${registry}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          # prod for main and release tags, dev for everything else. Consumed by
+          # webpack/shared.config.js (Production/Development label in About and the logs) and
+          # bin/terserOptions.js (prod strips console.log).
+          case "${{ github.ref }}" in
+            refs/heads/main|refs/tags/*) channel=prod ;;
+            *) channel=dev ;;
+          esac
+          echo "registry=${registry}" >> "$GITHUB_OUTPUT"
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "channel=${channel}" >> "$GITHUB_OUTPUT"
+          echo "Image: ${image} (channel ${channel})"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Gitea container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.image.outputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Docker metadata (tags and labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.image }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # add linux/arm64 here for ARM based NAS models
+          platforms: linux/amd64
+          build-args: |
+            ZOCIAL_CHANNEL=${{ steps.image.outputs.channel }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

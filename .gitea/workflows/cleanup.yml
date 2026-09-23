@@ -1,0 +1,47 @@
+# Weekly housekeeping: keeps the newest 3 runs per workflow (artifacts and logs of the
+# rest are deleted with them) and the newest 10 commit-SHA image tags in the container
+# registry. The logic lives in scripts/gitea-cleanup.py.
+#
+# Manual runs default to DRY RUN (see what would go); the schedule runs for real.
+# Deleting registry blobs and artifacts is irreversible.
+#
+# Token: repository secret CLEANUP_TOKEN with the scopes write:repository (runs and
+# artifacts) and write:package (registry). Falls back to REGISTRY_TOKEN, which then needs
+# the additional write:repository scope.
+name: Cleanup
+
+on:
+  schedule:
+    - cron: '23 3 * * 0' # Sundays 03:23
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only list what would be deleted'
+        type: boolean
+        default: true
+      keep_runs:
+        description: 'Newest runs to keep per workflow'
+        default: '3'
+      keep_sha_tags:
+        description: 'Newest sha-* image tags to keep'
+        default: '10'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clean up runs, artifacts and registry
+        env:
+          GITEA_SERVER: ${{ github.server_url }}
+          GITEA_REPO: ${{ github.repository }}
+          GITEA_TOKEN: ${{ secrets.CLEANUP_TOKEN || secrets.REGISTRY_TOKEN }}
+          # Defaults live in the script; the inputs only override them on a manual start
+          # (on schedule they are empty strings, which the script treats as unset).
+          KEEP_RUNS: ${{ inputs.keep_runs }}
+          KEEP_SHA_TAGS: ${{ inputs.keep_sha_tags }}
+          DRY_RUN: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) || 'false' }}
+        run: python3 scripts/gitea-cleanup.py

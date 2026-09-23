@@ -8,8 +8,11 @@ build
 .git
 .gitignore
 
-# CI / Docs
+# CI / Docs / Deploy (not part of the image)
 .github
+.gitea
+deploy
+scripts
 README.md
 *.md
 
