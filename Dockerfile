@@ -10,13 +10,16 @@ WORKDIR /app
 # Build benötigt devDependencies + git
 ENV NODE_ENV=development
 
-# System dependencies + pnpm
-RUN apk add --no-cache git \
- && npm install -g pnpm
+# System dependencies
+RUN apk add --no-cache git
 
-# Install dependencies (cached layer)
+# Install dependencies (cached layer). pnpm is pinned to the `packageManager` version in
+# package.json (single source of truth): an unpinned `npm install -g pnpm` picked up pnpm 12, which
+# tries to switch itself to that exact version via a native @pnpm/exe binary that doesn't exist for
+# Alpine (musl) → ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY.
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")" \
+ && pnpm install
 
 # Copy source
 COPY . .
