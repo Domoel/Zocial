@@ -94,9 +94,9 @@ Zocial therefore remains on Svelte 2 and Sapper indefinitely. The [v2 Svelte doc
 /
 ├── .gitea/workflows/        CI: docker.yml (image → Gitea registry), cleanup.yml, build-image.yml (Docker Hub backup)
 ├── bin/                    Build scripts (template injection, asset pipeline, SVG sprites)
-├── deploy/                 Synology compose project + example.env, deployment guide (see §4)
 ├── docs/                   Documentation (this file, guides, screenshots)
-├── docker/                 nginx.conf template + entrypoint.sh (baked into the image), generic docker-compose.yaml + .env.example
+├── docker/                 nginx.conf template + entrypoint.sh (baked into the image), generic docker-compose.yaml + .env.example,
+│                           synology/ (Container Manager project + Watchtower), README.md (deployment guide, see §4)
 ├── scripts/                Repo housekeeping (gitea-cleanup.py — old runs + sha image tags)
 ├── src/
 │   ├── client.js           Client-side bootstrap (Sapper client, polyfills)
@@ -158,7 +158,7 @@ A custom webpack loader that transforms `'intl.KEY'` string literals at build ti
 
 ### Image build & rollout (Gitea registry + Watchtower)
 
-The image is built by Gitea Actions and published to the **Gitea container registry** of the same instance (`git.ztfr.eu/dome/zocial`), not Docker Hub. Same setup as the Zeitfresser Messenger; full operator guide in [`deploy/README.md`](../deploy/README.md). Two compose variants pull it: the generic `docker/docker-compose.yaml` + `.env.example` (plain `docker compose`, manual updates) and the Synology project in `deploy/synology/` (Container Manager + Watchtower).
+The image is built by Gitea Actions and published to the **Gitea container registry** of the same instance (`git.ztfr.eu/dome/zocial`), not Docker Hub. Same setup as the Zeitfresser Messenger; full operator guide in [`docker/README.md`](../docker/README.md). Two compose variants pull it: the generic `docker/docker-compose.yaml` + `.env.example` (plain `docker compose`, manual updates) and the Synology project in `docker/synology/` (Container Manager + Watchtower).
 
 - **`.gitea/workflows/docker.yml`** runs on every push to `main`/`dev` (docs-only pushes skipped via `paths-ignore`), on tags and by hand. Tags: `main` → `:latest` + `:main`; `dev` → `:dev`; a release tag → `:<tag>`; every build → `:sha-<commit>`. The `ZOCIAL_CHANNEL` build-arg is `prod` for `main` and tags, `dev` otherwise (About/log label, `console.log` stripping). Builds are serialised per ref (`concurrency`, no cancel) so `:latest` can't be overwritten out of order.
 - **Rollout:** Watchtower on the Synology polls the registry and recreates every container labelled `com.centurylinklabs.watchtower.enable=true` whose tag got a new image, so a push is a deploy. **One Watchtower per NAS**: the existing one (Messenger project) also serves Zocial. The compose file's own Watchtower is opt-in (`COMPOSE_PROFILES=watchtower`), because an unscoped second instance stops the first.
@@ -174,7 +174,7 @@ Zocial ships as a **backendless static bundle** served by nginx, so deployment s
 |---|---|---|
 | `SINGLE_INSTANCE` | **Browser** | `entrypoint.sh` writes `/config.js` → `window.__ZOCIAL_SINGLE_INSTANCE__`, loaded by a `<script src="/config.js">` in `template.html` *before* the app boots; read at runtime by `_utils/getSingleInstance.js`. (The `process.env.SINGLE_INSTANCE` `DefinePlugin` entries are only a build-time default; the window var overrides it at runtime.) |
 | `TRANSLATE_API` | **nginx** | `entrypoint.sh` `sed`s the URL into `nginx.conf` from `nginx.conf.template`; nginx then reverse-proxies `/api/translate`, `/api/detect`, `/api/languages` to it (keeping any key server-side, no CORS). Swap the translation backend = set the env var + restart the container. See §13. |
-| `PORT` | **Docker** | host port mapping in `docker/docker-compose.yaml` (default 80). The Synology project in `deploy/synology/` names it `ZOCIAL_PORT`, so it can't clash with other projects' `.env` files. |
+| `PORT` | **Docker** | host port mapping in `docker/docker-compose.yaml` (default 80). The Synology project in `docker/synology/` names it `ZOCIAL_PORT`, so it can't clash with other projects' `.env` files. |
 
 > **Historical exception that drove the v1.10.0 i18n rework:** the UI language (`LOCALE`) used to be the **only** deploy setting baked in at **build time** — `DefinePlugin` + the `svelte-intl-loader` inlined one locale's strings into the bundle. That's why setting it via `.env` at runtime did nothing, and a German/Russian image needed a dedicated `--build-arg LOCALE` build. Discovering that asymmetry (a runtime `.env` change couldn't switch the language) is what surfaced the whole runtime-i18n migration. `LOCALE` is now **removed**; every current deploy setting is runtime-injectable as above, and the UI language is a per-user runtime choice (§15, §21 [v1.10.0]).
 

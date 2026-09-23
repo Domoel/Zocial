@@ -204,7 +204,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-**Synology with automatic updates:** [`deploy/synology/`](deploy/synology/) holds a Container Manager project that is kept up to date by Watchtower; [`deploy/README.md`](deploy/README.md) covers the build pipeline and the setup.
+**Synology with automatic updates:** [`docker/synology/`](docker/synology/) holds a Container Manager project that is kept up to date by Watchtower; [`docker/README.md`](docker/README.md) covers the build pipeline and the setup.
 
 The instance hostname is injected at container startup — **no rebuild required** to switch instances. Change `.env`, restart, done.
 

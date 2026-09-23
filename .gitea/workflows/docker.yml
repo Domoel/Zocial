@@ -1,6 +1,6 @@
 # Builds the Zocial Docker image and pushes it to the container registry of this Gitea instance
 # (git.ztfr.eu/dome/zocial). Watchtower on the Synology polls the registry and recreates a container
-# as soon as the tag it runs gets a new image — see deploy/README.md.
+# as soon as the tag it runs gets a new image — see docker/README.md.
 #
 #   push to main   -> :latest + :main       release channel prod
 #   push to dev    -> :dev                  release channel dev

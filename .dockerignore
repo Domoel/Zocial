@@ -11,7 +11,7 @@ build
 # CI / Docs / Deploy (not part of the image)
 .github
 .gitea
-deploy
+docker/synology
 scripts
 README.md
 *.md
