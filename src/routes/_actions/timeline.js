@@ -118,8 +118,11 @@ async function fetchTimelineItemsFromNetworkWithRetry (instanceName, accessToken
   try {
     // The first cold attempt at a slow list/tag read fails fast at the normal read timeout; the
     // retry below then gets the full SLOW_READ_TIMEOUT headroom (the backend has had a chance to
-    // warm up by then). Caps a hanging cold list at ~20 s + 40 s instead of 40 s + 40 s.
-    const firstTimeout = isSlowTimeline ? SLOW_READ_TIMEOUT_FIRST : undefined
+    // warm up by then). Caps a hanging cold list at ~20 s + 40 s instead of 40 s + 40 s. Only when
+    // a retry can actually follow (blank/stale view): pagination or a refresh over fresh content
+    // is never retried, so it keeps the full headroom on its single attempt.
+    const canRetry = isSlowTimeline && shouldRetryTimelineFetch(instanceName, timelineName)
+    const firstTimeout = canRetry ? SLOW_READ_TIMEOUT_FIRST : undefined
     return await fetchTimelineItemsFromNetwork(instanceName, accessToken, timelineName, lastTimelineItemId, firstTimeout)
   } catch (e) {
     // List/tag timelines are assembled per-list/-tag server-side; the *first* cold request
