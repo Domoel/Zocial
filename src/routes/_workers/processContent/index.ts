@@ -3,6 +3,7 @@ import { statusDomToPlainText } from '../../_utils/statusHtmlToPlainText.ts'
 import { computeHashtagBarForStatus } from './hashtagBar.ts'
 import { renderMfm } from './mfm.ts'
 import { renderPostHTMLToDOM } from '../../_utils/renderPostHTML.ts'
+import { getDisplayableQuote } from '../../_utils/quotes.js'
 import type { Mention } from '../../_utils/types.ts'
 import {
   type DefaultTreeAdapterMap,
@@ -68,7 +69,10 @@ registerPromiseWorker(
         emojis,
         mentionsByURL,
         mentionsByAcct,
-        hasQuote: 'quote' in originalStatus,
+        // Only strip the "RE: <link>" fallback when the quote is rendered inline. A quote that can't
+        // be shown (Mastodon wrapper not `accepted`, muted/blocked author, account not fetched, or
+        // `quote: null`) keeps its link, so the context isn't silently lost.
+        hasQuote: !!getDisplayableQuote(originalStatus),
       })
     }
     ;({ dom, hashtagsInBar } = computeHashtagBarForStatus(dom, originalStatus))

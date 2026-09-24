@@ -227,8 +227,13 @@ export default {
           })
           : [],
       sensitiveShown: ({ $sensitivesShown, uuid }) => !!$sensitivesShown[uuid],
-      sensitive: ({ originalStatus, $markMediaAsSensitive, $neverMarkMediaAsSensitive }) => (
-        !$neverMarkMediaAsSensitive && ($markMediaAsSensitive || originalStatus.sensitive || originalStatus.spoiler_text)
+      // Blurred when the author marked it sensitive or put a CW on the post — and when one of the
+      // user's own "hide with a warning" word filters matches (`filterWarning` from Status.html): the
+      // warning collapses the text, and the media mustn't give away what was filtered. The filter
+      // wins over "Show sensitive media by default" (neverMarkMediaAsSensitive), which is about authors' markings.
+      sensitive: ({ originalStatus, filterWarning, $markMediaAsSensitive, $neverMarkMediaAsSensitive }) => (
+        !!filterWarning ||
+        (!$neverMarkMediaAsSensitive && ($markMediaAsSensitive || originalStatus.sensitive || originalStatus.spoiler_text))
       ),
       elementId: ({ uuid }) => `sensitive-${uuid}`,
       innerComputedClass: ({ sensitive }) => classname(

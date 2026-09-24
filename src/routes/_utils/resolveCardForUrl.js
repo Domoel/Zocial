@@ -1,11 +1,17 @@
 import { search } from '../_api/search.js'
 
-function extractFirstExternalLink (html) {
+// `skipQuoteFallback`: ignore a quote post's "RE: <link>" fallback (`.quote-inline`) — set when the
+// quoted author is muted/blocked, so the hidden post can't come back as a preview card (§17). Otherwise
+// that link is fair game: on servers without a quote field (GoToSocial) its card is the only context.
+function extractFirstExternalLink (html, skipQuoteFallback = false) {
   if (typeof document === 'undefined' || !html) return null
   const div = document.createElement('div')
   div.innerHTML = html
   const links = div.querySelectorAll('a[href]')
   for (const link of links) {
+    if (skipQuoteFallback && link.closest('.quote-inline, .reference-link-inline')) {
+      continue
+    }
     try {
       const url = new URL(link.href)
       if (url.protocol.startsWith('http') && url.origin !== window.location.origin) {

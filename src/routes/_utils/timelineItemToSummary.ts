@@ -1,4 +1,5 @@
 import { computeFilterContextsForStatusOrNotification } from './computeFilterContextsForStatusOrNotification.js'
+import { isQuoteOfHiddenAccount } from './quotes.js'
 import { store } from '../_store/store.js'
 
 export interface TimelineSummary {
@@ -10,6 +11,7 @@ export interface TimelineSummary {
   statusId: string | undefined
   type: string | undefined
   filterContexts: unknown
+  quoteHidden: true | undefined
   start: boolean
   end: boolean
   replies: undefined
@@ -41,6 +43,12 @@ export function timelineItemToSummary(
       item,
       contextsToRegex,
     ),
+    // quotes a muted/blocked account (server-reported) → dropped in createFilterFunction; `undefined`
+    // rather than `false` to keep TimelineSummary small
+    quoteHidden:
+      isQuoteOfHiddenAccount(
+        item.status ? item.status.reblog || item.status : item.reblog || item,
+      ) || undefined,
     start: false,
     end: false,
     replies: undefined,

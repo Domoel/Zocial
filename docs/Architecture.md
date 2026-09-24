@@ -906,13 +906,24 @@ FEP-e232 (the ActivityPub quote extension) was considered but rejected because i
 
 ### Inline rendering (where supported)
 
-Where the server returns a `quote` field (e.g. Akkoma, some Mastodon forks), `Status.html` renders it inline using `<svelte:self status={originalQuote} quotedBy={uuid}>`. This is a recursive self-reference — a Status component renders another Status inside it.
+Where the server returns a `quote` field, `Status.html` renders it inline using `<svelte:self status={originalQuote} quotedBy={uuid}>`. This is a recursive self-reference — a Status component renders another Status inside it. The field comes in two shapes, both resolved by **`_utils/quotes.js`** (the only place that reads `status.quote`):
+
+| Server | `status.quote` | Displayable when |
+|---|---|---|
+| Akkoma / Pleroma / Fedibird | the quoted **Status** itself | it has an `account` |
+| Mastodon ≥ 4.4 | a **Quote wrapper** `{ state, quoted_status }` (nested quotes: ShallowQuote `{ state, quoted_status_id }`) | `state === 'accepted'` and `quoted_status.account` |
+| GoToSocial (0.22) | absent — the quote is just a link in the text | never |
+
+- **`getDisplayableQuote(status)`** → the Status to render, or `null`. Used by `Status.html` (`originalQuote`), the content worker and `rehydrateQuote`. **`getQuoteHandle`** feeds edit / delete-and-redraft (which used to read `status.quote.account.acct` and crashed on Mastodon's wrapper).
+- **Fallback link.** Quote posts carry a `RE: <link>` fallback in their HTML (`.quote-inline` / `.reference-link-inline`). The content worker strips it **only when the quote is rendered inline** (`hasQuote: !!getDisplayableQuote(…)`). It used to strip it whenever the `quote` key merely existed, so a quote that couldn't be shown (`quote: null`, a non-accepted state, and *every* Mastodon quote before the wrapper was understood) vanished completely. The client-side card resolver (`extractFirstExternalLink`) skips these fallback links only when the quoted author is muted/blocked, so the hidden post can't come back as a card. Otherwise the link stays eligible: on GoToSocial (no quote field) the card resolved from it is the only context a Mastodon quote gets, and for a displayable quote `showCard` is false anyway.
+- **Muted / blocked quoted author (Mastodon ≥ 4.5).** States `muted_account`, `blocked_account`, `blocked_domain` still carry the quoted status but mean "don't show it". `timelineItemToSummary` flags such posts (`quoteHidden`), and `createFilterFunction` **drops the whole post** in the home/list and public/tag contexts — where a mute hides that account's own posts; shown without its quote the post lacks its context. Notifications, threads and profiles keep the post (fallback link visible, no card, no inline quote), mirroring Mastodon's mute semantics. Akkoma-style servers don't report this, so there the quote simply isn't shown (and its link stays). See §21 [v1.12.1].
+- **Word filters on quotes.** A quoted post is checked separately (`filterWarning` in its own `Status`). Besides the "warn" filters it also applies the *hide* filters (`currentTimelineHideFilterRegex`): a quote isn't a timeline item, so it can't be dropped on its own and is collapsed behind the "Filtered" warning instead.
 
 ### Null-safety
 
 Some servers (Friendica, some Mastodon federations) return a `quote` object where `account` is `null` — the quoted post is from a remote server not yet fully fetched. All computed properties that access `originalAccount` have explicit null guards:
 
-- `showQuote` — requires `originalQuote && originalQuote.account` before rendering
+- `showQuote` — `getDisplayableQuote` only returns a quote whose `account` is set
 - `originalAccountId`, `originalAccountDisplayName`, `originalAccountEmojis` — all guard `originalAccount && …`
 
 Without these guards, accessing `originalAccount.id` throws a `TypeError` that crashes the entire timeline.
@@ -1219,8 +1230,8 @@ This section captures significant design decisions, feature choices, and archite
 - **Timelines & lists** — 1.4.0 (list management), 1.7.0 (list-error fallback, 60 s poll gate, `alwaysStreaming`), 1.8.3 (list reliability), 1.8.4 (cache-first everywhere), 1.9.2 (unfollow/block cache purge), 1.10.1 (5xx cold-load retry, scroll-up re-mount), 1.10.4 (gap-fill hardening), 1.10.5 + 1.10.7 (exclusive lists + Manage-lists page + home purge), 1.11.3 (members overview) — see also §19
 - **i18n & translation** — 1.6.0 (LibreTranslate backend), 1.6.1/1.7.1 (language detection), 1.10.0 (runtime i18n), 1.10.2 (first-visit language)
 - **Accounts & social** — 1.3.0 (in-app profile editing), 1.9.0 (manage follows, graded empty-state), 1.9.1 (remove from followers)
-- **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes)
-- **UI, UX & accessibility** — 1.1.0 (profile stats bar), 1.8.2 (word-filter shortcut), 1.10.3 (`scrollbar-gutter`), 1.11.4 (keyboard tab reordering)
+- **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes), 1.12.1 (Mastodon quote wrapper, muted/blocked quoted author)
+- **UI, UX & accessibility** — 1.1.0 (profile stats bar), 1.8.2 (word-filter shortcut), 1.10.3 (`scrollbar-gutter`), 1.11.4 (keyboard tab reordering), 1.12.1 (filter warning blurs media, hide-filters on quotes)
 - **Logs & auth** — 1.7.0 (log persistence), 1.7.1 (expected conditions as warnings), 1.8.11 (OAuth `state` CSRF)
 
 ---
@@ -1773,6 +1784,37 @@ Membership changes are routed through `addAccountToListAndPurge` / `removeAccoun
 
 ---
 
+### [v1.12.1] Word-filter warning also blurs media; hide-filters collapse quoted posts
+
+**Symptom (user-reported):** a "hide with a warning" word filter collapsed the post's *text* behind "Filtered", but its attached image (a giant bumblebee for a user who filters bees) was shown in full.
+
+**Cause:** the warning reuses the spoiler mechanism (`computedSpoilerText`), which gates text, card, poll and quote on `showContent`. Media deliberately isn't gated there; `StatusMediaAttachments` blurs it via its own `sensitive` (author's `sensitive` flag or a CW). A client-side filter warning sets neither, so the media stayed visible.
+
+**Decision:** `Status.html` passes `filterWarning` to `StatusMediaAttachments`, whose `sensitive` becomes `filterWarning || (usual rule)`. The media is **blurred** (blurhash + "click to show"), not removed, the same as a CW'd sensitive post. Expanding the text doesn't reveal the media; that's a second, deliberate click. The filter **wins over "Show sensitive media by default"** (`neverMarkMediaAsSensitive`): that setting is about authors' markings, while a filter is the user's own explicit wish.
+
+**Plus — quoted posts:** "hide" (irreversible) filters only ever dropped the *outer* timeline item. A quoted post matching one was rendered in full inside a non-matching post. Since a quote can't be dropped on its own, a quoted `Status` now also tests `currentTimelineHideFilterRegex` and collapses behind the warning (and its media blurs).
+
+**Files:** `_components/status/Status.html` (`filterWarning`, `sensitive`), `_components/status/StatusMediaAttachments.html` (`sensitive`), `_store/computations/timelineFilterComputations.js` (`currentTimelineHideFilterRegex`).
+
+---
+
+### [v1.12.1] Quote posts: understand Mastodon's Quote wrapper; drop posts quoting a muted/blocked account
+
+**Symptom (user-reported):** "quotes sometimes disappear from posts completely — probably because I muted the quoted account. Better if the whole post disappeared, otherwise I lack the context."
+
+**Cause (broader than reported):** Zocial only knew Akkoma-style quotes (`status.quote` = the Status). Mastodon ≥ 4.4 sends a wrapper `{ state, quoted_status }` without `account`, so **no Mastodon quote was ever rendered inline**. Meanwhile the content worker stripped the `RE: <link>` fallback because a `quote` key existed. Net effect on Mastodon: every quote vanished without a trace. The muted case (4.5 `muted_account`) is one instance of that.
+
+**Decision:**
+1. One resolver, `_utils/quotes.js`, for both shapes. Accepted Mastodon quotes now render inline (a new capability for Mastodon users).
+2. Strip the fallback link only when the quote is actually rendered. Otherwise keep it, so context is never silently lost.
+3. Muted/blocked quoted author (`muted_account` / `blocked_account` / `blocked_domain`): **drop the whole post** from home/lists and public/tag timelines, as the user asked. Keep it in notifications, threads and profiles (Mastodon's mute semantics: mutes hide from feeds, not from places you navigate to on purpose; a mention quoting a muted account must not be missed).
+
+**Tradeoffs:** (a) A friend's post is hidden from the feed because of whom it quotes. That's intended, but it's a stronger effect than a mute has on its own; could become a setting if users object. (b) Only Mastodon ≥ 4.5 reports mutes/blocks on quotes; Akkoma-style servers give no signal, so there the quote just isn't shown and its link stays. (c) `quoteHidden` is computed when the item is fetched, so muting someone later doesn't retroactively hide already-loaded quote posts until the next refetch (same as other server-side filtering).
+
+**Files:** `_utils/quotes.js` (new), `_utils/timelineItemToSummary.ts` (`quoteHidden`), `_utils/createFilterFunction.js`, `_components/status/Status.html` (`originalQuote`), `_workers/processContent/index.ts` (`hasQuote`), `_actions/rehydrateStatusOrNotification.js`, `_actions/edit.js` + `deleteAndRedraft.js` (`getQuoteHandle`), `_utils/resolveCardForUrl.js` (skip the fallback link for a hidden quote). See §17.
+
+---
+
 ## 22. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1824,6 +1866,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.11.5** | 2026-06-21 | **Emoji-data robustness (dev patch / fix).** Source-map triage of dev v1.11.4 console logs: the recurring `NetworkError` / `Timed out after 20 s` warnings on home + background refresh were the fail-fast timeout (§21 [v1.10.1]/[v1.11.1]) and best-effort swallow (§21 [v1.7.1]) working as designed during a brief dev-server rebuild. The one real gap was an **uncaught promise rejection** from emoji-picker-element's ETag `HEAD /emoji-en-US.json` hitting a transient non-2xx mid-deploy — `findByUnicodeOrName` / `findBySearchQuery` (and their fire-and-forget caller `addEmojiTooltips`) didn't catch it. Both now swallow a data-source failure (warn + empty result) so a momentarily unavailable emoji set degrades gracefully and self-heals on the next call; `sync.js` background-refresh log tidied to `err.message`. See §23 |
 | **1.11.6** | 2026-06-21 | **Tab-reorder screen-reader order fix (dev patch / a11y).** Follow-up to [v1.11.4] from the same blind tester: NVDA in browse mode announced the nav tab's `aria-keyshortcuts` **before** the tab name ("Alt+Shift+Right Alt+Shift+Left, Notifications"). Replaced `aria-keyshortcuts` on each nav link with a single shared `aria-describedby` hint (`#nav-reorder-hint`, `tabReorderHint` in all 5 locales) — descriptions are announced **after** the name, so the tab name now comes first. Key binding unchanged. See §21 [v1.11.4] |
 | **1.12.0** | 2026-09-23 | **Production release** rolling up the 1.11.1–1.11.6 dev line. Features — **list members overview** (`/lists/:id/members` with follow/unfollow), **keyboard tab reordering** with screen-reader announcements (Alt+Shift+←/→, name-first announcement), **app-logo fallback** for push-notification icons — plus faster recovery on hanging cold list/tag loads and a robust emoji data source. Pre-release review fixed two issues in the 1.11.x line (fail-fast timeout also hit pagination; the 1.11.5 emoji fix missed the library's fire-and-forget update check) — see §23. **Deployment:** images move from Docker Hub to the Gitea registry (`git.ztfr.eu/dome/zocial`, built on every push, rolled out by Watchtower; Docker Hub stays as a manual backup) and the image build is fixed (pnpm pinned to `packageManager`) — see §4. Full notes: [`docs/release-notes/1.12.0.md`](release-notes/1.12.0.md) |
+| **1.12.1** | 2026-09-24 | **Word filters + quote posts (dev patch / fixes, user-reported).** A "hide with a warning" filter now also blurs the post's media (it only collapsed the text), and *hide* filters collapse a matching **quoted** post instead of letting it through. Quote posts: Mastodon's Quote wrapper (`{ state, quoted_status }`) is understood, so Mastodon quotes render inline for the first time (before, they vanished completely because the `RE:` fallback link was stripped anyway). The fallback link is kept whenever the quote can't be shown. Posts quoting a muted/blocked account (Mastodon ≥ 4.5) are dropped from home/list/public timelines. Also fixes a crash on edit/redraft of a Mastodon quote post. See §17, §21 [v1.12.1] |
 
 ---
 

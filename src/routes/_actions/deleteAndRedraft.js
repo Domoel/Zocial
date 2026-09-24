@@ -3,6 +3,7 @@ import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/impo
 import { doDeleteStatus } from './delete.js'
 import { store } from '../_store/store.js'
 import { database } from '../_database/database.js'
+import { getQuoteHandle } from '../_utils/quotes.js'
 
 export async function deleteAndRedraft (status) {
   // Do everything that can fail BEFORE the destructive delete: load the compose dialog component
@@ -45,7 +46,7 @@ export async function deleteAndRedraft (status) {
     sensitive: !!status.sensitive,
     quoteId: status.quote_id,
     localOnly: status.local_only,
-    quoteHandle: status.quote && '@' + status.quote.account.acct
+    quoteHandle: getQuoteHandle(status)
   })
   showComposeDialog()
 }

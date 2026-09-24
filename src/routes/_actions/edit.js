@@ -3,6 +3,7 @@ import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/impo
 import { store } from '../_store/store.js'
 import { database } from '../_database/database.js'
 import { getStatusSource } from '../_api/statuses.js'
+import { getQuoteHandle } from '../_utils/quotes.js'
 
 export async function edit (status) {
   const { currentInstance, accessToken } = store.get()
@@ -35,7 +36,7 @@ export async function edit (status) {
     sensitive: !!status.sensitive,
     quoteId: status.quote_id,
     localOnly: status.local_only,
-    quoteHandle: status.quote && '@' + status.quote.account.acct,
+    quoteHandle: getQuoteHandle(status),
     editId: status.id
   })
   const showComposeDialog = await dialogPromise

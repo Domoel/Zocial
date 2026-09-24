@@ -97,6 +97,21 @@ export function timelineFilterComputations (store) {
     }
   )
 
+  // The "hide"/irreversible filter regex for the current timeline's context. Those filters normally
+  // drop the whole timeline item (createFilterFunction); Status.html uses this one only for a *quoted*
+  // post, which isn't a timeline item of its own and so gets collapsed behind the warning instead.
+  store.compute(
+    'currentTimelineHideFilterRegex',
+    ['unexpiredInstanceFilterRegexes', 'currentInstance', 'timelineWordFilterContext'],
+    (hideRegexes, currentInstance, wordFilterContext) => {
+      if (!wordFilterContext) {
+        return undefined
+      }
+      const contextsToRegex = hideRegexes[currentInstance]
+      return (contextsToRegex && contextsToRegex[wordFilterContext]) || undefined
+    }
+  )
+
   // This one is based on whatever the current timeline is
   store.compute(
     'timelineFilterFunction',

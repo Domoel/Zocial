@@ -7,6 +7,7 @@ import {
 import { store } from '../_store/store.js'
 import PromiseWorker from 'promise-worker'
 import { emit } from '../_utils/eventBus.ts'
+import { getDisplayableQuote } from '../_utils/quotes.js'
 
 let worker
 export function init () {
@@ -52,8 +53,9 @@ export const rehydrated = Symbol('rehydrated')
 export const rehydrating = Symbol('rehydrating')
 
 function rehydrateQuote (originalStatus) {
-  if (originalStatus.quote) {
-    return rehydrateStatusOrNotification({ status: originalStatus.quote })
+  const quote = getDisplayableQuote(originalStatus)
+  if (quote) {
+    return rehydrateStatusOrNotification({ status: quote })
   }
 }
 

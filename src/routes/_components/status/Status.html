@@ -44,7 +44,7 @@
     <StatusCard {...params} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle' && showMedia }
-    <StatusMediaAttachments {...params} on:recalculateHeight />
+    <StatusMediaAttachments {...params} {filterWarning} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle' && showPoll && (showContent || preloadHiddenContent)}
     <StatusPoll {...params} shown={showContent} on:recalculateHeight />
@@ -255,6 +255,7 @@
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
+  import { getDisplayableQuote, isQuoteOfHiddenAccount } from '../../_utils/quotes.js'
   import '@easrng/sparkle/index.js'
 
   const isToolbar = node => node.classList.contains('status-toolbar')
@@ -304,7 +305,7 @@
       // Client-side card: delay resolution so fast-scrolled items don't trigger API calls
       const { $hideCards } = this.store.get()
       if (!$hideCards && !_origStatus.card && _origStatus.content) {
-        const firstUrl = extractFirstExternalLink(_origStatus.content)
+        const firstUrl = extractFirstExternalLink(_origStatus.content, isQuoteOfHiddenAccount(_origStatus))
         if (firstUrl) {
           this._cardTimer = setTimeout(() => {
             const { currentInstance, accessToken } = this.store.get()
@@ -448,15 +449,18 @@
       spoilerText: ({ originalStatus, plainTextContentOverLength }) => originalStatus.spoiler_text,
       // A "hide with a warning" (non-irreversible) word filter matching this post in the current
       // timeline's context. Such posts are kept (not dropped) and collapsed behind a "Filtered"
-      // warning by reusing the spoiler mechanism. Returns '' when no warn filter applies.
-      filterWarning: ({ status, $currentTimelineWarnFilterRegex, $messages }) => {
-        if (!$currentTimelineWarnFilterRegex) {
+      // warning by reusing the spoiler mechanism; their media is blurred too (StatusMediaAttachments).
+      // A *quoted* post can't be dropped on its own (only the outer post is a timeline item), so a
+      // "hide"/irreversible filter matching it collapses it the same way. Returns '' when none applies.
+      filterWarning: ({ status, quotedBy, $currentTimelineWarnFilterRegex, $currentTimelineHideFilterRegex, $messages }) => {
+        const regexes = [$currentTimelineWarnFilterRegex, quotedBy && $currentTimelineHideFilterRegex].filter(Boolean)
+        if (!regexes.length) {
           return ''
         }
         try {
           const searchIndex = createSearchIndexFromStatusOrNotification(status)
           // FILTERED_TEXT is an i18n key; resolve it live so the warning follows the UI language
-          return $currentTimelineWarnFilterRegex.test(searchIndex) ? $messages[FILTERED_TEXT] : ''
+          return regexes.some(regex => regex.test(searchIndex)) ? $messages[FILTERED_TEXT] : ''
         } catch (e) {
           return ''
         }
@@ -492,14 +496,16 @@
         originalStatus.media_attachments &&
         originalStatus.media_attachments.length
       ),
-      originalQuote: ({ originalStatus }) => originalStatus.quote,
-      showQuote: ({ quotedBy, originalQuote }) => quotedBy ? false : (originalQuote && originalQuote.account ? originalQuote : null),
+      // Akkoma-style quote (a Status) or Mastodon's Quote wrapper — null unless displayable (§17)
+      originalQuote: ({ originalStatus }) => getDisplayableQuote(originalStatus),
+      showQuote: ({ quotedBy, originalQuote }) => quotedBy ? false : originalQuote,
       mediaAttachments: ({ originalStatus }) => (
         originalStatus.media_attachments
       ),
       sensitiveShown: ({ $sensitivesShown, uuid }) => !!$sensitivesShown[uuid],
-      sensitive: ({ originalStatus, $markMediaAsSensitive, $neverMarkMediaAsSensitive }) => (
-        !$neverMarkMediaAsSensitive && ($markMediaAsSensitive || originalStatus.sensitive)
+      // keep in sync with StatusMediaAttachments' `sensitive` (this one feeds the aria label)
+      sensitive: ({ originalStatus, filterWarning, $markMediaAsSensitive, $neverMarkMediaAsSensitive }) => (
+        !!filterWarning || (!$neverMarkMediaAsSensitive && ($markMediaAsSensitive || originalStatus.sensitive))
       ),
       originalAccountEmojis: ({ originalAccount }) => (originalAccount ? originalAccount.emojis || [] : []),
       originalStatusEmojis: ({ originalStatus }) => (originalStatus.emojis || []),
