@@ -288,18 +288,31 @@
       }
       scheduleIdleTask(() => addEmojiTooltips(this.refs.article))
 
-      // Async: load the replied-to account for reply header and boosted-reply header
+      // Reply header and boosted-reply header need only the replied-to *account*. Self-replies and
+      // replies to me need no lookup; otherwise look it up by in_reply_to_account_id — accounts are
+      // stored far more often than the parent post, so the header doesn't depend on whether the parent
+      // happens to be cached. The parent-post lookup is only a fallback for servers without that field.
       const { status: _status, originalStatus: _origStatus } = this.get()
-      const replyToId = _status.reblog
-        ? _status.reblog.in_reply_to_id
-        : _origStatus.in_reply_to_id
-      if (replyToId) {
-        const { currentInstance } = this.store.get()
-        database.getStatus(currentInstance, replyToId).then(parentStatus => {
-          if (parentStatus) {
-            try { this.set({ inReplyToAccount: parentStatus.account }) } catch (e) {}
-          }
-        }).catch(() => {})
+      const replyStatus = _status.reblog || _origStatus
+      if (replyStatus.in_reply_to_id) {
+        const { currentInstance, currentVerifyCredentials } = this.store.get()
+        const targetId = replyStatus.in_reply_to_account_id
+        const knownAccount = targetId && (
+          (replyStatus.account && replyStatus.account.id === targetId && replyStatus.account) ||
+          (currentVerifyCredentials && currentVerifyCredentials.id === targetId && currentVerifyCredentials)
+        )
+        if (knownAccount) {
+          this.set({ inReplyToAccount: knownAccount })
+        } else {
+          const lookup = targetId
+            ? database.getAccount(currentInstance, targetId)
+            : database.getStatus(currentInstance, replyStatus.in_reply_to_id).then(parent => parent && parent.account)
+          lookup.then(account => {
+            if (account) {
+              try { this.set({ inReplyToAccount: account }) } catch (e) {}
+            }
+          }).catch(() => {})
+        }
       }
 
       // Client-side card: delay resolution so fast-scrolled items don't trigger API calls

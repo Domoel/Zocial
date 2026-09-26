@@ -12,7 +12,9 @@ export async function getGenericEntityWithId (store, cache, instanceName, id) {
   const result = await dbPromise(db, store, 'readonly', (store, callback) => {
     store.get(id).onsuccess = (e) => callback(e.target.result)
   })
-  setInCache(cache, instanceName, id, result)
+  if (result && !hasInCache(cache, instanceName, id)) { // hits only, see getStatus()
+    setInCache(cache, instanceName, id, result)
+  }
   return result
 }
 
