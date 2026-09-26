@@ -55,7 +55,16 @@ Automatically fix most linting issues:
 
 ## Tests
 
-lol, lmao
+Unit tests for the parts that broke before (caches, streaming, rendering, compose, logout, several tabs, …) live in `test/`:
+
+    pnpm test
+
+`bin/run-tests.js` bundles each `test/*.test.js` with esbuild and runs it with Node's test runner. The app code is written for the browser, so a test swaps the modules it can't load in Node for mocks from `test/mocks/`, declared at the top of the file:
+
+    // @mock _store/store.js -> ./mocks/timelineStore.js
+    // @define ZOCIAL_IS_BROWSER=true
+
+The Docker build runs `pnpm run lint && pnpm test` before building, so a failing check builds no image (and Watchtower keeps the running one).
 
 ## Debug build
 

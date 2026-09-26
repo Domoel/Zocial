@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "version": "1.12.4",
+  "version": "1.12.5",
   "scripts": {
     "lint": "standard && standard --plugin html 'src/routes/**/*.html' && tsc && prettier -c 'src/**/*.ts'",
     "test": "node ./bin/run-tests.js",
