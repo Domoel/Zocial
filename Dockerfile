@@ -3,7 +3,9 @@
 # -----------------------------
 # Build Stage
 # -----------------------------
-FROM node:20-alpine AS build
+# Node 24 LTS (maintained until April 2028). Node 20 reached end-of-life in April 2026; a build with 24
+# produced byte-identical app output (only the service worker's build timestamp differs).
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
@@ -17,9 +19,11 @@ RUN apk add --no-cache git
 # package.json (single source of truth): an unpinned `npm install -g pnpm` picked up pnpm 12, which
 # tries to switch itself to that exact version via a native @pnpm/exe binary that doesn't exist for
 # Alpine (musl) → ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY.
+# --frozen-lockfile: install exactly what pnpm-lock.yaml pins; fail instead of silently resolving
+# newer versions when package.json and the lockfile disagree.
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")" \
- && pnpm install
+ && pnpm install --frozen-lockfile
 
 # Copy source
 COPY . .

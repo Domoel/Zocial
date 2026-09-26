@@ -164,8 +164,9 @@ The image is built by Gitea Actions and published to the **Gitea container regis
 - **Rollout:** Watchtower on the Synology polls the registry and recreates every container labelled `com.centurylinklabs.watchtower.enable=true` whose tag got a new image, so a push is a deploy. **One Watchtower per NAS**: the existing one (Messenger project) also serves Zocial. The compose file's own Watchtower is opt-in (`COMPOSE_PROFILES=watchtower`), because an unscoped second instance stops the first.
 - **Housekeeping:** `cleanup.yml` + `scripts/gitea-cleanup.py` (weekly; manual runs default to a dry run) keep the newest 10 `sha-*` tags and 3 runs per workflow. Without it the registry grows by one full image per push.
 - **Backup:** `build-image.yml` still pushes `domoel/zocial` to Docker Hub, manual dispatch only.
-- **Caching and security headers (`docker/nginx.conf`, v1.12.4).** Only `/client/` (webpack output with a content hash) is `immutable`. Everything that keeps its name across deploys (the shell `service-worker-index.html`, `service-worker.js`, `config.js`, theme CSS, the manifest, the emoji JSON) is served `no-cache` (revalidated via ETag). Before, every `.js/.css` was `immutable` for 30 days: a runtime-config change didn't reach returning browsers, and since the service worker precaches through the HTTP cache it could pin a stale shell. Every response carries `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff` and `no-referrer` (repeated per `location`, since nginx drops inherited `add_header`s). The runtime image is `nginx:stable-alpine`, so security fixes arrive with the next build.
+- **Caching and security headers (`docker/nginx.conf`, v1.12.4).** Only `/client/` (webpack output with a content hash) is `immutable`. Everything that keeps its name across deploys (the shell `service-worker-index.html`, `service-worker.js`, `config.js`, theme CSS, the manifest, the emoji JSON) is served `no-cache` (revalidated via ETag). Before, every `.js/.css` was `immutable` for 30 days: a runtime-config change didn't reach returning browsers, and since the service worker precaches through the HTTP cache it could pin a stale shell. Every response carries `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff` and `no-referrer` (repeated per `location`, since nginx drops inherited `add_header`s). The runtime image is `nginx:stable-alpine`, so security fixes arrive with the next build. See §21 [v1.12.4].
 - **Tags:** `metadata-action` runs with `flavor: latest=false`. Its default adds `:latest` to tag pushes too, so any tag would have been rolled into production by Watchtower.
+- **Build stage: `node:24-alpine`** (LTS until April 2028; Node 20 reached end-of-life in April 2026) with `pnpm install --frozen-lockfile`. Checked before the switch: a Node 24 build of the same tree produced byte-identical app output to Node 20 (only the service worker's build timestamp differs), and the lockfile is in sync. The Sapper export ends with a few `ECONNRESET` lines for pages still being crawled when its server closes. That happens identically on Node 20 and is harmless.
 - **pnpm is pinned** in the `Dockerfile` to the `packageManager` version from `package.json`. An unpinned `npm install -g pnpm` broke the build when pnpm 12 tried to switch itself to that version through a native binary that doesn't exist for Alpine/musl (`ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY`, 2026-09-23). Bump pnpm by changing `packageManager` (and regenerating the lockfile), never in the Dockerfile.
 
 ### Runtime configuration (deploy-time env, no rebuild)
@@ -435,7 +436,7 @@ Props flow down via `createMakeProps()` (`_actions/createMakeProps.js`) which bu
 
 `Status.html` (≈ 30 KB) is the largest component. It handles:
 - **Header** — boost/reply attribution, author avatar, display name, timestamp, thread position lines.
-- **Content** — HTML post content, spoiler toggle, long-post collapse. The server sanitises it; `renderPostHTML.ts` additionally drops active and embedding elements, `on*` attributes and script-capable URLs (defence in depth, v1.12.4 — the HTML also comes from third-party servers, and every account's token lives in this origin). `style` is kept; the CSP already blocks inline script. Reaction names are HTML-escaped like display names.
+- **Content** — HTML post content, spoiler toggle, long-post collapse. The server sanitises it; `renderPostHTML.ts` additionally drops active and embedding elements, `on*` attributes and script-capable URLs (defence in depth, v1.12.4 — the HTML also comes from third-party servers, and every account's token lives in this origin). `style` is kept; the CSP already blocks inline script. Reaction names are HTML-escaped like display names. See §21 [v1.12.4].
 - **Media** — `StatusMediaAttachments.html` renders images, video, audio with blurhash placeholders.
 - **Card** — `StatusCard.html` for link previews.
 - **Poll** — `StatusPoll.html` with live vote submission.
@@ -1257,12 +1258,13 @@ This section captures significant design decisions, feature choices, and archite
 **Index** — entries appear in version order below; this groups them by topic (Ctrl+F the version tag to jump):
 
 - **Notifications & push** — 1.8.0 (unified device notifications), 1.8.1 (visible-tab dedup), 1.8.2 (self-healing, VAPID-compare fix, sound section, re-prompt, System-A filter), 1.8.3 (push-only + System-A removed), 1.8.4 (per-instance flag), 1.8.5 + 1.8.6 (single-account model + SW routing), 1.10.1 (in-app OS-notification fallback rejected)
-- **Timelines & lists** — 1.4.0 (list management), 1.7.0 (list-error fallback, 60 s poll gate, `alwaysStreaming`), 1.8.3 (list reliability), 1.8.4 (cache-first everywhere), 1.9.2 (unfollow/block cache purge), 1.10.1 (5xx cold-load retry, scroll-up re-mount), 1.10.4 (gap-fill hardening), 1.10.5 + 1.10.7 (exclusive lists + Manage-lists page + home purge), 1.11.3 (members overview), 1.12.2 (status cache holds found records only) — see also §19
+- **Timelines & lists** — 1.4.0 (list management), 1.7.0 (list-error fallback, 60 s poll gate, `alwaysStreaming`), 1.8.3 (list reliability), 1.8.4 (cache-first everywhere), 1.9.2 (unfollow/block cache purge), 1.10.1 (5xx cold-load retry, scroll-up re-mount), 1.10.4 (gap-fill hardening), 1.10.5 + 1.10.7 (exclusive lists + Manage-lists page + home purge), 1.11.3 (members overview), 1.12.2 (status cache holds found records only), 1.12.4 (drop items with an incomplete stored record) — see also §19
 - **i18n & translation** — 1.6.0 (LibreTranslate backend), 1.6.1/1.7.1 (language detection), 1.10.0 (runtime i18n), 1.10.2 (first-visit language)
 - **Accounts & social** — 1.3.0 (in-app profile editing), 1.9.0 (manage follows, graded empty-state), 1.9.1 (remove from followers)
-- **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes), 1.12.1 (Mastodon quote wrapper, muted/blocked quoted author)
+- **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes), 1.12.1 (Mastodon quote wrapper, muted/blocked quoted author), 1.12.4 (ask before replacing a draft)
 - **UI, UX & accessibility** — 1.1.0 (profile stats bar), 1.8.2 (word-filter shortcut), 1.10.3 (`scrollbar-gutter`), 1.11.4 (keyboard tab reordering), 1.12.1 (filter warning blurs media, hide-filters on quotes), 1.12.3 (reply header via the replied-to account)
 - **Logs & auth** — 1.7.0 (log persistence), 1.7.1 (expected conditions as warnings), 1.8.11 (OAuth `state` CSRF)
+- **Security & deployment** — 1.12.4 (client-side HTML filter, nginx cache policy)
 
 ---
 
@@ -1878,6 +1880,54 @@ Membership changes are routed through `addAccountToListAndPurge` / `removeAccoun
 
 ---
 
+### [v1.12.4] Client-side HTML filter for post content: a denylist, and `style` stays
+
+**Problem:** Post content, bios and profile fields reach `{@html}` after `renderPostHTML.ts`, which only rewrote links, mentions, hashtags and emoji and passed everything else through. So Zocial relied entirely on the home server's sanitiser. That HTML also comes from third-party servers and bridges, and every logged-in account's token lives in this origin: script injected by one account's server could reach the others' tokens.
+
+**Decision:** Filter in the same parse5 walk that already visits every element: drop active and embedding elements (`script`, `style`, `iframe`, `object`, `embed`, `form`/controls, `meta`, `link`, `base`, `template`, `svg`, `math`, …), every `on*` attribute, `srcset`/`srcdoc`, and URLs with `javascript:`/`vbscript:`/`file:` (control characters stripped first, so `java\tscript:` is caught) or `data:` other than an image `src`. Content Zocial generates itself (emoji, mentions, KaTeX, MFM) is created after the filter and isn't touched.
+
+**Tradeoffs:** (a) **A denylist, not an allowlist.** An allowlist would also strip formatting that servers legitimately send (Akkoma/Misskey send more than Mastodon's tag set) and would need upkeep per server; the CSP (`script-src 'self'` + hashes, no `unsafe-inline`) is the actual script barrier, so this layer only has to remove what could still act without script (forms, frames, meta refresh, navigation URLs). (b) **`style` is kept.** Servers that allow it use it for formatting (colours, MFM-rendered HTML); the CSP can't stop inline CSS (`style-src 'unsafe-inline'` is needed by Svelte), so an overlay via `position: fixed` stays possible if a server passes it through. Mastodon, GoToSocial and Akkoma strip `style` themselves. (c) Content arrives from the server already sanitised, so the filter normally changes nothing and costs a set lookup per element.
+
+**Files:** `_utils/renderPostHTML.ts` (`DROPPED_ELEMENTS`, `sanitizeAttributes`, `isSafeUrl`). See §10, §23 (2026-09-26 hardening review).
+
+---
+
+### [v1.12.4] Ask before an action replaces an unsent compose draft
+
+**Problem:** Closing the compose dialog keeps its draft (the sticky button and `c` reopen it). Quote, mention, edit, delete-and-redraft and the share target all start with `clearComposeData('dialog')`, so a long unfinished post was silently gone, e.g. after closing the dialog to go and find the post to quote.
+
+**Decision:** `confirmReplaceDialogDraft()` (`_actions/composeDraft.js`) runs first in all five actions. It returns immediately when the draft is empty (text, media, poll options and CW all blank), otherwise it shows the existing text-confirmation dialog ("Discard"/"Cancel"). Cancel leaves both the draft and the action's target untouched; for delete-and-redraft the question comes before the delete.
+
+**Tradeoffs:** (a) Merging instead of asking (appending the quote URL or @handle to the draft) was rejected: it would carry over the draft's reply target, visibility and CW into an unrelated post, and edit/redraft can't merge at all. One consistent question is predictable. (b) The share target loses the shared content on "Cancel" (it was already consumed from IndexedDB); sharing again is a single step. (c) One extra dialog for users who keep stale drafts around; it only appears when there is something to lose.
+
+**Files:** `_actions/composeDraft.js`, `quote.js`, `mention.js`, `edit.js`, `deleteAndRedraft.js`, `showComposeDialog.js`; i18n `discardDraftConfirm`, `discardDraft`.
+
+---
+
+### [v1.12.4] Drop a timeline item whose stored record is incomplete instead of rendering it
+
+**Problem:** A timeline lists item ids; the bodies live in IndexedDB. A body or its author can be missing when the item renders: statuses and accounts are cleaned up by their own timestamps (an update restamps only the status), a delete reaches IndexedDB but misses a timeline, or a status was never stored. `createMakeProps` then handed `undefined` (or a status without `account`) to `Status.html`/`Notification.html`, whose computeds throw and blank the item (§14).
+
+**Decision:** `createMakeProps` checks the record first (`isRenderableStatus`: status with an account, and a boost's original with one too; notifications likewise, incl. their status). If it isn't renderable, the item resolves to `null` props (nothing is rendered) and `removeUnstoredItemFromStore` removes its id from every in-memory timeline of that kind (all non-notification timelines, or `notifications` + `notifications/mentions`). A warning is logged.
+
+**Tradeoffs:** (a) The post disappears from the list instead of showing a placeholder. The next fetch of that timeline brings it back if it still exists on the server; a placeholder would need a second rendering path in the virtual list for a rare state. (b) Guards in every computed were rejected: dozens of places, and each new one would be a fresh chance to blank the timeline. One check at the boundary covers them all. (c) The root causes are fixed separately where possible (deletes now reach `notifications/mentions`, the flag setters skip unstored statuses); this is the safety net for what remains, chiefly the age cleanup.
+
+**Files:** `_actions/createMakeProps.js`, `_actions/deleteStatuses.js` (`removeUnstoredItemFromStore`), `_store/observers/wordFilterObservers.js`. See §7 "Failure handling".
+
+---
+
+### [v1.12.4] nginx cache policy: only hashed build output is immutable
+
+**Problem:** One `location` gave every `.js/.css/.png/…` `expires 30d` + `Cache-Control: public, immutable`. Most of those files keep their name across deploys: `config.js` (the runtime `SINGLE_INSTANCE`), `service-worker.js`, the app shell `service-worker-index.html` (no header at all, so heuristically cacheable), theme CSS, the manifest, the emoji JSON. A changed runtime setting could take up to 30 days to reach a returning browser (`immutable` skips even revalidation), and since the service worker precaches through the HTTP cache, a new worker could store a stale shell, pinning users to an old build or, after a second deploy removed its chunks, loading blank.
+
+**Decision:** Three tiers. `^~ /client/` (webpack output with a content hash in the name) is `public, max-age=31536000, immutable`. Everything text-like that keeps its name (`js|css|html|json|webmanifest`) is `no-cache`, i.e. always revalidated (a 304 via ETag when unchanged). Unhashed images and fonts get one day. The security headers are repeated in each of these locations, because nginx drops server-level `add_header`s in a location that sets its own.
+
+**Tradeoffs:** (a) Each page load revalidates a handful of small files, one conditional request each; the heavy chunks stay cached forever. (b) Theme CSS and icons are no longer served from cache without asking. That is the price of deploys and runtime config taking effect on the next load. (c) `expires` was dropped for `/client/`; it added a second `Cache-Control` header.
+
+**Files:** `docker/nginx.conf`. See §4.
+
+---
+
 ## 22. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1932,7 +1982,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.12.1** | 2026-09-24 | **Word filters + quote posts (dev patch / fixes, user-reported).** A "hide with a warning" filter now also blurs the post's media (it only collapsed the text), and *hide* filters collapse a matching **quoted** post instead of letting it through. Quote posts: Mastodon's Quote wrapper (`{ state, quoted_status }`) is understood, so Mastodon quotes render inline for the first time (before, they vanished completely because the `RE:` fallback link was stripped anyway). The fallback link is kept whenever the quote can't be shown. Posts quoting a muted/blocked account (Mastodon ≥ 4.5) are dropped from home/list/public timelines. Also fixes a crash on edit/redraft of a Mastodon quote post. See §17, §21 [v1.12.1] |
 | **1.12.2** | 2026-09-26 | **Status-cache crash + emoji picker (dev patch / fixes, from production logs).** A cached IDB miss (`getStatus` stored `undefined`, most often from the reply-header parent lookup, or an in-flight read overwriting a fresh insert) made `doUpdateStatus` throw `TypeError … reading 'id'` on every streaming `status.update` for that post, which was the ⛔ flood in the 1.12.0 production log. Favourite, boost and bookmark on such a post also failed after the server call had succeeded. The status and notification caches now hold found records only (§7). The `<emoji-picker>` element's own `Database` instance gets the same `_lazyUpdate` guard as `emojiDatabase.js` (§10). See §21 [v1.12.2], §23 |
 | **1.12.3** | 2026-09-26 | **Reliable reply header (dev patch / UX).** The "reply to [avatar] Name" header resolves the replied-to **account** instead of loading the parent post: self-replies and replies to me need no lookup, other replies read the account by `in_reply_to_account_id` (stored far more often than the parent post). Before, the header only appeared if the parent post happened to be cached. It is also cheaper (one store, no clone, often no lookup at all). The account/relationship caches now follow the found-records-only rule from 1.12.2. See §7, §21 [v1.12.3] |
-| **1.12.4** | 2026-09-26 | **Hardening review (dev patch / fixes + security).** General code review of all neuralgic areas (six parallel passes, every finding verified against the code before fixing). **Security:** the inherited Pinafore test backdoor `/?accessToken=…&instanceName=…` (silent session takeover by link) is removed; post HTML gets a client-side element/attribute/URL filter; reaction names and login errors are escaped; nginx sends frame/nosniff/referrer headers; tag pushes can no longer move `:latest`. **Data loss:** GoToSocial profile fields 5–6 were deleted on save; posting mid-upload dropped the file; quote/mention/edit/redraft/share silently replaced a stored draft (now asks); redraft dropped a Mastodon quote; edits lost alt text on Mastodon. **Crashes / stuck states:** `::` vanished from rendered text; aborted IDB transactions hung forever; missing bodies/authors blanked items; favourites/bookmarks paged backwards on every poll and spun forever on errors; duplicate WebSocket connections after standby; the active stream survived logout and re-created the deleted database. Plus push lifecycle fixes, cache/header fixes for runtime config, and many smaller ones. See §7, §8, §9, §12, §17, §18, §23 |
+| **1.12.4** | 2026-09-26 | **Hardening review (dev patch / fixes + security).** General code review of all neuralgic areas (six parallel passes, every finding verified against the code before fixing). **Security:** the inherited Pinafore test backdoor `/?accessToken=…&instanceName=…` (silent session takeover by link) is removed; post HTML gets a client-side element/attribute/URL filter; reaction names and login errors are escaped; nginx sends frame/nosniff/referrer headers; tag pushes can no longer move `:latest`. **Data loss:** GoToSocial profile fields 5–6 were deleted on save; posting mid-upload dropped the file; quote/mention/edit/redraft/share silently replaced a stored draft (now asks); redraft dropped a Mastodon quote; edits lost alt text on Mastodon. **Crashes / stuck states:** `::` vanished from rendered text; aborted IDB transactions hung forever; missing bodies/authors blanked items; favourites/bookmarks paged backwards on every poll and spun forever on errors; duplicate WebSocket connections after standby; the active stream survived logout and re-created the deleted database. Plus push lifecycle fixes, cache/header fixes for runtime config, and many smaller ones. The build stage moved to Node 24 LTS with `--frozen-lockfile` (verified: identical output to Node 20). See §4, §7, §8, §9, §12, §17, §18, §21 [v1.12.4] ×4, §23 |
 
 ---
 
@@ -1985,7 +2035,7 @@ Every major neuralgic subsystem and every previously-deferred lower-criticality 
 - **OAuth token revocation on logout.** Needs `client_id`/`client_secret` stored per account (1.8.11 deliberately discards the secret after login). Without it a token that leaked before logout stays valid until the user revokes it on the server.
 - **`Idempotency-Key` on POST /statuses.** Would stop a duplicate post when the response is lost and the user retries. Needs confirmation that GoToSocial/Akkoma allow the header in CORS preflight; if not, posting would fail entirely.
 - **`/migrate`.** Still accepts any persisted store key from the URL hash while logged out (one click, instance list shown). Retire it if the domain move is complete, or restrict it to the login keys.
-- **Build stage:** `node:20` is end-of-life, and `pnpm install` runs without `--frozen-lockfile`. Both need a CI build to verify. Pinning third-party actions to commit SHAs and a dedicated bot token for the registry are hygiene items.
+- **CI hygiene:** pin third-party actions to commit SHAs, and use a dedicated bot token for the registry. (The build-stage items are done: Node 24 and `--frozen-lockfile`, see §4.)
 - **Smaller:** queued card lookups for already-destroyed posts aren't cancelled; the report dialog closes before the request (a failed report loses the typed comment); the meta cache still caches misses (read-only callers).
 - **API/ajax endpoint modules** (`_api/*`): thin wrappers, stable — only revisit if a specific endpoint misbehaves.
 - **Device-dependent mobile / touch / swipe behaviour**: can't be reviewed meaningfully by reading code — only revisit with a real device and a reproducible symptom.
