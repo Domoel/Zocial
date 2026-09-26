@@ -3,6 +3,7 @@
   "version": "1.12.4",
   "scripts": {
     "lint": "standard && standard --plugin html 'src/routes/**/*.html' && tsc && prettier -c 'src/**/*.ts'",
+    "test": "node ./bin/run-tests.js",
     "lint-fix": "standard --fix && standard --fix --plugin html 'src/routes/**/*.html' && prettier -w 'src/**/*.ts'",
     "dev": "run-s build-lodash before-build serve-dev",
     "serve-dev": "run-p --race build-template-html-watch sapper-dev",

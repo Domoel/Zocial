@@ -28,6 +28,10 @@ RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.spl
 # Copy source
 COPY . .
 
+# Quality gate: lint (standard, tsc, prettier) and the unit tests (test/, see bin/run-tests.js) must
+# pass, otherwise no image is built — and Watchtower keeps running the previous one.
+RUN pnpm run lint && pnpm test
+
 # Release channel (prod/dev) — CI passes this based on the branch; defaults to dev.
 # Consumed by webpack/shared.config.js to set ZOCIAL_CHANNEL.
 ARG ZOCIAL_CHANNEL=dev
