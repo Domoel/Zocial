@@ -19,9 +19,9 @@
       // correct any edge case. The list title (from the cached lists) labels the page.
       list: ({ $lists, listId }) => ($lists || []).find(l => l.id === listId),
       pageTitle: ({ list, $messages }) => (list && list.title) || ($messages && $messages.listMembers),
-      accountsFetcher: ({ $currentInstance, $accessToken, listId }) => (
+      accountsFetcher: ({ $currentInstance, $accessToken, listId }) =>
         (maxId) => getListAccountsPaged($currentInstance, $accessToken, listId, maxId)
-      )
+  
     },
     components: {
       AccountsListPage,

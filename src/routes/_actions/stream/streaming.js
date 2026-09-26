@@ -4,7 +4,6 @@ import { fillStreamingGap } from './fillStreamingGap.js'
 import { store } from '../../_store/store.js'
 
 export function createStream (api, instanceName, accessToken, timelineName, firstStatusId, firstNotificationId) {
-
   const fillGap = (timelineName, timelineItemId) => {
     if (timelineItemId) {
       /* no await */ fillStreamingGap(instanceName, accessToken, timelineName, timelineItemId)

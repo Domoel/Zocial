@@ -42,12 +42,20 @@ const webpackAssets = __shell__
 // match the pages in your src
 const routes = __routes__
 
+// Files without a content hash in their name (the app shell, index.html, theme CSS, icons) keep
+// their name across deploys: revalidate them instead of taking them from the HTTP cache. A browser
+// that still holds an old long-lived entry (nginx marked them "immutable" for 30 days before
+// v1.12.4) would otherwise precache a stale shell, pinning the user to the previous build.
+function precacheRequest (url) {
+  return /(^|\/)client\//.test(url) ? url : new Request(url, { cache: 'no-cache' })
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     (async () => {
       await Promise.all([
-        caches.open(WEBPACK_ASSETS).then(cache => cache.addAll(webpackAssets)),
-        caches.open(ASSETS).then(cache => cache.addAll(assets))
+        caches.open(WEBPACK_ASSETS).then(cache => cache.addAll(webpackAssets.map(precacheRequest))),
+        caches.open(ASSETS).then(cache => cache.addAll(assets.map(precacheRequest)))
       ])
       // We shouldn't have to do this, but the previous page could be an old one,
       // which would not send us a postMessage to skipWaiting().

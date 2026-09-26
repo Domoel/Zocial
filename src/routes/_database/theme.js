@@ -9,4 +9,3 @@ export function setLastTheme (data) {
 export function getLastTheme () {
   return get('theme')
 }
-

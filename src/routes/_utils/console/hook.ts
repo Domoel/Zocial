@@ -15,7 +15,8 @@ const MAX_LOGS = 100
 
 function stringifyValue(value: unknown): string {
   if (typeof value === 'string') return value
-  if (value instanceof Error) return value.stack || `${value.name}: ${value.message}`
+  if (value instanceof Error)
+    return value.stack || `${value.name}: ${value.message}`
   if (value === null) return 'null'
   if (typeof value === 'undefined') return 'undefined'
   if (typeof value === 'object') {
@@ -33,7 +34,11 @@ function stringifyValue(value: unknown): string {
 function serializeArgs(args: unknown[]): string {
   if (!args.length) return ''
   const first = args[0]
-  if (typeof first === 'string' && args.length > 1 && /%[sdifoOjc%]/.test(first)) {
+  if (
+    typeof first === 'string' &&
+    args.length > 1 &&
+    /%[sdifoOjc%]/.test(first)
+  ) {
     let i = 1
     const formatted = first.replace(/%([sdifoOjc%])/g, (match, spec) => {
       if (spec === '%') return '%'
@@ -50,7 +55,8 @@ function logToStored(log: Log) {
   return {
     type: log.type,
     time: log.time,
-    message: typeof log.message === 'string' ? log.message : serializeArgs(log.args),
+    message:
+      typeof log.message === 'string' ? log.message : serializeArgs(log.args),
   }
 }
 
@@ -69,7 +75,9 @@ export function clearLogs() {
   if (ZOCIAL_IS_BROWSER) {
     try {
       localStorage.removeItem(LOG_STORAGE_KEY)
-    } catch (e) { /* storage unavailable */ }
+    } catch (e) {
+      /* storage unavailable */
+    }
   }
 }
 
@@ -81,18 +89,30 @@ if (ZOCIAL_IS_BROWSER) {
       const parsed = JSON.parse(stored)
       if (Array.isArray(parsed)) {
         for (const entry of parsed.slice(-MAX_LOGS)) {
-          logs.push({ type: entry.type, time: entry.time, args: [], message: entry.message })
+          logs.push({
+            type: entry.type,
+            time: entry.time,
+            args: [],
+            message: entry.message,
+          })
         }
       }
     }
-  } catch (e) { /* corrupt or unavailable storage */ }
+  } catch (e) {
+    /* corrupt or unavailable storage */
+  }
 
   // Persist the buffer (debounced), and flush synchronously when the page is hidden/closed
   // so logs aren't lost if a reload happens within the debounce window.
   function saveNow() {
     try {
-      localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.map(logToStored)))
-    } catch (e) { /* quota or unavailable */ }
+      localStorage.setItem(
+        LOG_STORAGE_KEY,
+        JSON.stringify(logs.map(logToStored)),
+      )
+    } catch (e) {
+      /* quota or unavailable */
+    }
   }
   let saveTimer: ReturnType<typeof setTimeout> | undefined
   function persist() {
@@ -122,7 +142,8 @@ if (ZOCIAL_IS_BROWSER) {
     // capture the ORIGINAL error's stack (event.reason), not the handler's, and fold it into
     // the message so the source is visible live, in "Copy logs", and after a reload
     const reason: any = event.reason
-    const detail = (reason && reason.stack) || (reason && reason.message) || String(reason)
+    const detail =
+      (reason && reason.stack) || (reason && reason.message) || String(reason)
     // Network/HTTP errors (failed fetch, timeouts, non-2xx responses) are infrastructure
     // noise, not code bugs — log as warn so real errors stay visually distinct.
     const isNetworkNoise = isNetworkNoiseError(reason)
@@ -138,7 +159,8 @@ if (ZOCIAL_IS_BROWSER) {
   })
   globalThis.addEventListener('error', (event) => {
     const err: any = event.error
-    const detail = (err && err.stack) || (err && err.message) || event.message || String(err)
+    const detail =
+      (err && err.stack) || (err && err.message) || event.message || String(err)
     add({
       type: 'error',
       args: [detail],

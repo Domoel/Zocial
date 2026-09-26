@@ -119,6 +119,56 @@ export const notificationInfos = {
     target: notification.target,
     ariaLabel: `${name} ${'intl.moved'} ${'@' + notification.target.acct}`,
   }),
+  // Mastodon 4.5: someone quoted your post (the status is the new, quoting post)
+  quote: ({ name }) => ({
+    actionText: 'intl.quotedYou',
+    icon: '#fa-quote-right',
+    standalone: false,
+    ariaLabel: `${name} ${'intl.quotedYou'}`,
+  }),
+  // Mastodon 4.5: a post you quoted was edited (the status is that post)
+  quoted_update: ({ name }) => ({
+    actionText: 'intl.quotedPostEdited',
+    icon: '#fa-pencil',
+    standalone: false,
+    ariaLabel: `${name} ${'intl.quotedPostEdited'}`,
+  }),
+  // About the user's own account (the server sends it as the sender), so rendered as a plain
+  // sentence without avatar/name (`selfEvent`).
+  severed_relationships: ({ notification }) => {
+    const event =
+      notification.event || notification.relationship_severance_event || {}
+    const text = formatIntl('intl.severedRelationships', {
+      name: event.target_name || '?',
+    })
+    return {
+      actionText: text,
+      icon: '#fa-user-times',
+      standalone: true,
+      selfEvent: true,
+      ariaLabel: text,
+    }
+  },
+  moderation_warning: () => ({
+    actionText: 'intl.moderationWarning',
+    icon: '#fa-exclamation-triangle',
+    standalone: true,
+    selfEvent: true,
+    ariaLabel: 'intl.moderationWarning',
+  }),
+  annual_report: ({ notification }) => {
+    const report = notification.annual_report || {}
+    const text = formatIntl('intl.annualReportReady', {
+      year: report.year || new Date().getFullYear(),
+    })
+    return {
+      actionText: text,
+      icon: '#fa-bar-chart',
+      standalone: true,
+      selfEvent: true,
+      ariaLabel: text,
+    }
+  },
   bite: ({ notification, name }) => ({
     actionText: 'intl.bite',
     icon: '#tooth',

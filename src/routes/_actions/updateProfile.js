@@ -32,10 +32,10 @@ export async function updateProfile ({ displayName, note, fields, avatarFile, he
   store.runIfLoggedIn(currentInstance, ({ verifyCredentials, currentAccountProfile }) => {
     const mergedProfile = currentAccountProfile
       ? Object.assign({}, updated, {
-          followers_count: currentAccountProfile.followers_count,
-          following_count: currentAccountProfile.following_count,
-          statuses_count: currentAccountProfile.statuses_count
-        })
+        followers_count: currentAccountProfile.followers_count,
+        following_count: currentAccountProfile.following_count,
+        statuses_count: currentAccountProfile.statuses_count
+      })
       : updated
     store.set({
       verifyCredentials: Object.assign({}, verifyCredentials, { [currentInstance]: updated }),

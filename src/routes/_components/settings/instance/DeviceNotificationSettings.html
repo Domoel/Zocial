@@ -155,11 +155,11 @@
         }
         const { permission, pushError, pushUnsupported } = result
         if (permission === 'unsupported') {
-          alert('intl.desktopNotificationsNotSupported')
+          window.alert('intl.desktopNotificationsNotSupported')
           return
         }
         if (permission === 'denied') {
-          alert('intl.desktopNotificationsBlocked')
+          window.alert('intl.desktopNotificationsBlocked')
           return
         }
         if (permission !== 'granted') {
@@ -168,7 +168,7 @@
         if (pushUnsupported) {
           // Browser can't do Web Push; OS notifications are push-only, so there's nothing to turn
           // on. Leave the toggle off and explain.
-          alert('intl.browserDoesNotSupportPush')
+          window.alert('intl.browserDoesNotSupportPush')
           return
         }
         if (pushError) {

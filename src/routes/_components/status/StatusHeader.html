@@ -274,7 +274,7 @@
         icon === '#fa-question' ||
         timelineType === 'pinned' ||
         (!inReplyToAccount && !!matchingHashtag) ||
-        (notificationInfo && notificationInfo.poll)
+        (notificationInfo && (notificationInfo.poll || notificationInfo.selfEvent))
           ? 'hidden'
           : ''
     },

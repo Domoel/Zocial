@@ -255,9 +255,13 @@ if (ZOCIAL_IS_BROWSER) {
     // live formatting/normalisation (their original args no longer exist).
     if (typeof log.message === 'string') {
       const restoredIcon = icons[log.type]
-        ? html`<span class="icon" title=${log.type} aria-label=${log.type}>${icons[log.type]}</span>`
+        ? html`<span class="icon" title=${log.type} aria-label=${log.type}
+            >${icons[log.type]}</span
+          >`
         : ''
-      return html`<li class=${'log log-' + log.type}>${restoredIcon} <span class="message">${log.message}</span></li>`
+      return html`<li class=${'log log-' + log.type}>
+        ${restoredIcon} <span class="message">${log.message}</span>
+      </li>`
     }
     const times = context(TimesContext)!
     const counts = context(CountsContext)!

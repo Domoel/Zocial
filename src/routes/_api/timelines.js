@@ -69,6 +69,12 @@ export async function getTimeline (instanceName, accessToken, timeline, maxId, s
   }
 
   if (timeline === 'notifications/mentions') {
+    // Ask for mentions only (Mastodon >= 3.5 and GoToSocial: `types`, Pleroma/Akkoma: `include_types`).
+    // Excluding the types we know stays as the fallback for servers without either — it can't cover
+    // types that are newer than this client (quote, severed_relationships, …), which is why those
+    // used to show up here.
+    params.types = ['mention']
+    params.include_types = ['mention']
     params.exclude_types = notMentions
   }
 
@@ -85,6 +91,8 @@ export async function getTimeline (instanceName, accessToken, timeline, maxId, s
 
   if (timeline === 'direct') {
     items = items.map(item => item.last_status).filter(Boolean) // ignore falsy last_status'es
+  } else if (timeline === 'notifications/mentions') {
+    items = items.filter(item => item && item.type === 'mention') // a server that ignored all three filters
   }
   return { items, headers }
 }

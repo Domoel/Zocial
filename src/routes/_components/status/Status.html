@@ -492,7 +492,10 @@
       ),
       isStatusInNotification: ({ originalStatusId, notification }) => (
         notification && notification.status &&
-          notification.type !== 'mention' && notification.type !== 'status' && notification.status.id === originalStatusId
+          // a mention, a subscribed post and a quote of your post are new content, not a reference to
+          // your own post, so they aren't dimmed
+          notification.type !== 'mention' && notification.type !== 'status' && notification.type !== 'quote' &&
+          notification.status.id === originalStatusId
       ),
       spoilerShown: ({ $spoilersShown, uuid, $showAllSpoilers }) => (typeof $spoilersShown[uuid] === 'undefined' ? !!$showAllSpoilers : !!$spoilersShown[uuid]),
       replyShown: ({ $repliesShown, uuid }) => !!$repliesShown[uuid],

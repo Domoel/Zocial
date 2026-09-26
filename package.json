@@ -122,7 +122,8 @@
       "HTMLElement",
       "ZOCIAL_IS_BROWSER",
       "ZOCIAL_VERSION",
-      "ZOCIAL_CHANNEL"
+      "ZOCIAL_CHANNEL",
+      "Notification"
     ]
   },
   "prettier": {

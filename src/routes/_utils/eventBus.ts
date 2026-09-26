@@ -4,6 +4,7 @@ import type { Log } from './console/hook.ts'
 
 type Events = {
   console: Log
+  clearConsole: undefined // emitted by clearLogs() (hook.ts), handled by the log viewer (element.ts)
 }
 const eventBus = mitt<Events>()
 
