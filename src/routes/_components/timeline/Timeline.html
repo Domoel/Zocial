@@ -49,7 +49,7 @@
   } from '../../_actions/timeline.js'
   import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
   import { mark, stop } from '../../_utils/marks.js'
-  import { isEqual } from '../../_utils/lodash-lite.js'
+  import { arraysEqual } from '../../_utils/lodash-lite.js'
   import { doubleRAF } from '../../_utils/doubleRAF.js'
   import { observe } from 'svelte-extras'
   import { createMakeProps } from '../../_actions/createMakeProps.js'
@@ -246,7 +246,7 @@
         this.observe('itemsToAdd', (newItemsToAdd, oldItemsToAdd) => {
           if (!newItemsToAdd ||
               !newItemsToAdd.length ||
-              isEqual(newItemsToAdd, oldItemsToAdd)) {
+              arraysEqual(newItemsToAdd, oldItemsToAdd)) {
             return
           }
           scheduleIdleTask(handleItemsToAdd)

@@ -184,22 +184,42 @@ self.addEventListener('fetch', event => {
   )
 })
 
+// Which account each window shows (client id -> instance), reported by the pages (see
+// serviceWorkerViewObservers.js). Lives only as long as this worker; unknown means "as before".
+const clientInstances = new Map()
+
+// Is this push's account on screen? The streaming connection then handles it in-app (sound +
+// notification list), so the OS popup is suppressed. A visible window that shows *another* account
+// doesn't count: that account's stream doesn't carry this notification, so suppressing it would lose
+// it. When a window's account isn't known (the worker just started) it counts as before.
+async function pushIsInView (windowClients, data) {
+  const visible = windowClients.filter(c => c.visibilityState === 'visible')
+  if (!visible.length) {
+    return false
+  }
+  const shown = visible.map(c => clientInstances.get(c.id))
+  if (!data || shown.some(instance => instance === undefined)) {
+    return true
+  }
+  let instance = null
+  try {
+    instance = await getInstanceForPushToken(data.access_token)
+  } catch (_) {}
+  return !instance || shown.includes(instance)
+}
+
 self.addEventListener('push', event => {
   event.waitUntil(
     (async () => {
-      // When the app is open and visible, the streaming connection handles the notification
-      // in-app (sound + notification list). Suppress the OS popup to avoid interrupting the
-      // user while they're actively using Zocial.
-      const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      if (windowClients.some(c => c.visibilityState === 'visible')) {
-        return
-      }
-
       let data
       try {
         data = event.data && event.data.json()
       } catch (_) {
         data = null
+      }
+      const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      if (await pushIsInView(windowClients, data)) {
+        return
       }
       if (!data) {
         // No or malformed payload. Still show something: silently dropping a userVisibleOnly push
@@ -408,5 +428,8 @@ self.addEventListener('message', event => {
     case 'skip-waiting':
       self.skipWaiting()
       break
+  }
+  if (event.data && event.data.type === 'zocial-view' && event.source && event.source.id) {
+    clientInstances.set(event.source.id, event.data.instance || null)
   }
 })

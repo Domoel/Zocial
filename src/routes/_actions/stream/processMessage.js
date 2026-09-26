@@ -10,7 +10,7 @@ const KNOWN_EVENTS = ['update', 'delete', 'notification', 'conversation', 'filte
 export function processMessage (instanceName, timelineName, message) {
   let { event, payload } = (message || {})
   if (!KNOWN_EVENTS.includes(event)) {
-    console.warn('ignoring message from server', message)
+    console.warn('ignoring message from server:', event) // the event name, not the (persisted) frame
     return
   }
   mark('processMessage')

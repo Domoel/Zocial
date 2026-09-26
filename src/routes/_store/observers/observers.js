@@ -11,6 +11,9 @@ import { leftRightFocusObservers } from './leftRightFocusObservers.js'
 import { bottomNavObservers } from './bottomNavObservers.js'
 import { reduceMotionObservers } from './reduceMotionObservers.js'
 import { pushTokenObservers } from './pushTokenObservers.js'
+import { crossTabObservers } from './crossTabObservers.js'
+import { serviceWorkerViewObservers } from './serviceWorkerViewObservers.js'
+import { visitedTimelineObservers } from './visitedTimelineObservers.js'
 
 export function observers (store) {
   onlineObservers(store)
@@ -26,4 +29,7 @@ export function observers (store) {
   setupLoggedInObservers(store)
   reduceMotionObservers(store)
   pushTokenObservers(store)
+  crossTabObservers(store)
+  serviceWorkerViewObservers(store)
+  visitedTimelineObservers(store)
 }

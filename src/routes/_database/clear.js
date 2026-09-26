@@ -7,3 +7,5 @@ export async function clearDatabaseForInstance (instanceName) {
   clearCache(metaCache, instanceName)
   await deleteDatabase(instanceName)
 }
+
+export { markInstanceLoggedOut } from './databaseLifecycle.ts'

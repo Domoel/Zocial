@@ -70,6 +70,25 @@ export function isEqual (value, other, bitmask, customizer, stack) {
   return JSON.stringify(value) === JSON.stringify(other)
 }
 
+// Same result as isEqual for arrays (JSON of an array is the JSON of its elements), without
+// serialising the whole array: same length, and each element either the same object or equal as
+// JSON. Timelines grow to thousands of summaries and are compared on every streamed post — the
+// full-array JSON took tens of ms and megabytes of garbage per call there.
+export function arraysEqual (a, b) {
+  if (a === b) {
+    return true
+  }
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i] && JSON.stringify(a[i]) !== JSON.stringify(b[i])) {
+      return false
+    }
+  }
+  return true
+}
+
 export function difference (arr, toRemove) {
   toRemove = new Set(toRemove)
   return arr.filter(item => !toRemove.has(item))

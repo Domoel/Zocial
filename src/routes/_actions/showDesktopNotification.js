@@ -65,13 +65,34 @@ export function showDesktopNotification (instanceName, notification) {
   }
 
   if (!disableNotificationSound) {
-    try {
-      const played = (audio || (audio = new Audio('/boop.mp3'))).play()
-      if (played && typeof played.catch === 'function') {
-        played.catch(() => {})
-      }
-    } catch (_) {
-      // ignore (older browsers where play() throws synchronously)
-    }
+    playOncePerNotification(instanceName, notification, playSound)
   }
+}
+
+function playSound () {
+  try {
+    const played = (audio || (audio = new Audio('/boop.mp3'))).play()
+    if (played && typeof played.catch === 'function') {
+      played.catch(() => {})
+    }
+  } catch (_) {
+    // ignore (older browsers where play() throws synchronously)
+  }
+}
+
+// Every tab/window of the app runs its own stream, so each receives the same notification. Only the
+// tab that gets this notification's lock first plays the sound; it holds the lock long enough for the
+// others to receive the event and skip it.
+function playOncePerNotification (instanceName, notification, play) {
+  if (typeof navigator === 'undefined' || !navigator.locks || typeof navigator.locks.request !== 'function') {
+    play()
+    return
+  }
+  navigator.locks.request(`zocial-sound:${instanceName}:${notification.id}`, { ifAvailable: true }, lock => {
+    if (!lock) {
+      return // another tab already played it
+    }
+    play()
+    return new Promise(resolve => setTimeout(resolve, 10000))
+  }).catch(() => {})
 }

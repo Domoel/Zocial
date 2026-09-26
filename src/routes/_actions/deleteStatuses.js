@@ -1,6 +1,5 @@
 import { getIdsThatRebloggedThisStatus, getNotificationIdsForStatuses } from './statuses.js'
 import { store } from '../_store/store.js'
-import { isEqual } from '../_utils/lodash-lite.js'
 import { database } from '../_database/database.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 
@@ -16,7 +15,9 @@ function filterItemIdsFromTimelines (instanceName, timelineFilter, idFilter) {
         return
       }
       const filteredSummaries = summaries.filter(summaryFilter)
-      if (!isEqual(summaries, filteredSummaries)) {
+      // filter() can only remove, so the length tells whether anything changed — this runs for
+      // every visited timeline on every streamed delete, often with thousands of items
+      if (filteredSummaries.length !== summaries.length) {
         store.setForTimeline(instanceName, timelineName, {
           [key]: filteredSummaries
         })

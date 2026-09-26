@@ -5,11 +5,11 @@ import { formatIntl } from '../_utils/formatIntl.js'
 import { mark, stop } from '../_utils/marks.js'
 import { concat, mergeArrays } from '../_utils/arrays.js'
 import { compareTimelineItemSummaries } from '../_utils/statusIdSorting.js'
-import { isEqual, uniqById } from '../_utils/lodash-lite.js'
+import { arraysEqual, uniqById } from '../_utils/lodash-lite.js'
 import { database } from '../_database/database.js'
 import { getStatus, getStatusContext } from '../_api/statuses.js'
 import { emit } from '../_utils/eventBus.ts'
-import { TIMELINE_BATCH_SIZE, LIST_BATCH_SIZE } from '../_static/timelines.js'
+import { TIMELINE_BATCH_SIZE, LIST_BATCH_SIZE, MAX_TIMELINE_ITEMS } from '../_static/timelines.js'
 import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
 import { addStatusesOrNotifications, insertUpdatesIntoTimeline, refreshServerDerivedFlags } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
@@ -174,7 +174,7 @@ export async function addPagedTimelineItemSummaries (instanceName, timelineName,
     mergedSummaries = sortItemSummariesForThread(mergedSummaries, statusId)
   }
 
-  if (!isEqual(oldSummaries, mergedSummaries)) {
+  if (!arraysEqual(oldSummaries, mergedSummaries)) {
     store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: mergedSummaries })
   }
 }
@@ -218,7 +218,7 @@ async function fetchPagedItems (instanceName, accessToken, timelineName, fresh) 
   if (isRefresh) {
     const newSummaries = items.map(item => timelineItemToSummary(item, instanceName))
     const mergedSummaries = uniqById(concat(newSummaries, oldSummaries))
-    if (!isEqual(oldSummaries, mergedSummaries)) {
+    if (!arraysEqual(oldSummaries, mergedSummaries)) {
       store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: mergedSummaries })
     }
   } else {
@@ -299,7 +299,7 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
     mergedSummaries = sortItemSummariesForThread(mergedSummaries, statusId)
   }
 
-  if (!isEqual(oldSummaries, mergedSummaries)) {
+  if (!arraysEqual(oldSummaries, mergedSummaries)) {
     store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: mergedSummaries })
   }
   if (oldStale !== newStale) {
@@ -529,7 +529,21 @@ export async function showMoreItemsForTimeline (instanceName, timelineName) {
   mark('showMoreItemsForTimeline')
   let itemSummariesToAdd = store.getForTimeline(instanceName, timelineName, 'timelineItemSummariesToAdd') || []
   itemSummariesToAdd = itemSummariesToAdd.sort(compareTimelineItemSummaries).reverse()
-  addTimelineItemSummaries(instanceName, timelineName, itemSummariesToAdd, false)
+  if (store.getForTimeline(instanceName, timelineName, 'timelineItemSummariesToAddTruncated')) {
+    // The buffer overflowed and dropped its oldest posts, so it no longer connects to the list below:
+    // start the list over from the buffer (the view is at the top here) instead of leaving a gap.
+    store.setForTimeline(instanceName, timelineName, {
+      timelineItemSummaries: itemSummariesToAdd,
+      timelineItemSummariesToAddTruncated: false
+    })
+  } else {
+    addTimelineItemSummaries(instanceName, timelineName, itemSummariesToAdd, false)
+  }
+  // merged at the top: keep only the newest posts (see MAX_TIMELINE_ITEMS)
+  const summaries = store.getForTimeline(instanceName, timelineName, 'timelineItemSummaries')
+  if (summaries && summaries.length > MAX_TIMELINE_ITEMS) {
+    store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: summaries.slice(0, MAX_TIMELINE_ITEMS) })
+  }
   store.setForTimeline(instanceName, timelineName, {
     timelineItemSummariesToAdd: [],
     shouldShowHeader: false,

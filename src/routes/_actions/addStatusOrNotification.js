@@ -2,9 +2,11 @@ import { mark, stop } from '../_utils/marks.js'
 import { store } from '../_store/store.js'
 import { database } from '../_database/database.js'
 import { concat } from '../_utils/arrays.js'
-import { isEqual, uniqById } from '../_utils/lodash-lite.js'
+import { arraysEqual, isEqual, uniqById } from '../_utils/lodash-lite.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
+import { compareTimelineItemSummaries } from '../_utils/statusIdSorting.js'
+import { MAX_TIMELINE_ITEMS } from '../_static/timelines.js'
 
 function getExistingItemIdsSet (instanceName, timelineName) {
   const timelineItemSummaries = store.getForTimeline(instanceName, timelineName, 'timelineItemSummaries') || []
@@ -46,7 +48,7 @@ function refreshListedSummaries (instanceName, timelineName, updates) {
     return
   }
   const refreshed = refreshServerDerivedFlags(summaries, listedUpdates.map(item => timelineItemToSummary(item, instanceName)))
-  if (!isEqual(summaries, refreshed)) {
+  if (!arraysEqual(summaries, refreshed)) {
     store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: refreshed })
   }
 }
@@ -68,10 +70,17 @@ export async function insertUpdatesIntoTimeline (instanceName, timelineName, upd
   }
 
   const itemSummariesToAdd = store.getForTimeline(instanceName, timelineName, 'timelineItemSummariesToAdd') || []
-  const newItemSummariesToAdd = uniqById(
+  let newItemSummariesToAdd = uniqById(
     concat(itemSummariesToAdd, updates.map(item => timelineItemToSummary(item, instanceName)))
   )
-  if (!isEqual(itemSummariesToAdd, newItemSummariesToAdd)) {
+  if (newItemSummariesToAdd.length > MAX_TIMELINE_ITEMS) {
+    // Nobody has looked at this timeline for a long while (scrolled down, or another page is open):
+    // keep only the newest posts. Mark it, so showing them replaces the list instead of merging
+    // across the gap left by the dropped ones.
+    newItemSummariesToAdd = newItemSummariesToAdd.slice().sort(compareTimelineItemSummaries).slice(-MAX_TIMELINE_ITEMS)
+    store.setForTimeline(instanceName, timelineName, { timelineItemSummariesToAddTruncated: true })
+  }
+  if (!arraysEqual(itemSummariesToAdd, newItemSummariesToAdd)) {
     store.setForTimeline(instanceName, timelineName, { timelineItemSummariesToAdd: newItemSummariesToAdd })
   }
 }
@@ -116,7 +125,7 @@ async function insertUpdatesIntoThreads (instanceName, updates) {
       continue
     }
     const newItemSummariesToAdd = uniqById(concat(itemSummariesToAdd, validUpdates.map(item => timelineItemToSummary(item, instanceName))))
-    if (!isEqual(itemSummariesToAdd, newItemSummariesToAdd)) {
+    if (!arraysEqual(itemSummariesToAdd, newItemSummariesToAdd)) {
       store.setForTimeline(instanceName, timelineName, { timelineItemSummariesToAdd: newItemSummariesToAdd })
     }
   }

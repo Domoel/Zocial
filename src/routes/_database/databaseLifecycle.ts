@@ -159,6 +159,13 @@ export function deleteDatabase(instanceName: string) {
     .then(() => clearAllCaches(instanceName))
 }
 
+// Another tab logged this instance out and deleted its database: close ours and never re-open it
+// in this page either (same guard as deleteDatabase).
+export function markInstanceLoggedOut(instanceName: string) {
+  loggedOutInstances.add(instanceName)
+  closeDatabase(instanceName)
+}
+
 export function closeDatabase(instanceName: string) {
   // close any open requests
   closeOpenRequest(instanceName)

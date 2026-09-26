@@ -65,7 +65,7 @@ async function processStatusContent (originalStatus) {
     const { autoplayGifs, currentVerifyCredentials } = store.get()
     Object.assign(originalStatus, await worker.postMessage({ originalStatus, autoplayGifs, currentVerifyCredentials }))
   } catch (e) {
-    console.warn('failed to processStatusContent', originalStatus, e)
+    console.warn('failed to processStatusContent', originalStatus && originalStatus.id, (e && e.message) || e) // not the whole status: the log is persisted
   }
 }
 

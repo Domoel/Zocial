@@ -44,6 +44,20 @@ export function timelineMixins (Store) {
     })
   }
 
+  // Drop everything kept for these timelines (see visitedTimelineObservers)
+  Store.prototype.clearTimelineData = function (instanceName, timelineNames) {
+    const changes = {}
+    Object.entries(this.get()).forEach(([key, value]) => {
+      if (key.startsWith('timelineData_') && value && value[instanceName]) {
+        for (const timelineName of timelineNames) {
+          delete value[instanceName][timelineName]
+        }
+        changes[key] = value
+      }
+    })
+    this.set(changes)
+  }
+
   Store.prototype.clearTimelineDataForInstance = function (instanceName) {
     const changes = {}
     Object.entries(this.get()).forEach(([key, value]) => {

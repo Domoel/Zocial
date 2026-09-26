@@ -5,6 +5,8 @@
 // @mock _api/timelines.js -> ./mocks/timelinesApi.js
 // @mock scheduleIdleTask.js -> ./mocks/scheduleIdleTask.js
 // @mock marks.js -> ./mocks/marks.js
+// @mock toast/toast.js -> ./mocks/appMisc.js
+// @mock formatIntl.js -> ./mocks/appMisc.js
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { data, threads } from './mocks/timelineStore.js'
@@ -13,6 +15,8 @@ import { setPages } from './mocks/timelinesApi.js'
 import { createMakeProps } from '../src/routes/_actions/createMakeProps.js'
 import { addStatusesOrNotifications, refreshServerDerivedFlags } from '../src/routes/_actions/addStatusOrNotification.js'
 import { fillStreamingGap } from '../src/routes/_actions/stream/fillStreamingGap.js'
+import { showMoreItemsForTimeline } from '../src/routes/_actions/timeline.js'
+import { MAX_TIMELINE_ITEMS } from '../src/routes/_static/timelines.js'
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const ids = list => (list || []).map(s => s.id).join()
@@ -82,4 +86,31 @@ test('server-derived flags are refreshed, thread fields kept', () => {
   assert.deepEqual(merged[0].filterContexts, ['home'])
   assert.equal(merged[0].depth, 2)
   assert.equal(merged[1], old[1])
+})
+
+test('a buffer nobody looks at keeps only the newest posts, and showing it restarts the list', async () => {
+  const count = MAX_TIMELINE_ITEMS + 20
+  data.timelineItemSummaries.federated = [{ id: '1' }]
+  addStatusesOrNotifications('i', 'federated', Array.from({ length: count }, (_, i) => ({ id: String(1000 + i), account: { id: 'x' } })))
+  await wait(30)
+  const buffer = data.timelineItemSummariesToAdd.federated
+  assert.equal(buffer.length, MAX_TIMELINE_ITEMS)
+  assert.equal(buffer[buffer.length - 1].id, String(1000 + count - 1)) // the newest are kept
+  assert.equal(data.timelineItemSummariesToAddTruncated.federated, true)
+  await showMoreItemsForTimeline('i', 'federated')
+  const list = data.timelineItemSummaries.federated
+  assert.equal(list.length, MAX_TIMELINE_ITEMS)
+  assert.equal(list[0].id, String(1000 + count - 1))
+  assert.ok(!list.some(s => s.id === '1')) // no gap: the old list was replaced, not merged
+  assert.equal(data.timelineItemSummariesToAddTruncated.federated, false)
+})
+
+test('merging new posts at the top keeps the list bounded', async () => {
+  data.timelineItemSummaries.local = Array.from({ length: MAX_TIMELINE_ITEMS }, (_, i) => ({ id: String(5000 - i) }))
+  data.timelineItemSummariesToAdd.local = [{ id: '6000' }, { id: '6001' }]
+  await showMoreItemsForTimeline('i', 'local')
+  const list = data.timelineItemSummaries.local
+  assert.equal(list.length, MAX_TIMELINE_ITEMS)
+  assert.equal(list[0].id, '6001')
+  assert.equal(list[list.length - 1].id, String(5000 - MAX_TIMELINE_ITEMS + 3)) // the oldest two went
 })

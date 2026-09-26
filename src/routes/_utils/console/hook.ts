@@ -12,6 +12,9 @@ export const logs: Log[] = []
 
 const LOG_STORAGE_KEY = 'zocial_logs'
 const MAX_LOGS = 100
+// Per stored entry: one logged object (a whole status, a stream frame) must not eat the
+// localStorage quota the app's own state lives in.
+const MAX_STORED_MESSAGE_LENGTH = 4000
 
 function stringifyValue(value: unknown): string {
   if (typeof value === 'string') return value
@@ -52,11 +55,15 @@ function serializeArgs(args: unknown[]): string {
 }
 
 function logToStored(log: Log) {
+  const message =
+    typeof log.message === 'string' ? log.message : serializeArgs(log.args)
   return {
     type: log.type,
     time: log.time,
     message:
-      typeof log.message === 'string' ? log.message : serializeArgs(log.args),
+      message.length > MAX_STORED_MESSAGE_LENGTH
+        ? message.slice(0, MAX_STORED_MESSAGE_LENGTH) + ' …'
+        : message,
   }
 }
 

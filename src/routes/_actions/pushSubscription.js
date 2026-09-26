@@ -5,7 +5,29 @@ import { ALL_PUSH_ALERTS } from '../_static/pushAlerts.js'
 
 const dummyApplicationServerKey = 'BImgAz4cF_yvNFp8uoBJCaGpCX4d0atNIFMHfBvAAXCyrnn9IMAFQ10DW_ZvBCzGeR4fZI5FnEi2JVcRE-L88jY='
 
-export async function updatePushSubscriptionForInstance (instanceName) {
+// The browser has ONE push subscription, shared by every tab/window of the app. Two tabs working on
+// it at once (a session restore loads several) could unsubscribe each other's fresh subscription,
+// and a tab loaded earlier would act on stale push state. So the entry points run one at a time
+// across tabs (Web Locks, where available) and first take over the latest push state from storage.
+// Web Locks aren't reentrant: code inside the lock calls the *Unlocked variants.
+const PUSH_STATE_KEYS = ['pushSubscriptions', 'enableDesktopNotifications', 'lastPushAlerts', 'pushFailureCount']
+
+function withPushLock (fn) {
+  const run = () => {
+    store.reloadKeys(PUSH_STATE_KEYS)
+    return fn()
+  }
+  if (typeof navigator !== 'undefined' && navigator.locks && typeof navigator.locks.request === 'function') {
+    return navigator.locks.request('zocial-push', run)
+  }
+  return new Promise(resolve => resolve(run())) // always a promise, like the async functions it wraps
+}
+
+export function updatePushSubscriptionForInstance (instanceName) {
+  return withPushLock(() => updatePushSubscriptionForInstanceUnlocked(instanceName))
+}
+
+async function updatePushSubscriptionForInstanceUnlocked (instanceName) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
     // This instance's stored subscription — not currentPushSubscription, which belongs to the
@@ -41,7 +63,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       // prompt here.
       if (canSilentlyReregister(instanceName)) {
         try {
-          await updateAlerts(instanceName, getSavedAlerts(instanceName))
+          await updateAlertsUnlocked(instanceName, getSavedAlerts(instanceName))
         } catch (e) {
           // Re-registration failed. Count it; after a threshold (or a permanent error) push is
           // given up on and the master toggle is turned off (recordPushFailure).
@@ -70,7 +92,7 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       // allow, re-register silently with the previously saved alert preferences.
       if (canSilentlyReregister(instanceName)) {
         try {
-          await updateAlerts(instanceName, getSavedAlerts(instanceName))
+          await updateAlertsUnlocked(instanceName, getSavedAlerts(instanceName))
           return
         } catch (e) {
           if (await recordPushFailure(instanceName, e)) {
@@ -96,7 +118,14 @@ export async function updatePushSubscriptionForInstance (instanceName) {
       if (!binaryKeysEqual(serverKey, subscription.options.applicationServerKey)) {
         await subscription.unsubscribe()
         await deleteSubscription(instanceName, accessToken)
-        await updateAlerts(instanceName, currentPushSubscription.alerts)
+        await updateAlertsUnlocked(instanceName, currentPushSubscription.alerts)
+      } else if (backendSubscription.endpoint && backendSubscription.endpoint !== subscription.endpoint) {
+        // The server pushes to another endpoint than the subscription this browser has (e.g. two tabs
+        // raced through a re-registration): register the one we actually have, or pushes go nowhere.
+        const alerts = backendSubscription.alerts || currentPushSubscription.alerts
+        store.setInstanceData(instanceName, 'pushSubscriptions',
+          await postSubscription(instanceName, accessToken, subscription, alerts))
+        store.save()
       } else {
         store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
         store.save()
@@ -181,8 +210,8 @@ export function describeDOMException (e) {
 // Fully turn off Web Push for an instance: unsubscribe the browser push subscription, delete it
 // on the backend, and clear it (+ the failure counter) from the store. Used by the "Enable OS push
 // notifications on this device" master toggle when switched off.
-export async function disablePushForInstance (instanceName) {
-  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
+export function disablePushForInstance (instanceName) {
+  return withPushLock(() => store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 
     // Under the single-account model only one instance ever holds push, so tearing down the shared
@@ -203,7 +232,7 @@ export async function disablePushForInstance (instanceName) {
     store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
     store.set({ pushFailureCount: withPushFailureCount(pushFailureCount, instanceName, 0) })
     store.save()
-  })
+  }))
 }
 
 // Create a browser subscription keyed to this server's VAPID key and register it there.
@@ -234,7 +263,11 @@ async function subscribeWithServerKey (registration, instanceName, accessToken, 
   return postSubscription(instanceName, accessToken, subscription, alerts)
 }
 
-export async function updateAlerts (instanceName, alerts) {
+export function updateAlerts (instanceName, alerts) {
+  return withPushLock(() => updateAlertsUnlocked(instanceName, alerts))
+}
+
+async function updateAlertsUnlocked (instanceName, alerts) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 

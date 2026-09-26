@@ -37,7 +37,7 @@
   import VirtualListFooter from './VirtualListFooter.html'
   import VirtualListHeader from './VirtualListHeader.html'
   import { virtualListStore } from './virtualListStore.js'
-  import { isEqual } from '../../_utils/lodash-lite.js'
+  import { arraysEqual } from '../../_utils/lodash-lite.js'
   import { throttle } from '../../_thirdparty/lodash/timers.js'
   import { mark, stop } from '../../_utils/marks.js'
   import { observe } from 'svelte-extras'
@@ -64,7 +64,7 @@
         stop('set showHeader')
       })
       this.observe('items', (newItems, oldItems) => {
-        if (!newItems || isEqual(newItems, oldItems)) {
+        if (!newItems || arraysEqual(newItems, oldItems)) {
           return
         }
         mark('set items')

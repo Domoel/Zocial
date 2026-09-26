@@ -34,7 +34,9 @@ export function sortItemSummariesForThread(
     const status = summariesById.get(statusId)
     if (!status) {
       // bail out, for some reason we can't find the status (should never happen)
-      console.warn(`couldn't find status ${statusId} in`, _summaries)
+      console.warn(
+        `couldn't find status ${statusId} in ${_summaries.length} thread items`,
+      )
       return _summaries
     }
 
