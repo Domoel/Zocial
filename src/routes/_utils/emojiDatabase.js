@@ -53,6 +53,12 @@ async function whenReady (db) {
   return db
 }
 
+// <emoji-picker> creates its own Database instance, whose update check needs the same guard. A failed
+// ready() there is the picker's to handle (it shows its network-error message).
+export function guardPickerDatabase (db) {
+  /* no await */ whenReady(db).catch(() => {})
+}
+
 export function init () {
   if (!database || (databaseFailedAt && Date.now() - databaseFailedAt > RETRY_AFTER_FAILURE_MS)) {
     databaseFailedAt = 0

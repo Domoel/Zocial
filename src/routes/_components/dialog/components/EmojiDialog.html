@@ -71,12 +71,14 @@
   import { supportsFocusVisible } from '../../../_utils/supportsFocusVisible.js'
   import { importFocusVisible } from '../../../_utils/polyfills/asyncPolyfills.js'
   import { emojiPickerI18n, emojiPickerDataSource, emojiPickerLocale } from '../../../_static/emojiPickerIntl.js'
+  import { guardPickerDatabase } from '../../../_utils/emojiDatabase.js'
 
   export default {
     async oncreate () {
       const { customEmoji } = this.get()
       const { enableGrayscale, isUserTouching } = this.store.get()
       const { picker } = this.refs
+      guardPickerDatabase(picker.database)
       picker.customEmoji = customEmoji
       if (emojiPickerI18n) {
         picker.i18n = emojiPickerI18n

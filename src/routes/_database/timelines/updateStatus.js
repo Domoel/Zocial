@@ -1,5 +1,5 @@
 import { dbPromise, getDatabase } from '../databaseLifecycle.ts'
-import { getInCache, hasInCache, statusesCache } from '../cache.js'
+import { getInCache, statusesCache } from '../cache.js'
 import { STATUSES_STORE } from '../constants.js'
 import { cacheStatus } from './cacheStatus.js'
 import { putStatus } from './insertion.ts'
@@ -11,10 +11,12 @@ import { cloneForStorage } from '../helpers.js'
 
 async function doUpdateStatus (instanceName, statusId, updateFunc) {
   const db = await getDatabase(instanceName)
-  if (hasInCache(statusesCache, instanceName, statusId)) {
-    const status = getInCache(statusesCache, instanceName, statusId)
-    updateFunc(status)
-    cacheStatus(status, instanceName)
+  // test the value, not hasInCache(): an entry holding undefined (a cached miss) would pass
+  // updateFunc/cacheStatus an undefined status (TypeError reading 'id' on every status.update)
+  const cached = getInCache(statusesCache, instanceName, statusId)
+  if (cached) {
+    updateFunc(cached)
+    cacheStatus(cached, instanceName)
   }
   return dbPromise(db, STATUSES_STORE, 'readwrite', (statusesStore) => {
     statusesStore.get(statusId).onsuccess = e => {

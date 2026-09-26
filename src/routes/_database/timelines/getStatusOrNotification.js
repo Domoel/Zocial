@@ -19,7 +19,12 @@ export async function getStatus (instanceName, id) {
     const [statusesStore, accountsStore] = stores
     fetchStatus(statusesStore, accountsStore, id, callback)
   })
-  setInCache(statusesCache, instanceName, id, cloneDeep(result))
+  // Cache hits only, and never over an entry written while the read was in flight (a background
+  // insert caches the fresher network copy before its IDB write lands). A cached miss makes
+  // hasInCache() true while getInCache() returns undefined — see doUpdateStatus().
+  if (result && !hasInCache(statusesCache, instanceName, id)) {
+    setInCache(statusesCache, instanceName, id, cloneDeep(result))
+  }
   return result
 }
 
@@ -33,6 +38,8 @@ export async function getNotification (instanceName, id) {
     const [notificationsStore, statusesStore, accountsStore] = stores
     fetchNotification(notificationsStore, statusesStore, accountsStore, id, callback)
   })
-  setInCache(notificationsCache, instanceName, id, cloneDeep(result))
+  if (result && !hasInCache(notificationsCache, instanceName, id)) { // see getStatus()
+    setInCache(notificationsCache, instanceName, id, cloneDeep(result))
+  }
   return result
 }
