@@ -10,6 +10,7 @@ import { uniqById } from '../_utils/lodash-lite.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import { logActionError } from '../_utils/isNetworkError.js'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
+import { randomToken } from '../_utils/randomToken.js'
 
 export async function insertHandleForReply (realm, statusId, statusInHand) {
   const { currentInstance } = store.get()
@@ -84,8 +85,17 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
       emit('statusUpdated', status)
       emit('postedStatus', { realm, inReplyToUuid }) // mitt passes a single payload
     } else {
+      // One key per draft (stored with it, so it also survives a reload): a retry after a lost
+      // response is recognised by the server instead of creating a duplicate post. Cleared together
+      // with the draft once the post went out.
+      let idempotencyKey = store.getComposeData(realm, 'idempotencyKey')
+      if (!idempotencyKey) {
+        idempotencyKey = randomToken()
+        store.setComposeData(realm, { idempotencyKey })
+        store.save() // persist before the request, so a retry after a reload reuses it
+      }
       const result = await postStatusToServer(currentInstance, accessToken, text,
-        inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt)
+        inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt, idempotencyKey)
       if (scheduledAt) {
         // when scheduled, the server returns a ScheduledStatus (not a real status yet),
         // so don't add it to the timeline — just confirm it was scheduled

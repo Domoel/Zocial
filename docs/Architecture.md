@@ -458,6 +458,10 @@ The compose system is split across ≈ 18 files:
 
 The compose state (`composeData`) is persisted to localStorage so an unsent draft survives a page reload.
 
+**No duplicate posts on retry (v1.12.4).** `postStatus` sends an `Idempotency-Key` header on `POST /api/v1/statuses`. The key belongs to the draft: it is created on the first attempt, stored and saved with the draft, reused by every retry, and removed with the draft once the post went out (the same model as Mastodon's own web client). If the response was lost after the server had created the post, the retry returns that post instead of publishing it twice (Mastodon and Akkoma deduplicate; GoToSocial accepts the header). Edits (`PUT`) send none. The header is allowed in CORS by all three.
+
+**A failed report keeps its input (v1.12.4).** The report dialog closes before the request runs; on failure (or with no post selected) it reopens with the comment, the forward checkbox and the selection.
+
 ### Dialogs
 
 `src/routes/_components/dialog/` contains ≈ 28 modal components built on `ModalDialog.html` (keyboard-trapped, accessible, focus-managed via `a11y-dialog`). Key ones:
@@ -1263,7 +1267,7 @@ This section captures significant design decisions, feature choices, and archite
 - **Accounts & social** — 1.3.0 (in-app profile editing), 1.9.0 (manage follows, graded empty-state), 1.9.1 (remove from followers)
 - **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes), 1.12.1 (Mastodon quote wrapper, muted/blocked quoted author), 1.12.4 (ask before replacing a draft)
 - **UI, UX & accessibility** — 1.1.0 (profile stats bar), 1.8.2 (word-filter shortcut), 1.10.3 (`scrollbar-gutter`), 1.11.4 (keyboard tab reordering), 1.12.1 (filter warning blurs media, hide-filters on quotes), 1.12.3 (reply header via the replied-to account)
-- **Logs & auth** — 1.7.0 (log persistence), 1.7.1 (expected conditions as warnings), 1.8.11 (OAuth `state` CSRF)
+- **Logs & auth** — 1.7.0 (log persistence), 1.7.1 (expected conditions as warnings), 1.8.11 (OAuth `state` CSRF), 1.12.4 (token revocation on logout)
 - **Security & deployment** — 1.12.4 (client-side HTML filter, nginx cache policy)
 
 ---
@@ -1928,6 +1932,18 @@ Membership changes are routed through `addAccountToListAndPurge` / `removeAccoun
 
 ---
 
+### [v1.12.4] Revoke the access token on logout; keep the app credentials with the token
+
+**Problem:** Logout only forgot the token locally. The token stayed valid on the server, so a copy of it (a shared device's storage read beforehand, a token that leaked some other way) kept full access until the user revoked it on the server by hand. Revoking needs the credentials of the app the token was issued to, and Zocial dropped those after the login (only the temporary `currentRegisteredInstance` state held them).
+
+**Decision:** Store `client_id`/`client_secret` of the per-login app registration next to the token (`loggedInInstances[instance].oauthClient`). On logout, `cleanUpServerSide` first deletes the push subscription (that call still needs the token), then calls `POST /oauth/revoke` (RFC 7009). Both are best-effort and fire-and-forget, so an offline logout still logs out locally. Mastodon, GoToSocial and Akkoma all offer the endpoint; Mastodon allows it via CORS, GtS and Akkoma apply CORS globally.
+
+**Tradeoffs:** (a) The client secret now lives in localStorage. It sits next to the access token it belongs to, which already grants everything the secret could; the registration is created per login and used by nothing else, so this adds no exposure. (b) Only logins from v1.12.4 on carry the credentials. Older sessions are still only forgotten locally until the user logs in again. (c) A 401-triggered logout calls revoke on a token that is already dead; the HTTP error is ignored. (d) With several Zocial domains side by side, each has its own app registration and token, so logging out on one domain doesn't affect the others.
+
+**Files:** `_actions/addInstance.js` (`registerNewInstance`), `_actions/instances.js` (`cleanUpServerSide`), `_api/oauth.js` (`revokeToken`).
+
+---
+
 ## 22. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -1982,7 +1998,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.12.1** | 2026-09-24 | **Word filters + quote posts (dev patch / fixes, user-reported).** A "hide with a warning" filter now also blurs the post's media (it only collapsed the text), and *hide* filters collapse a matching **quoted** post instead of letting it through. Quote posts: Mastodon's Quote wrapper (`{ state, quoted_status }`) is understood, so Mastodon quotes render inline for the first time (before, they vanished completely because the `RE:` fallback link was stripped anyway). The fallback link is kept whenever the quote can't be shown. Posts quoting a muted/blocked account (Mastodon ≥ 4.5) are dropped from home/list/public timelines. Also fixes a crash on edit/redraft of a Mastodon quote post. See §17, §21 [v1.12.1] |
 | **1.12.2** | 2026-09-26 | **Status-cache crash + emoji picker (dev patch / fixes, from production logs).** A cached IDB miss (`getStatus` stored `undefined`, most often from the reply-header parent lookup, or an in-flight read overwriting a fresh insert) made `doUpdateStatus` throw `TypeError … reading 'id'` on every streaming `status.update` for that post, which was the ⛔ flood in the 1.12.0 production log. Favourite, boost and bookmark on such a post also failed after the server call had succeeded. The status and notification caches now hold found records only (§7). The `<emoji-picker>` element's own `Database` instance gets the same `_lazyUpdate` guard as `emojiDatabase.js` (§10). See §21 [v1.12.2], §23 |
 | **1.12.3** | 2026-09-26 | **Reliable reply header (dev patch / UX).** The "reply to [avatar] Name" header resolves the replied-to **account** instead of loading the parent post: self-replies and replies to me need no lookup, other replies read the account by `in_reply_to_account_id` (stored far more often than the parent post). Before, the header only appeared if the parent post happened to be cached. It is also cheaper (one store, no clone, often no lookup at all). The account/relationship caches now follow the found-records-only rule from 1.12.2. See §7, §21 [v1.12.3] |
-| **1.12.4** | 2026-09-26 | **Hardening review (dev patch / fixes + security).** General code review of all neuralgic areas (six parallel passes, every finding verified against the code before fixing). **Security:** the inherited Pinafore test backdoor `/?accessToken=…&instanceName=…` (silent session takeover by link) is removed; post HTML gets a client-side element/attribute/URL filter; reaction names and login errors are escaped; nginx sends frame/nosniff/referrer headers; tag pushes can no longer move `:latest`. **Data loss:** GoToSocial profile fields 5–6 were deleted on save; posting mid-upload dropped the file; quote/mention/edit/redraft/share silently replaced a stored draft (now asks); redraft dropped a Mastodon quote; edits lost alt text on Mastodon. **Crashes / stuck states:** `::` vanished from rendered text; aborted IDB transactions hung forever; missing bodies/authors blanked items; favourites/bookmarks paged backwards on every poll and spun forever on errors; duplicate WebSocket connections after standby; the active stream survived logout and re-created the deleted database. Plus push lifecycle fixes, cache/header fixes for runtime config, and many smaller ones. The build stage moved to Node 24 LTS with `--frozen-lockfile` (verified: identical output to Node 20). See §4, §7, §8, §9, §12, §17, §18, §21 [v1.12.4] ×4, §23 |
+| **1.12.4** | 2026-09-26 | **Hardening review (dev patch / fixes + security).** General code review of all neuralgic areas (six parallel passes, every finding verified against the code before fixing). **Security:** the inherited Pinafore test backdoor `/?accessToken=…&instanceName=…` (silent session takeover by link) is removed; post HTML gets a client-side element/attribute/URL filter; reaction names and login errors are escaped; nginx sends frame/nosniff/referrer headers; tag pushes can no longer move `:latest`. **Data loss:** GoToSocial profile fields 5–6 were deleted on save; posting mid-upload dropped the file; quote/mention/edit/redraft/share silently replaced a stored draft (now asks); redraft dropped a Mastodon quote; edits lost alt text on Mastodon. **Crashes / stuck states:** `::` vanished from rendered text; aborted IDB transactions hung forever; missing bodies/authors blanked items; favourites/bookmarks paged backwards on every poll and spun forever on errors; duplicate WebSocket connections after standby; the active stream survived logout and re-created the deleted database. Plus push lifecycle fixes, cache/header fixes for runtime config, and many smaller ones. The build stage moved to Node 24 LTS with `--frozen-lockfile` (verified: identical output to Node 20). Follow-ups from the open-points list: logout revokes the token on the server, `Idempotency-Key` against duplicate posts, the report dialog keeps its input on failure, and the unused `/migrate` page is removed. See §4, §7, §8, §9, §12, §17, §18, §21 [v1.12.4] ×4, §23 |
 
 ---
 
@@ -2031,12 +2047,10 @@ A short log of focused review passes — what was reviewed, when, the outcome, a
 
 Every major neuralgic subsystem and every previously-deferred lower-criticality area has now had a focused pass (push, streaming, compose, virtual-list, DB lifecycle, timeline read/hydration, auth/OAuth, service worker, word filters, autosuggest, status actions), and both earlier carry-over notes (`getNotification` by-reference caching, `deleteDatabase` `onblocked`) are resolved. The v1.10.x i18n + UX work was followed by its own passes: the runtime-i18n review, the rAF/rPAF + `setTimeout`/`scheduleIdleTask` teardown sweep, the dialog scroll-lock lifecycle, the 5xx-retry verification, and a final `$messages`-store-access check — all clean (see the 2026-06-15/16 rows above). No focused passes are outstanding. Future opportunities only:
 
-**Open after the 2026-09-26 hardening review** (deliberately not changed — each needs a decision or a runtime check):
-- **OAuth token revocation on logout.** Needs `client_id`/`client_secret` stored per account (1.8.11 deliberately discards the secret after login). Without it a token that leaked before logout stays valid until the user revokes it on the server.
-- **`Idempotency-Key` on POST /statuses.** Would stop a duplicate post when the response is lost and the user retries. Needs confirmation that GoToSocial/Akkoma allow the header in CORS preflight; if not, posting would fail entirely.
-- **`/migrate`.** Still accepts any persisted store key from the URL hash while logged out (one click, instance list shown). Retire it if the domain move is complete, or restrict it to the login keys.
-- **CI hygiene:** pin third-party actions to commit SHAs, and use a dedicated bot token for the registry. (The build-stage items are done: Node 24 and `--frozen-lockfile`, see §4.)
-- **Smaller:** queued card lookups for already-destroyed posts aren't cancelled; the report dialog closes before the request (a failed report loses the typed comment); the meta cache still caches misses (read-only callers).
+**Backlog after the 2026-09-26 hardening review.** Done since: token revocation on logout (§21 [v1.12.4]), `Idempotency-Key` (§10 Compose), the report dialog keeps its input, `/migrate` removed. The page only received data and its counterpart never existed in this repo; the old domain no longer serves Zocial. A future domain move just means logging in once more on the new domain, and parallel domains are independent origins anyway. Deliberately left for later:
+- **CI hygiene:** pin third-party actions to commit SHAs, and use a dedicated bot token for the registry (the build-stage items are done: Node 24 and `--frozen-lockfile`, see §4).
+- **Card lookups:** queued lookups for posts that were already scrolled away aren't cancelled. Low impact, since the 400 ms delay already filters fast scrolling; revisit if GoToSocial users report slow cards.
+- **Meta cache** still caches misses. No impact (read-only callers).
 - **API/ajax endpoint modules** (`_api/*`): thin wrappers, stable — only revisit if a specific endpoint misbehaves.
 - **Device-dependent mobile / touch / swipe behaviour**: can't be reviewed meaningfully by reading code — only revisit with a real device and a reproducible symptom.
 

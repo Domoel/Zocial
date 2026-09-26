@@ -37,3 +37,14 @@ export function getAccessTokenFromAuthCode (instanceName, clientId, clientSecret
     code
   }), null, { timeout: WRITE_TIMEOUT })
 }
+
+// RFC 7009 token revocation (Mastodon, GoToSocial and Akkoma all offer it; Mastodon allows it via
+// CORS). Needs the credentials of the app the token was issued to.
+export function revokeToken (instanceName, clientId, clientSecret, token) {
+  const url = `${basename(instanceName)}/oauth/revoke`
+  return post(url, new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    token
+  }), null, { timeout: WRITE_TIMEOUT })
+}

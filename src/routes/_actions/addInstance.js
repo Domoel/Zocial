@@ -10,6 +10,7 @@ import { logActionError } from '../_utils/isNetworkError.js'
 import { formatIntl } from '../_utils/formatIntl.js'
 import escapeHtml from 'escape-html'
 import { getSingleInstance } from '../_utils/getSingleInstance.js'
+import { randomToken } from '../_utils/randomToken.js'
 
 function createKnownError (message) {
   const err = new Error(message)
@@ -24,9 +25,7 @@ function getRedirectUri () {
 // Random, unguessable OAuth state token (RFC 6749 §10.12) used to tie the authorize redirect
 // to its callback, so a forged/replayed callback that we didn't initiate is rejected.
 function generateOauthState () {
-  const bytes = new Uint8Array(16)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  return randomToken()
 }
 
 async function redirectToOauth () {
@@ -102,7 +101,15 @@ async function registerNewInstance (code) {
   )
   const { loggedInInstances, loggedInInstancesInOrder, instanceThemes } = store.get()
   instanceThemes[currentRegisteredInstanceName] = DEFAULT_THEME
-  loggedInInstances[currentRegisteredInstanceName] = instanceData
+  // Keep the app credentials with the token: logout revokes the token on the server, and
+  // POST /oauth/revoke needs them. (They sit next to the token they belong to; the temporary
+  // registration state is still cleared below.)
+  loggedInInstances[currentRegisteredInstanceName] = Object.assign({}, instanceData, {
+    oauthClient: {
+      client_id: currentRegisteredInstance.client_id,
+      client_secret: currentRegisteredInstance.client_secret
+    }
+  })
   if (!loggedInInstancesInOrder.includes(currentRegisteredInstanceName)) {
     loggedInInstancesInOrder.push(currentRegisteredInstanceName)
   }

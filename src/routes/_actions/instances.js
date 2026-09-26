@@ -7,6 +7,7 @@ import { cacheFirstUpdateAfter } from '../_utils/sync.js'
 import { getInstanceInfo, fetchNodeInfo } from '../_api/instance.js'
 import { auth } from '../_api/utils.js'
 import { deleteSubscription } from '../_api/pushSubscription.js'
+import { revokeToken } from '../_api/oauth.js'
 import { unsubscribeBrowserPush } from './pushSubscription.js'
 import { database } from '../_database/database.js'
 import { importVirtualListStore } from '../_utils/asyncModules/importVirtualListStore.js'
@@ -36,6 +37,32 @@ export function switchToInstance (instanceName) {
   store.save()
   const { enableGrayscale } = store.get()
   switchToTheme(instanceThemes[instanceName], enableGrayscale)
+}
+
+// Best-effort server-side cleanup after a logout, in order: the push subscription (needs the token),
+// then the token itself.
+async function cleanUpServerSide (instanceName, accessToken, hadPushSubscription, oauthClient) {
+  if (hadPushSubscription) {
+    try {
+      await deleteSubscription(instanceName, accessToken)
+    } catch (e) {
+      if (e.status !== 404) { // 404: the backend already had no subscription
+        console.warn('failed to delete push subscription on logout', e.message || e)
+      }
+    }
+  }
+  // Revoke the token, so it is dead on the server too (shared device, a copy that leaked). Needs
+  // the app credentials, stored with logins since v1.12.4 — older sessions are only forgotten
+  // locally. A token the server already revoked (the 401 logout) just gets an HTTP error here.
+  if (oauthClient && oauthClient.client_id && oauthClient.client_secret) {
+    try {
+      await revokeToken(instanceName, oauthClient.client_id, oauthClient.client_secret, accessToken)
+    } catch (e) {
+      if (!e.status) {
+        console.warn('failed to revoke the access token on logout', e.message || e)
+      }
+    }
+  }
 }
 
 export async function logOutOfInstance (instanceName, message) {
@@ -72,6 +99,7 @@ export async function logOutOfInstance (instanceName, message) {
     return
   }
   const loggedOutAccessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
+  const loggedOutClient = loggedInInstances[instanceName] && loggedInInstances[instanceName].oauthClient
   const hadPushSubscription = !!(pushSubscriptions && pushSubscriptions[instanceName])
   loggedInInstancesInOrder.splice(loggedInInstancesInOrder.indexOf(instanceName), 1)
   const newInstance = instanceName === currentInstance ? loggedInInstancesInOrder[0] : currentInstance
@@ -144,13 +172,8 @@ export async function logOutOfInstance (instanceName, message) {
     // legacy state where another account still has a subscription record keeps it.)
     /* no await */ unsubscribeBrowserPush()
   }
-  if (loggedOutAccessToken && hadPushSubscription) {
-    // best-effort: a 404 just means the backend already had no subscription
-    /* no await */ deleteSubscription(instanceName, loggedOutAccessToken).catch(e => {
-      if (e.status !== 404) {
-        console.warn('failed to delete push subscription on logout', e.message || e)
-      }
-    })
+  if (loggedOutAccessToken) {
+    /* no await */ cleanUpServerSide(instanceName, loggedOutAccessToken, hadPushSubscription, loggedOutClient)
   }
   /* no await */ database.clearDatabaseForInstance(instanceName)
   goto(getSingleInstance() ? '/' : '/settings/instances')

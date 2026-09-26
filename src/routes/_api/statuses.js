@@ -3,7 +3,7 @@ import { DEFAULT_TIMEOUT, get, post, put, WRITE_TIMEOUT } from '../_utils/ajax.j
 
 // post is create, put is edit
 async function postOrPutStatus (url, accessToken, method, text, inReplyToId, mediaIds,
-  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt, mediaAttributes) {
+  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt, mediaAttributes, idempotencyKey) {
   const body = {
     status: text,
     media_ids: mediaIds,
@@ -36,15 +36,20 @@ async function postOrPutStatus (url, accessToken, method, text, inReplyToId, med
   }
 
   const func = method === 'post' ? post : put
+  // Same key for every retry of the same draft: if the response got lost after the server created
+  // the post, the retry returns that post instead of publishing it twice (Mastodon, Akkoma).
+  const headers = idempotencyKey
+    ? Object.assign(auth(accessToken), { 'Idempotency-Key': idempotencyKey })
+    : auth(accessToken)
 
-  return func(url, body, auth(accessToken), { timeout: WRITE_TIMEOUT })
+  return func(url, body, headers, { timeout: WRITE_TIMEOUT })
 }
 
 export async function postStatus (instanceName, accessToken, text, inReplyToId, mediaIds,
-  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt) {
+  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt, idempotencyKey) {
   const url = `${basename(instanceName)}/api/v1/statuses`
   return postOrPutStatus(url, accessToken, 'post', text, inReplyToId, mediaIds,
-    sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt)
+    sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt, undefined, idempotencyKey)
 }
 
 export async function putStatus (instanceName, accessToken, id, text, inReplyToId, mediaIds,

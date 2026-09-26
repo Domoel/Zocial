@@ -163,12 +163,13 @@
   import { toast } from '../../toast/toast.js'
   import { store } from '../../../_store/store.js'
   import { reportStatuses } from '../../../_actions/reportStatuses.js'
+  import { reportStatusOrAccount } from '../../../_actions/report.js'
   import { formatIntl } from '../../../_utils/formatIntl.js'
 
   export default {
     async oncreate () {
       const { account, status, reportMap } = this.get()
-      if (status) {
+      if (status && !(status.id in reportMap)) { // reopened after a failure: keep the user's selection
         reportMap[status.id] = true
       }
       try {
@@ -230,12 +231,18 @@
         reportMap[statusId] = report
       },
       async doReport () {
-        const { displayStatuses, account, comment, forward, reportMap } = this.get()
+        const { displayStatuses, account, status, comment, forward, reportMap } = this.get()
         const statusIds = displayStatuses.map(({ id }) => id).filter(id => reportMap[id])
+        let submitted = false
         if (!statusIds.length) {
           toast.say('intl.noStatuses')
         } else {
-          await reportStatuses(account, statusIds, comment, forward)
+          submitted = await reportStatuses(account, statusIds, comment, forward)
+        }
+        if (!submitted) {
+          // The dialog has already closed at this point: reopen it with what was entered, so a failed
+          // report (or one with no post selected) doesn't lose the typed comment.
+          /* no await */ reportStatusOrAccount({ status, account, draft: { comment, forward, reportMap } })
         }
       }
     },
