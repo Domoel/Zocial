@@ -64,6 +64,8 @@ Unit tests for the parts that broke before (caches, streaming, rendering, compos
     // @mock _store/store.js -> ./mocks/timelineStore.js
     // @define ZOCIAL_IS_BROWSER=true
 
+Svelte components have no tests of their own. When a component breaks because of its logic (a computed value, a decision), move that logic into a plain function, test the function and let the component call it. Layout and device behaviour are checked on dev.
+
 Tests for the database layer import `fake-indexeddb/auto` and run the real `src/routes/_database` modules against it. A test that never settles fails after 30 seconds.
 
 The Docker build runs `pnpm run lint && pnpm test` before building, so a failing check builds no image (and Watchtower keeps the running one).
