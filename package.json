@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "version": "1.12.5",
+  "version": "1.12.6",
   "scripts": {
     "lint": "standard && standard --plugin html 'src/routes/**/*.html' && tsc && prettier -c 'src/**/*.ts'",
     "test": "node ./bin/run-tests.js",
@@ -143,5 +143,8 @@
   },
   "homepage": "https://git.ztfr.eu/Dome/Zocial#readme",
   "pre-commit": "lint",
-  "packageManager": "pnpm@9.4.0+sha256.b6fd0bfda555e7e584ad7e56b30c68b01d5a04f9ee93989f4b93ca8473c49c74"
+  "packageManager": "pnpm@9.4.0+sha256.b6fd0bfda555e7e584ad7e56b30c68b01d5a04f9ee93989f4b93ca8473c49c74",
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5"
+  }
 }

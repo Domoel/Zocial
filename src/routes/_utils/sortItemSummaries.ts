@@ -72,7 +72,12 @@ export function sortItemSummariesForThread(
     }
     status.start = true
     status.depth = 0
-    const subtree = [status, ...status.replies!.map(flatten)].flat()
+    // direct replies oldest first, like every deeper level (the input order is only right when it
+    // comes straight from /context, not after merging cached and fresh replies)
+    const subtree = [
+      status,
+      ...status.replies!.sort(compareTimelineItemSummaries).map(flatten),
+    ].flat()
     subtree[subtree.length - 1]!.end = true
     const newSummaries: TimelineSummary[] = orphans
       .map((summary) =>

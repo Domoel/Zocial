@@ -67,6 +67,12 @@ for (const file of files) {
   bundles.push(outfile)
 }
 
-const result = spawnSync(process.execPath, ['--test', ...bundles], { stdio: 'inherit' })
+// A test that never settles must fail the gate, not hang the image build: every test gets a timeout,
+// the process exits once all tests are done even if something (an IndexedDB connection that never
+// closes, a timer) keeps the event loop alive, and the whole run is capped.
+const result = spawnSync(process.execPath, ['--test', '--test-timeout=30000', '--test-force-exit', ...bundles], {
+  stdio: 'inherit',
+  timeout: 10 * 60 * 1000
+})
 fs.rmSync(outDir, { recursive: true, force: true })
 process.exit(result.status === null ? 1 : result.status)

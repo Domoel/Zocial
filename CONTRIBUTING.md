@@ -64,6 +64,8 @@ Unit tests for the parts that broke before (caches, streaming, rendering, compos
     // @mock _store/store.js -> ./mocks/timelineStore.js
     // @define ZOCIAL_IS_BROWSER=true
 
+Tests for the database layer import `fake-indexeddb/auto` and run the real `src/routes/_database` modules against it. A test that never settles fails after 30 seconds.
+
 The Docker build runs `pnpm run lint && pnpm test` before building, so a failing check builds no image (and Watchtower keeps the running one).
 
 ## Debug build

@@ -184,7 +184,7 @@ export default {
     ·
     {showInstanceName, select,
       true {{instanceName}}
-      other {Zocial}
+      other {{appName}}
     }
   `,
   pinLabel: `{label} {pinnable, select,

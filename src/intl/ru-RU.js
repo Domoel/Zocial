@@ -168,7 +168,7 @@ export default {
     }
     {showInstanceName, select,
       true {{instanceName}}
-      other {Zocial}
+      other {{appName}}
     }
     ·
     {name}
