@@ -99,7 +99,6 @@
   import { setReblogged } from '../../_actions/reblog.js'
   import { importShowStatusOptionsDialog } from '../dialog/asyncDialogs/importShowStatusOptionsDialog.js'
   import { importShowReblogChoiceDialog } from '../dialog/asyncDialogs/importShowReblogChoiceDialog.js'
-  import { updateProfileAndRelationship } from '../../_actions/accounts.js'
   import { CHECKMARK_ANIMATION, FAVORITE_ANIMATION, REBLOG_ANIMATION } from '../../_static/animations.js'
   import { on } from '../../_utils/eventBus.ts'
   import { announceAriaLivePolite } from '../../_utils/announceAriaLivePolite.js'
@@ -199,14 +198,11 @@
         }
       },
       async onOptionsClick () {
-        const { originalStatus, originalAccountId } = this.get()
-        const updateRelationshipPromise = updateProfileAndRelationship(originalAccountId)
+        const { originalStatus } = this.get()
         const showStatusOptionsDialog = await importShowStatusOptionsDialog()
-        await Promise.resolve()
-        showStatusOptionsDialog(originalStatus)
-        await updateRelationshipPromise
+        showStatusOptionsDialog(originalStatus) // loads the author's relationship itself
       },
-      onPostedStatus (realm, inReplyToUuid) {
+      onPostedStatus ({ realm, inReplyToUuid }) {
         const {
           originalStatusId,
           uuid

@@ -1,6 +1,7 @@
 import { store } from '../_store/store.js'
 import { getTimeline } from '../_api/timelines.js'
 import { toast } from '../_components/toast/toast.js'
+import { formatIntl } from '../_utils/formatIntl.js'
 import { mark, stop } from '../_utils/marks.js'
 import { concat, mergeArrays } from '../_utils/arrays.js'
 import { compareTimelineItemSummaries } from '../_utils/statusIdSorting.js'
@@ -10,7 +11,7 @@ import { getStatus, getStatusContext } from '../_api/statuses.js'
 import { emit } from '../_utils/eventBus.ts'
 import { TIMELINE_BATCH_SIZE, LIST_BATCH_SIZE } from '../_static/timelines.js'
 import { timelineItemToSummary } from '../_utils/timelineItemToSummary.ts'
-import { addStatusesOrNotifications, insertUpdatesIntoTimeline } from './addStatusOrNotification.js'
+import { addStatusesOrNotifications, insertUpdatesIntoTimeline, refreshServerDerivedFlags } from './addStatusOrNotification.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { isNetworkNoiseError } from '../_utils/isNetworkError.js'
 import { SLOW_READ_TIMEOUT_FIRST } from '../_utils/ajax.js'
@@ -60,6 +61,16 @@ async function fetchFreshThreadFromNetwork (instanceName, accessToken, statusId)
   return concat(context.ancestors, status, context.descendants)
 }
 
+// Background refresh of a cached thread: on failure (the post was deleted meanwhile → 404, or the
+// network is down) the cached version simply stays.
+function warnThreadRefresh (e) {
+  if (isNetworkNoiseError(e)) {
+    console.warn('thread refresh failed:', e.message || e)
+  } else {
+    console.error('thread refresh failed', e)
+  }
+}
+
 async function fetchThreadFromNetwork (instanceName, accessToken, timelineName) {
   const statusId = timelineName.split('/').slice(-1)[0]
 
@@ -78,13 +89,13 @@ async function fetchThreadFromNetwork (instanceName, accessToken, timelineName) 
     // status is not a reply to another status (fast path)
     // Update the status and thread asynchronously, but return just the status for now
     // Any replies to the status will load asynchronously
-    /* no await */ updateStatusAndThread(instanceName, accessToken, timelineName, statusId)
+    /* no await */ updateStatusAndThread(instanceName, accessToken, timelineName, statusId).catch(warnThreadRefresh)
     return [status]
   }
   // status is a reply to some other status, meaning we don't want some
   // jerky behavior where it suddenly scrolls into place. Update the status asynchronously
   // but grab the thread now
-  scheduleIdleTask(() => updateStatus(instanceName, accessToken, statusId))
+  scheduleIdleTask(() => updateStatus(instanceName, accessToken, statusId).catch(warnThreadRefresh))
   const context = await getStatusContext(instanceName, accessToken, statusId)
   return concat(context.ancestors, status, context.descendants)
 }
@@ -168,16 +179,51 @@ export async function addPagedTimelineItemSummaries (instanceName, timelineName,
   }
 }
 
-async function fetchPagedItems (instanceName, accessToken, timelineName) {
-  const { timelineNextPageId } = store.get()
-  const { items, headers } = await getTimeline(instanceName, accessToken, timelineName, timelineNextPageId, null, TIMELINE_BATCH_SIZE)
-  const linkHeader = headers.get('Link')
-  const parsedLinkHeader = li.parse(linkHeader)
-  const nextUrl = parsedLinkHeader && parsedLinkHeader.next
-  const nextId = nextUrl && (new URL(nextUrl)).searchParams.get('max_id')
-  store.setForTimeline(instanceName, timelineName, { timelineNextPageId: nextId })
-  await storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
-  await addPagedTimelineItems(instanceName, timelineName, items)
+// Favourites/bookmarks page by an opaque Link-header cursor. A fresh fetch (first load, the 60 s
+// poll, a revisit) re-reads the newest page and puts it on top; only "load more" continues from the
+// cursor. (Before, every refresh silently loaded the next *older* page.)
+async function fetchPagedItems (instanceName, accessToken, timelineName, fresh) {
+  const oldSummaries = store.getForTimeline(instanceName, timelineName, 'timelineItemSummaries')
+  const isRefresh = !!(fresh && oldSummaries && oldSummaries.length)
+  const pageId = fresh ? null : store.getForTimeline(instanceName, timelineName, 'timelineNextPageId')
+  let items, headers
+  try {
+    ({ items, headers } = await getTimeline(instanceName, accessToken, timelineName, pageId, null, TIMELINE_BATCH_SIZE))
+  } catch (e) {
+    if (isNetworkNoiseError(e)) {
+      console.warn('timeline fetch failed:', timelineName, '·', e.message || e)
+    } else {
+      console.error(e)
+    }
+    /* no await */ toast.say(formatIntl('intl.unableToLoadStatuses', { error: (e.message || '') }))
+    if (!oldSummaries) {
+      // no cache for these timelines: initialise the list (empty state) instead of spinning forever
+      store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: [] })
+    }
+    return
+  }
+  if (!isRefresh) {
+    // a refresh must not rewind the cursor of a list that was already paged further down
+    const linkHeader = headers.get('Link')
+    const parsedLinkHeader = li.parse(linkHeader)
+    const nextUrl = parsedLinkHeader && parsedLinkHeader.next
+    const nextId = nextUrl && (new URL(nextUrl)).searchParams.get('max_id')
+    store.setForTimeline(instanceName, timelineName, { timelineNextPageId: nextId })
+  }
+  try {
+    await storeFreshTimelineItemsInDatabase(instanceName, timelineName, items)
+  } catch (e) {
+    console.warn('failed to store timeline items:', (e && e.message) || e)
+  }
+  if (isRefresh) {
+    const newSummaries = items.map(item => timelineItemToSummary(item, instanceName))
+    const mergedSummaries = uniqById(concat(newSummaries, oldSummaries))
+    if (!isEqual(oldSummaries, mergedSummaries)) {
+      store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: mergedSummaries })
+    }
+  } else {
+    await addPagedTimelineItems(instanceName, timelineName, items)
+  }
 }
 
 async function fetchTimelineItems (instanceName, accessToken, timelineName, online, maxId) {
@@ -245,6 +291,9 @@ export async function addTimelineItemSummaries (instanceName, timelineName, newS
   }
 
   let mergedSummaries = uniqById(mergeArrays(oldSummaries || [], newSummaries, compareTimelineItemSummaries))
+  if (!newStale && oldSummaries) {
+    mergedSummaries = refreshServerDerivedFlags(mergedSummaries, newSummaries)
+  }
 
   if (type === 'status') {
     mergedSummaries = sortItemSummariesForThread(mergedSummaries, statusId)
@@ -365,7 +414,7 @@ async function fetchTimelineItemsAndPossiblyFallBack (fresh, isInitialLoad) {
   if (currentTimeline === 'favorites' || currentTimeline === 'bookmarks') {
     // Always fetch favorites from the network, we currently don't have a good way of storing
     // these in IndexedDB because of "internal ID" system Mastodon uses to paginate these
-    await fetchPagedItems(currentInstance, accessToken, currentTimeline)
+    await fetchPagedItems(currentInstance, accessToken, currentTimeline, fresh)
   } else {
     // fresh=true (navigate/poll refresh): pass null so no max_id is sent → fetches newest posts.
     // fresh=false/undefined (pagination): pass undefined to fall back to lastTimelineItemId from
@@ -468,8 +517,12 @@ export async function setupTimeline () {
 
 export async function fetchMoreItemsAtBottomOfTimeline (instanceName, timelineName) {
   store.setForTimeline(instanceName, timelineName, { runningUpdate: true })
-  await fetchTimelineItemsAndPossiblyFallBack()
-  store.setForTimeline(instanceName, timelineName, { runningUpdate: false })
+  try {
+    await fetchTimelineItemsAndPossiblyFallBack()
+  } finally {
+    // a failed page must not leave the "loading more" spinner running forever
+    store.setForTimeline(instanceName, timelineName, { runningUpdate: false })
+  }
 }
 
 export async function showMoreItemsForTimeline (instanceName, timelineName) {

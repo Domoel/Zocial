@@ -11,6 +11,10 @@ const openReqs: Record<string, IDBOpenDBRequest> = {}
 // opening (and leaking) its own connection. A leaked connection would also
 // later block deleteDatabase() on logout.
 const databaseCache: Record<string, Promise<IDBDatabase>> = {}
+// Instances logged out during this page session: their database was just deleted, and a request
+// still in flight (a timeline fetch, a stream event) must not re-create it with the logged-out
+// account's data. Logging in again always goes through the OAuth redirect (a fresh page load).
+const loggedOutInstances = new Set<string>()
 
 function createDatabase(instanceName: string) {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -37,8 +41,29 @@ function createDatabase(instanceName: string) {
       }
       doNextMigration()
     }
-    req.onsuccess = () => resolve(req.result)
+    req.onsuccess = () => {
+      const db = req.result
+      // Another tab deletes this database on logout (or a newer version upgrades it): close our
+      // connection so that isn't blocked for as long as this tab stays open. The next
+      // getDatabase() call opens a fresh connection.
+      db.onversionchange = () => {
+        db.close()
+        if (openReqs[instanceName] === req) {
+          delete openReqs[instanceName]
+          delete databaseCache[instanceName]
+        }
+      }
+      resolve(db)
+    }
   })
+}
+
+// `result` throws InvalidStateError while the open request is still pending
+function closeOpenRequest(instanceName: string) {
+  const openReq = openReqs[instanceName]
+  if (openReq && openReq.readyState === 'done' && openReq.result) {
+    openReq.result.close()
+  }
 }
 
 export function getDatabase(instanceName: string): Promise<IDBDatabase> {
@@ -47,10 +72,23 @@ export function getDatabase(instanceName: string): Promise<IDBDatabase> {
       new Error('instanceName is undefined in getDatabase()'),
     )
   }
+  if (loggedOutInstances.has(instanceName)) {
+    return Promise.reject(
+      new Error(`${instanceName} was logged out, not re-opening its database`),
+    )
+  }
   if (!databaseCache[instanceName]) {
     databaseCache[instanceName] = createDatabase(instanceName).then(
       async (db) => {
-        await addKnownInstance(instanceName)
+        try {
+          await addKnownInstance(instanceName)
+        } catch (e) {
+          // bookkeeping for the age cleanup only — don't fail (and leak) the open connection over it
+          console.warn(
+            'failed to register known instance',
+            (e && (e as Error).message) || e,
+          )
+        }
         return db
       },
     )
@@ -90,16 +128,18 @@ export async function dbPromise<result, stores extends string | string[]>(
 
     tx.oncomplete = () => resolve(res)
     tx.onerror = () => reject(tx.error)
+    // An abort doesn't always come with an error event (an exception thrown in a request callback,
+    // a commit-time QuotaExceededError), so without this the caller would wait forever.
+    tx.onabort = () =>
+      reject(tx.error || new DOMException('Transaction aborted', 'AbortError'))
   })
 }
 
 export function deleteDatabase(instanceName: string) {
+  loggedOutInstances.add(instanceName) // only logout deletes a database (clear.js)
   return new Promise<void>((resolve, reject) => {
     // close any open requests
-    const openReq = openReqs[instanceName]
-    if (openReq && openReq.result) {
-      openReq.result.close()
-    }
+    closeOpenRequest(instanceName)
     delete openReqs[instanceName]
     delete databaseCache[instanceName]
     const req = indexedDB.deleteDatabase(instanceName)
@@ -109,7 +149,9 @@ export function deleteDatabase(instanceName: string) {
     // completes once that connection closes, but we must not hang the caller (logout / clear data)
     // forever waiting on it — resolve best-effort and let the actual delete finish in the background.
     req.onblocked = () => {
-      console.warn(`database ${instanceName} delete blocked by another connection; continuing`)
+      console.warn(
+        `database ${instanceName} delete blocked by another connection; continuing`,
+      )
       resolve()
     }
   })
@@ -119,10 +161,7 @@ export function deleteDatabase(instanceName: string) {
 
 export function closeDatabase(instanceName: string) {
   // close any open requests
-  const openReq = openReqs[instanceName]
-  if (openReq && openReq.result) {
-    openReq.result.close()
-  }
+  closeOpenRequest(instanceName)
   delete openReqs[instanceName]
   delete databaseCache[instanceName]
   clearAllCaches(instanceName)

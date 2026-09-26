@@ -8,6 +8,7 @@ import { store } from '../_store/store.js'
 import PromiseWorker from 'promise-worker'
 import { emit } from '../_utils/eventBus.ts'
 import { getDisplayableQuote } from '../_utils/quotes.js'
+import { RAW_CONTENT } from '../_utils/createSearchIndexFromStatusOrNotification.js'
 
 let worker
 export function init () {
@@ -77,6 +78,7 @@ export async function rehydrateStatusOrNotification (statusOrNotification) {
   const originalStatus = status.reblog ? status.reblog : status
   if (originalStatus[rehydrated] || originalStatus[rehydrating]) return
   originalStatus[rehydrating] = true
+  originalStatus[RAW_CONTENT] = originalStatus.content // processStatusContent replaces it (see RAW_CONTENT)
   /* no await */ decodeAllBlurhashes(originalStatus)
   await Promise.all([
     processStatusContent(originalStatus),

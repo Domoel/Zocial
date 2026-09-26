@@ -58,12 +58,16 @@
   import ScrollToTopButton from './ScrollToTopButton.html'
   import { formatIntl } from '../../_utils/formatIntl.js'
 
+  // fetch failures are handled inside (cache fallback / toast); this only catches genuine bugs, which
+  // would otherwise surface as uncaught rejections
+  const logTimelineError = e => console.error('timeline update failed', e)
+
   export default {
     oncreate () {
       // Track that a timeline is being viewed, so the 60s polling fallback only runs
       // while the user is actually on a timeline (not on settings/profile/etc.).
       this.store.set({ mountedTimelines: this.store.get().mountedTimelines + 1 })
-      setupTimeline()
+      setupTimeline().catch(logTimelineError)
       this.setupStreaming()
       this.setupAsyncComponents()
       // When the tab becomes visible again after being hidden, re-run setupTimeline.
@@ -72,7 +76,7 @@
       // and setupTimeline will re-fetch. If data is fresh it exits immediately.
       this._visibilityObserver = this.observe('$pageVisibilityHidden', (hidden, wasHidden) => {
         if (wasHidden === true && !hidden) {
-          setupTimeline()
+          setupTimeline().catch(logTimelineError)
         }
       })
     },
@@ -197,7 +201,7 @@
         }
         const { currentInstance } = this.store.get()
         const { timeline } = this.get()
-        /* no await */ fetchMoreItemsAtBottomOfTimeline(currentInstance, timeline)
+        /* no await */ fetchMoreItemsAtBottomOfTimeline(currentInstance, timeline).catch(logTimelineError)
       },
       onScrollToTop () {
         const { shouldShowHeader } = this.store.get()

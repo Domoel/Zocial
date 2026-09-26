@@ -53,7 +53,16 @@ export class TimelineStream {
         this.emit('reconnect')
       }
     }
-    ws.onmessage = (e) => this.emit('message', safeParse(e.data))
+    ws.onmessage = (e) => {
+      let message
+      try {
+        message = safeParse(e.data)
+      } catch (err) {
+        console.warn('ignoring a malformed streaming message') // a non-JSON frame from a proxy/server
+        return
+      }
+      this.emit('message', message)
+    }
     ws.onclose = () => this.emit('close')
     // The ws "onreconnect" event seems unreliable. When the server goes down and comes back up,
     // it doesn't fire (but "open" does). When we freeze and unfreeze, it fires along with the
@@ -96,7 +105,8 @@ export class TimelineStream {
     }
     if (!this._ws) {
       this._setupWebSocket()
-    } else if (this._ws.readyState !== WebSocketClient.OPEN) {
+    } else if (this._ws.readyState !== WebSocketClient.OPEN && this._ws.readyState !== WebSocketClient.CONNECTING) {
+      // (a socket that is still connecting is left alone: replacing it only restarts the handshake)
       // reset the backoff counter so fresh notifications come in faster
       this._ws.reset()
       this._ws.reconnect()

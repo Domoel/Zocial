@@ -19,7 +19,9 @@ export async function setStatusBookmarkedOrUnbookmarked (statusId, bookmarked) {
       /* no await */ toast.say('intl.unbookmarkedStatus')
     }
     store.setStatusBookmarked(currentInstance, statusId, bookmarked)
-    await database.setStatusBookmarked(currentInstance, statusId, bookmarked)
+    await database.setStatusBookmarked(currentInstance, statusId, bookmarked).catch(e => {
+      console.warn('failed to store bookmark:', (e && e.message) || e) // the server already applied it
+    })
   } catch (e) {
     logActionError('bookmark', e)
     /* no await */toast.say(

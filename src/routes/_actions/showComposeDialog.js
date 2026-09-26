@@ -1,4 +1,5 @@
 import { store } from '../_store/store.js'
+import { confirmReplaceDialogDraft } from './composeDraft.js'
 import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/importShowComposeDialog.js'
 import { database } from '../_database/database.js'
 import { doMediaUpload } from './media.js'
@@ -24,6 +25,9 @@ export async function showComposeDialog () {
   const composeText = [title, text, url].filter(Boolean).join('\n\n')
   const [showComposeDialog, twitterPost] = await Promise.all([importShowComposeDialogPromise, Promise.resolve(new URLSearchParams(location.search).get('retweet')).then(rt => rt && fetch(Object.assign(new URL(rt), { hostname: 'birdlink.easrng.workers.dev' }).href)).then(e => e.text()).catch(e => console.warn('failed to load tweet', e))])
 
+  if (!(await confirmReplaceDialogDraft())) {
+    return
+  }
   store.clearComposeData('dialog')
   store.setComposeData('dialog', { text: composeText || twitterPost })
   store.save()

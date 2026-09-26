@@ -42,9 +42,17 @@ export class LocalStorageStore extends Store {
     if (!ZOCIAL_IS_BROWSER) {
       return
     }
+    // Per key and never throwing: save() runs in the middle of logout, posting and uploads, and a full
+    // localStorage (QuotaExceededError) must not abort those. A key that failed stays queued.
+    const failedKeys = {}
     Object.keys(this._keysToSave).forEach(key => {
-      LS.setItem(`store_${key}`, JSON.stringify(this.get()[key]))
+      try {
+        LS.setItem(`store_${key}`, JSON.stringify(this.get()[key]))
+      } catch (e) {
+        failedKeys[key] = true
+        console.warn('failed to persist', key, (e && e.message) || e)
+      }
     })
-    this._keysToSave = {}
+    this._keysToSave = failedKeys
   }
 }

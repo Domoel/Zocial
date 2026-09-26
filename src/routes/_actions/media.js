@@ -1,5 +1,5 @@
 import { store } from '../_store/store.js'
-import { uploadMedia } from '../_api/media.js'
+import { uploadMedia, waitForMediaProcessing } from '../_api/media.js'
 import { toast } from '../_components/toast/toast.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 import { formatIntl } from '../_utils/formatIntl.js'
@@ -14,12 +14,18 @@ export async function doMediaUpload (realm, file) {
     if (composeMedia.length === maxStatusMediaAttachments) {
       throw new Error(formatIntl('intl.tooManyMediaAttachments', { max: maxStatusMediaAttachments }))
     }
-    const response = await uploadMedia(currentInstance, accessToken, file)
+    const response = await waitForMediaProcessing(currentInstance, accessToken,
+      await uploadMedia(currentInstance, accessToken, file))
     composeMedia = store.getComposeData(realm, 'media') || []
     if (composeMedia.length === maxStatusMediaAttachments) {
       throw new Error(formatIntl('intl.tooManyMediaAttachments', { max: maxStatusMediaAttachments }))
     }
-    await database.setCachedMediaFile(response.id, file)
+    try {
+      // local copy for previews/redraft only — the upload itself succeeded, so don't fail it over this
+      await database.setCachedMediaFile(response.id, file)
+    } catch (e) {
+      console.warn('failed to cache uploaded media locally:', (e && e.message) || e)
+    }
     composeMedia.push({
       data: response,
       file: { name: file.name },

@@ -6,7 +6,7 @@ import { formatIntl } from '../_utils/formatIntl.js'
 import { logActionError } from '../_utils/isNetworkError.js'
 
 export async function setReblogged (statusId, reblogged) {
-  const online = store.get()
+  const { online } = store.get()
   if (!online) {
     /* no await */ toast.say(reblogged ? 'intl.cannotReblogOffline' : 'intl.cannotUnreblogOffline')
     return
@@ -18,7 +18,6 @@ export async function setReblogged (statusId, reblogged) {
   store.setStatusReblogged(currentInstance, statusId, reblogged) // optimistic update
   try {
     await networkPromise
-    await database.setStatusReblogged(currentInstance, statusId, reblogged)
   } catch (e) {
     logActionError('reblog', e)
     /* no await */ toast.say(reblogged
@@ -26,5 +25,12 @@ export async function setReblogged (statusId, reblogged) {
       : formatIntl('intl.failedToUnreblog', { error: (e.message || '') })
     )
     store.setStatusReblogged(currentInstance, statusId, !reblogged) // undo optimistic update
+    return
+  }
+  // The server accepted it: a failed local write must not undo the optimistic update or show an error.
+  try {
+    await database.setStatusReblogged(currentInstance, statusId, reblogged)
+  } catch (e) {
+    console.warn('failed to store reblog:', (e && e.message) || e)
   }
 }

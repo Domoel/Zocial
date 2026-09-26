@@ -641,6 +641,7 @@ export default {
   unableToPost: 'Не удалось опубликовать запись: {error}',
   statusDeleted: 'Запись удалена',
   unableToDelete: 'Не удалось удалить запись: {error}',
+  unableToEdit: 'Не удалось изменить запись: {error}',
   cannotFavoriteOffline: 'Вы не можете добавлять в избранное в офлайн-режиме режиме',
   cannotUnfavoriteOffline: 'Вы не можете удалять из избранного в офлайн-режиме режиме',
   // Custom emoji reactions
@@ -667,6 +668,9 @@ export default {
   accessTokenRevoked: 'Токен доступа был отозван, выполнен выход из {instance}',
   loggedOutOfInstance: 'Выполнен выход из {instance}',
   failedToUploadMedia: 'Не удалось загрузить мультимедиа: {error}',
+  waitForMediaUpload: 'Дождитесь окончания загрузки мультимедиа',
+  discardDraftConfirm: 'У вас есть незаконченная запись, которая ещё не отправлена. Удалить её?',
+  discardDraft: 'Удалить',
   mutedAccount: 'Аккаунт игнорируется',
   unmutedAccount: 'Аккаунт не игнорируется',
   unableToMute: 'Не удалось добавить аккаунт в игнорируемые: {error}',

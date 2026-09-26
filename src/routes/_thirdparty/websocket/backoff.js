@@ -9,7 +9,18 @@ export class Backoff {
 
   backoff () {
     const delay = this.fibonacci(++this.attempts)
-    setTimeout(this.onReady, delay)
+    this.cancel() // at most one pending reconnect
+    this._timer = setTimeout(() => {
+      this._timer = null
+      this.onReady()
+    }, delay)
+  }
+
+  cancel () {
+    if (this._timer) {
+      clearTimeout(this._timer)
+      this._timer = null
+    }
   }
 
   fibonacci (attempt) {

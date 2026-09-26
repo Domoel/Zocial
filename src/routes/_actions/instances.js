@@ -7,6 +7,7 @@ import { cacheFirstUpdateAfter } from '../_utils/sync.js'
 import { getInstanceInfo, fetchNodeInfo } from '../_api/instance.js'
 import { auth } from '../_api/utils.js'
 import { deleteSubscription } from '../_api/pushSubscription.js'
+import { unsubscribeBrowserPush } from './pushSubscription.js'
 import { database } from '../_database/database.js'
 import { importVirtualListStore } from '../_utils/asyncModules/importVirtualListStore.js'
 import { formatIntl } from '../_utils/formatIntl.js'
@@ -60,12 +61,16 @@ export async function logOutOfInstance (instanceName, message) {
     lastContentTypes,
     instanceFollowedHashtags
   } = store.get()
-  // Tell this account's server to stop sending push notifications after logout. The browser push
-  // subscription is a single shared per-origin object, so we must NOT unsubscribe it here (another
-  // account may be the current push account); we only drop *this* account's subscription record on
-  // its backend. Otherwise the server keeps pushing to the shared endpoint and the service worker
-  // would still surface notifications for a logged-out account. Capture the token before the cleanup
-  // loop below removes it from loggedInInstances.
+  // Tell this account's server to stop sending push notifications after logout, and — when this
+  // account holds push (single-account model, §18) — drop the shared browser subscription too (see
+  // below). Otherwise the server keeps pushing to the endpoint and the service worker would still
+  // surface notifications for a logged-out account. Capture the token before the cleanup loop below
+  // removes it from loggedInInstances.
+  if (!loggedInInstances[instanceName]) {
+    // already logged out, e.g. two concurrent 401s: indexOf() below would be -1 and splice(-1, 1)
+    // would drop the *last* account from the list instead
+    return
+  }
   const loggedOutAccessToken = loggedInInstances[instanceName] && loggedInInstances[instanceName].access_token
   const hadPushSubscription = !!(pushSubscriptions && pushSubscriptions[instanceName])
   loggedInInstancesInOrder.splice(loggedInInstancesInOrder.indexOf(instanceName), 1)
@@ -130,6 +135,15 @@ export async function logOutOfInstance (instanceName, message) {
   clearLogs()
   const { enableGrayscale } = store.get()
   switchToTheme(instanceThemes[newInstance], enableGrayscale)
+  const anotherAccountHasPush = Object.keys(pushSubscriptions).some(name => pushSubscriptions[name])
+  if (hadPushSubscription && !anotherAccountHasPush) {
+    // Single-account model (§18): the account being logged out holds push, so the shared browser
+    // subscription is its own. Unsubscribing makes the push service reject further pushes (the
+    // server then drops the subscription on the 410) — even when the backend delete below fails
+    // (offline, instance down), which would otherwise keep pushing to a logged-out account. (A
+    // legacy state where another account still has a subscription record keeps it.)
+    /* no await */ unsubscribeBrowserPush()
+  }
   if (loggedOutAccessToken && hadPushSubscription) {
     // best-effort: a 404 just means the backend already had no subscription
     /* no await */ deleteSubscription(instanceName, loggedOutAccessToken).catch(e => {

@@ -16,7 +16,7 @@ import { deleteAll } from './utils.js'
 import { createPinnedStatusKeyRange, createThreadKeyRange } from './keys.js'
 import { getKnownInstances } from './knownInstances.js'
 import { noop } from '../_utils/lodash-lite.js'
-import { CLEANUP_DELAY, CLEANUP_TIME_AGO } from '../_static/database.js'
+import { CLEANUP_DELAY, CLEANUP_MAX_WAIT, CLEANUP_TIME_AGO } from '../_static/database.js'
 import { scheduleIdleTask } from '../_utils/scheduleIdleTask.js'
 
 const BATCH_SIZE = 20
@@ -134,7 +134,10 @@ export async function cleanup (instanceName) {
 }
 
 function doCleanup (instanceName) {
-  scheduleIdleTask(() => cleanup(instanceName))
+  scheduleIdleTask(() => {
+    // best-effort housekeeping (e.g. an instance logged out in the meantime)
+    cleanup(instanceName).catch(e => console.warn('database cleanup failed:', instanceName, (e && e.message) || e))
+  })
 }
 
 async function scheduledCleanup () {
@@ -145,4 +148,8 @@ async function scheduledCleanup () {
 }
 
 // we have unit tests that test indexedDB; we don't want this thing to run forever
-export const scheduleCleanup = ZOCIAL_IS_BROWSER ? debounce(scheduledCleanup, CLEANUP_DELAY) : noop
+// maxWait: a busy home stream inserts more often than every CLEANUP_DELAY, and a plain trailing
+// debounce would then never fire, so IndexedDB would grow without bound.
+export const scheduleCleanup = ZOCIAL_IS_BROWSER
+  ? debounce(scheduledCleanup, CLEANUP_DELAY, { maxWait: CLEANUP_MAX_WAIT })
+  : noop

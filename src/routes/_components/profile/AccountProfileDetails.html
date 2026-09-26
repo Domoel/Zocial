@@ -127,11 +127,16 @@
   // compact for the visible label ("Sep 2024"), full date for the tooltip
   const joinDateFormat = perLocale((locale) => new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short' }))
   const joinDateFullFormat = perLocale((locale) => new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }))
+  // format() throws a RangeError on an unparseable date, which would blank the profile page
+  function formatJoinDate (format, createdAt) {
+    const date = createdAt ? new Date(createdAt) : null
+    return date && !isNaN(date.getTime()) ? format.format(date) : ''
+  }
 
   export default {
     computed: {
-      joinedDisplay: ({ account }) => account.created_at ? joinDateFormat().format(new Date(account.created_at)) : '',
-      joinedFull: ({ account }) => account.created_at ? joinDateFullFormat().format(new Date(account.created_at)) : '',
+      joinedDisplay: ({ account }) => formatJoinDate(joinDateFormat(), account.created_at),
+      joinedFull: ({ account }) => formatJoinDate(joinDateFullFormat(), account.created_at),
       numStatuses: ({ account }) => account.statuses_count || 0,
       numFollowing: ({ account }) => account.following_count || 0,
       numFollowers: ({ account }) => account.followers_count || 0,

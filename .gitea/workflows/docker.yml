@@ -72,6 +72,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ steps.image.outputs.image }}
+          # The default latest=auto adds :latest to tag pushes too — any tag (a rollback point, a tag on
+          # a dev commit) would overwrite :latest and Watchtower would roll it into production. Only
+          # main produces :latest (the raw rule below).
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch

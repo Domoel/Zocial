@@ -41,3 +41,23 @@ export function getQuoteHandle (status) {
   const quoted = isQuoteWrapper(quote) ? quote.quoted_status : quote
   return quoted && quoted.account ? '@' + quoted.account.acct : undefined
 }
+
+// The quoted post's URL, or undefined (nothing quoted, or a Mastodon wrapper without the post:
+// `deleted`, `unauthorized`, a nested ShallowQuote).
+export function getQuotedStatusUrl (status) {
+  const quote = status && status.quote
+  if (!quote) {
+    return undefined
+  }
+  const quoted = isQuoteWrapper(quote) ? quote.quoted_status : quote
+  return (quoted && (quoted.url || quoted.uri)) || undefined
+}
+
+// True when the quote post's "RE: <link>" fallback must not become a preview card: the server says
+// the quote may not be shown (pending approval, rejected, revoked, deleted, unauthorized, or a
+// muted/blocked author). An accepted quote — or a server without quote support (GoToSocial) —
+// keeps the link card-eligible, since there the card is the only context.
+export function isQuoteWithheld (status) {
+  const quote = status && status.quote
+  return !!(quote && isQuoteWrapper(quote) && quote.state !== 'accepted')
+}

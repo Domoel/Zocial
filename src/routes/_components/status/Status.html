@@ -36,7 +36,7 @@
     <StatusContent {...params} shown={showContent} {plainTextContent} {translateContent} {showTranslate} on:recalculateHeight />
   {/if}
   {#if !nextGrouped && threadPosition !== 'middle' && showTranslate}
-    <StatusTranslateToolbar {translateContent} {translateState}/>
+    <StatusTranslateToolbar {translateContent} {translateState} {translateKey}/>
   {/if}
   <!-- Apparently it's possible for spoilered content to sometimes have embeds, but I can't figure out how.
        Don't bother optimizing this with the preloadHiddenContent. -->
@@ -255,7 +255,7 @@
   import { rehydrated } from '../../_actions/rehydrateStatusOrNotification.js'
   import { canonicalStatusUrl } from '../../_utils/canonicalStatusUrl.js'
   import { isUserInputElement } from '../../_utils/isUserInputElement.js'
-  import { getDisplayableQuote, isQuoteOfHiddenAccount } from '../../_utils/quotes.js'
+  import { getDisplayableQuote, isQuoteWithheld } from '../../_utils/quotes.js'
   import '@easrng/sparkle/index.js'
 
   const isToolbar = node => node.classList.contains('status-toolbar')
@@ -318,7 +318,7 @@
       // Client-side card: delay resolution so fast-scrolled items don't trigger API calls
       const { $hideCards } = this.store.get()
       if (!$hideCards && !_origStatus.card && _origStatus.content) {
-        const firstUrl = extractFirstExternalLink(_origStatus.content, isQuoteOfHiddenAccount(_origStatus))
+        const firstUrl = extractFirstExternalLink(_origStatus.content, isQuoteWithheld(_origStatus))
         if (firstUrl) {
           this._cardTimer = setTimeout(() => {
             const { currentInstance, accessToken } = this.store.get()

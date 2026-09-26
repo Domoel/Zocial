@@ -73,6 +73,77 @@ const isValidHashtagNode = (
 
 const empty = new Map()
 
+// Defence in depth. Servers sanitise post HTML (and the CSP blocks inline scripts), but this HTML
+// also comes from third-party servers and bridges and ends up in {@html}, in the same origin as every
+// logged-in account's token. So drop active/embedding elements, event-handler attributes and
+// script-capable URLs here too. `style` is kept on purpose (servers that allow it use it for
+// formatting; it can't run script under the CSP).
+const DROPPED_ELEMENTS = new Set([
+  'script',
+  'style',
+  'iframe',
+  'frame',
+  'frameset',
+  'object',
+  'embed',
+  'applet',
+  'noscript',
+  'template',
+  'meta',
+  'link',
+  'base',
+  'form',
+  'input',
+  'button',
+  'textarea',
+  'select',
+  'option',
+  'dialog',
+  'svg',
+  'math',
+])
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'src',
+  'action',
+  'formaction',
+  'xlink:href',
+  'poster',
+  'background',
+  'cite',
+  'longdesc',
+])
+const DROPPED_ATTRIBUTES = new Set(['srcset', 'srcdoc'])
+
+function isSafeUrl(name: string, value: string): boolean {
+  // browsers ignore ASCII whitespace/control characters inside a scheme ("java\tscript:")
+  const normalized = value.replace(/[\u0000- \u007f]/g, '').toLowerCase()
+  const scheme = /^([a-z][a-z0-9+.-]*):/.exec(normalized)
+  if (!scheme) {
+    return true // relative URL
+  }
+  if (scheme[1] === 'data') {
+    return (
+      name === 'src' &&
+      /^data:image\/(?:png|gif|jpe?g|webp|avif);/.test(normalized)
+    )
+  }
+  return (
+    scheme[1] !== 'javascript' &&
+    scheme[1] !== 'vbscript' &&
+    scheme[1] !== 'file'
+  )
+}
+
+function sanitizeAttributes(element: DefaultTreeAdapterMap['element']): void {
+  element.attrs = element.attrs.filter(
+    ({ name, value }) =>
+      !name.startsWith('on') &&
+      !DROPPED_ATTRIBUTES.has(name) &&
+      (!URL_ATTRIBUTES.has(name) || isSafeUrl(name, value)),
+  )
+}
+
 /* eslint no-constant-condition:0 */
 const findEndOfMath = function (
   delimiter: string,
@@ -208,10 +279,15 @@ export function renderPostHTMLToDOM({
     ? tags.map((tag: any) => tag.name.normalize('NFKC'))
     : []
   const dom = parseFragment(content)
-  const customEmoji = [...emojis.keys()].map((e) => escapeRegExp(e)).join('|')
+  const customEmoji = [...emojis.keys()]
+    .filter(Boolean)
+    .map((e) => escapeRegExp(e))
+    .join('|')
   const unicodeEmoji = getEmojiRegex().source
+  // Without custom emoji the branch must be left out entirely: `:():` would match every "::" with an
+  // empty group and silently drop it (std::vector → stdvector).
   const part = new RegExp(
-    `:(${customEmoji}):|(${unicodeEmoji})|([\\s\\S])`,
+    `${customEmoji ? `:(${customEmoji}):` : '(?!)()'}|(${unicodeEmoji})|([\\s\\S])`,
     'g',
   )
   function handleTextNode(node: DefaultTreeAdapterMap['textNode']): void {
@@ -384,8 +460,15 @@ export function renderPostHTMLToDOM({
     c.value = ''
   }
   function walkElements(node: DefaultTreeAdapterMap['parentNode']): void {
-    for (const child of node.childNodes) {
+    // Iterate over a snapshot: the handlers detach nodes and insert new ones, which would otherwise
+    // skip the next sibling or re-process the nodes we just created.
+    for (const child of [...node.childNodes]) {
       if (defaultTreeAdapter.isElementNode(child)) {
+        if (DROPPED_ELEMENTS.has(child.tagName)) {
+          defaultTreeAdapter.detachNode(child)
+          continue
+        }
+        sanitizeAttributes(child)
         const c = child.attrs.find((attr) => attr.name === 'class')
         if (
           c &&

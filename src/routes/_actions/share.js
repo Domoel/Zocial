@@ -10,6 +10,9 @@ export async function shareStatus (status) {
       url: status.url
     })
   } catch (e) {
+    if (e && e.name === 'AbortError') {
+      return // the user dismissed the share sheet
+    }
     /* no await */ toast.say(formatIntl('intl.unableToShare', { error: (e.message || '') }))
   }
 }

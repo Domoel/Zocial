@@ -35,7 +35,9 @@ RUN pnpm run build \
 # -----------------------------
 # Runtime Stage
 # -----------------------------
-FROM nginx:1.27-alpine
+# stable-alpine rather than a pinned minor: this image faces the internet, and the CI rebuilds it on
+# every push, so nginx/Alpine security fixes arrive with the next build (1.27 no longer gets any).
+FROM nginx:stable-alpine
 
 # Copy nginx config and entrypoint
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf.template

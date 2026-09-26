@@ -142,7 +142,9 @@
         this.refs.input.click()
       },
       async onFileChange (e) {
-        const { files } = e.target
+        const files = Array.from(e.target.files || [])
+        // reset, so picking the same file again (after a failed upload or a removal) fires `change`
+        e.target.value = ''
         const { realm } = this.get()
         for (const file of files) {
           await doMediaUpload(realm, file)

@@ -102,7 +102,7 @@
       pollExpiryDefaultValue: undefined
     }),
     computed: {
-      canAddOption: ({ poll, $maxStatusPollOptions }) => poll.options.length <= $maxStatusPollOptions,
+      canAddOption: ({ poll, $maxStatusPollOptions }) => poll.options.length < $maxStatusPollOptions,
       canRemoveOption: ({ poll }) => poll.options.length > 2,
       // $statusPollExpiryOptions carries i18n keys as `label`; resolve them live so the duration
       // dropdown follows the UI language.
@@ -155,7 +155,8 @@
         scheduleIdleTask(() => {
           const { realm } = this.get()
           const poll = this.store.getComposeData(realm, 'poll')
-          if (!poll.options.length !== 4) {
+          const { maxStatusPollOptions } = this.store.get()
+          if (poll.options.length < maxStatusPollOptions) { // a double click must not exceed the server limit (422)
             poll.options.push('')
           }
           this.store.setComposeData(realm, { poll })

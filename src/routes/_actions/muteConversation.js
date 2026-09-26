@@ -13,7 +13,9 @@ export async function setConversationMuted (statusId, mute, toastOnSuccess) {
     } else {
       await unmuteConversation(currentInstance, accessToken, statusId)
     }
-    await database.setStatusMuted(currentInstance, statusId, mute)
+    await database.setStatusMuted(currentInstance, statusId, mute).catch(e => {
+      console.warn('failed to store conversation mute:', (e && e.message) || e) // the server already applied it
+    })
     if (toastOnSuccess) {
       /* no await */ toast.say(mute ? 'intl.mutedConversation' : 'intl.unmutedConversation')
     }

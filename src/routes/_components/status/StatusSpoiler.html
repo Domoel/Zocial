@@ -61,7 +61,8 @@
     computed: {
       massagedSpoilerText: ({ computedSpoilerText, originalStatusEmojis, $autoplayGifs, showTranslate, translateContent }) => {
         computedSpoilerText = escapeHtml(computedSpoilerText)
-        return (showTranslate && translateContent)
+        // a "Long post" / "Filtered" warning has no spoiler_text, so the translation has no spoiler part
+        return (showTranslate && translateContent && translateContent.spoiler)
           ? translateContent.spoiler
           : emojifyText(computedSpoilerText, originalStatusEmojis, $autoplayGifs)
       },

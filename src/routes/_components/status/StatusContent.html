@@ -99,6 +99,8 @@
   import { search } from '../../_api/search.js'
   import { goto } from '../../../../__sapper__/client.js'
 
+  const LINK_RESOLVE_WAIT_MS = 1000
+
   export default {
     onupdate ({ changed }) {
       if (changed.massagedContent) {
@@ -146,12 +148,19 @@
           return
         }
         try {
-          const results = await search(currentInstance, accessToken, href, /* resolve */ true, /* limit */ 1)
-          if (results.statuses && results.statuses[0]) {
+          // Wait only briefly for the in-app resolution: browsers allow window.open() only shortly
+          // after the click (transient user activation, ~1 s in Safari, 5 s elsewhere), and a slow
+          // resolve (up to the 20 s request timeout) would otherwise make the link do nothing.
+          const results = await Promise.race([
+            search(currentInstance, accessToken, href, /* resolve */ true, /* limit */ 1),
+            new Promise(resolve => setTimeout(() => resolve(null), LINK_RESOLVE_WAIT_MS))
+          ])
+          // results === null: too slow, fall through and open the link normally
+          if (results && results.statuses && results.statuses[0]) {
             goto(`/statuses/${results.statuses[0].id}`)
             return
           }
-          if (results.accounts && results.accounts[0]) {
+          if (results && results.accounts && results.accounts[0]) {
             goto(`/accounts/${results.accounts[0].id}`)
             return
           }

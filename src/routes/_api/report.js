@@ -1,5 +1,5 @@
 import { auth, basename } from './utils.js'
-import { post } from '../_utils/ajax.js'
+import { post, WRITE_TIMEOUT } from '../_utils/ajax.js'
 
 export async function report (instanceName, accessToken, accountId, statusIds, comment, forward) {
   const url = `${basename(instanceName)}/api/v1/reports`
@@ -8,5 +8,5 @@ export async function report (instanceName, accessToken, accountId, statusIds, c
     status_ids: statusIds,
     comment,
     forward
-  }, auth(accessToken))
+  }, auth(accessToken), { timeout: WRITE_TIMEOUT })
 }

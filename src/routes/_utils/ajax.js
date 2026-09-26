@@ -36,9 +36,27 @@ function makeFetchOptions (method, headers, options) {
   return res
 }
 
+// The server's own reason ("Validation failed: …", "Cannot attach files that have not finished
+// processing") makes a failure toast actionable. Best-effort: non-JSON bodies (a proxy's 502 page)
+// and slow bodies are skipped.
+async function readErrorDetail (response) {
+  try {
+    const json = await Promise.race([
+      response.json(),
+      new Promise((resolve, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+    ])
+    const detail = json && (json.error_description || json.error)
+    return typeof detail === 'string' ? detail.trim().slice(0, 200) : ''
+  } catch (e) {
+    return ''
+  }
+}
+
 async function throwErrorIfInvalidResponse (response) {
   if (response.status >= 300) {
-    const err = new Error('Request failed: ' + response.status)
+    const detail = await readErrorDetail(response)
+    // keep the "Request failed: NNN" prefix: isNetworkNoiseError() matches it (callers use err.status)
+    const err = new Error('Request failed: ' + response.status + (detail ? ' · ' + detail : ''))
     err.status = response.status
     throw err
   }

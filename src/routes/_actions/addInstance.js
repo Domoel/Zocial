@@ -8,6 +8,8 @@ import { updateCustomEmojiForInstance } from './emoji.js'
 import { database } from '../_database/database.js'
 import { logActionError } from '../_utils/isNetworkError.js'
 import { formatIntl } from '../_utils/formatIntl.js'
+import escapeHtml from 'escape-html'
+import { getSingleInstance } from '../_utils/getSingleInstance.js'
 
 function createKnownError (message) {
   const err = new Error(message)
@@ -74,7 +76,9 @@ export async function logInToInstance () {
     await redirectToOauth()
   } catch (err) {
     logActionError('log in to instance', err)
-    const error = `${(err.message || err.name).replace(/\.$/, '')}. ` +
+    // rendered with {@html} (the generic hint contains a link), so escape the error text itself —
+    // it can carry the server's own error description (ajax.js)
+    const error = `${escapeHtml((err.message || err.name).replace(/\.$/, ''))}. ` +
       (err.knownError ? '' : (navigator.onLine ? 'intl.instanceGenericError' : 'intl.areYouOffline'))
     const { instanceNameInSearch } = store.get()
     store.set({
@@ -133,7 +137,13 @@ export async function handleOauthCode (code, state) {
     }
     await registerNewInstance(code)
   } catch (err) {
-    store.set({ logInToInstanceError: formatIntl('intl.failedToConnectToInstance', { error: err.message || err.name }) })
+    const { instanceNameInSearch } = store.get()
+    store.set({
+      logInToInstanceError: formatIntl('intl.failedToConnectToInstance', { error: escapeHtml(err.message || err.name) }),
+      // the page shows the error only for the instance in the input field; without this the failed
+      // callback (e.g. the invalid-state check) landed back on the form with no message at all
+      logInToInstanceErrorForText: getSingleInstance() || instanceNameInSearch
+    })
   } finally {
     store.set({ logInToInstanceLoading: false })
   }

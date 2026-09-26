@@ -18,7 +18,9 @@ export async function setStatusPinnedOrUnpinned (statusId, pinned, toastOnSucces
       /* no await */ toast.say(pinned ? 'intl.pinnedStatus' : 'intl.unpinnedStatus')
     }
     store.setStatusPinned(currentInstance, statusId, pinned)
-    await database.setStatusPinned(currentInstance, statusId, pinned)
+    await database.setStatusPinned(currentInstance, statusId, pinned).catch(e => {
+      console.warn('failed to store pin:', (e && e.message) || e) // the server already applied it
+    })
     emit('updatePinnedStatuses')
   } catch (e) {
     logActionError('pin status', e)

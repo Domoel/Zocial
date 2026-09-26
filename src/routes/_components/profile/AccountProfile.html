@@ -133,7 +133,11 @@
     },
     store: () => store,
     computed: {
-      headerImageIsMissing: ({ account }) => account.header.endsWith('missing.png') || account.header.endsWith('/images/banner.png') || account.header.endsWith('/assets/default_header.png'),
+      // some servers send `header: null` (a throw here would blank the profile page)
+      headerImageIsMissing: ({ account }) => {
+        const header = account.header || ''
+        return !header || header.endsWith('missing.png') || header.endsWith('/images/banner.png') || header.endsWith('/assets/default_header.png')
+      },
       headerImage: ({ $autoplayGifs, account }) => $autoplayGifs ? account.header : account.header_static,
       backgroundStyle: ({ account, headerImageIsMissing }) => `background-image: url('${headerImageIsMissing ? account.avatar_static : account.header_static}');`,
       accountName: ({ account }) => (account && (account.display_name || account.username)) || '',

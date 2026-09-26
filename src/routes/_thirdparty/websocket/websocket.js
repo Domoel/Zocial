@@ -28,6 +28,10 @@ export class WebSocketClient {
     // keep binaryType used on previous WebSocket connection
     const binaryType = this.ws && this.ws.binaryType
 
+    // Zocial: never leave the previous socket alive next to the new one — it would keep delivering
+    // (duplicate) events, or keep downloading a stream nobody listens to any more.
+    this._discardSocket()
+
     this.ws = new WebSocket(this.url, this.protocols)
     this.ws.onclose = this.onCloseCallback.bind(this)
     this.ws.onerror = this.onErrorCallback.bind(this)
@@ -43,7 +47,21 @@ export class WebSocketClient {
    * @ignore
    */
   onBackoffReady () {
+    if (!this.reconnectEnabled) { // Zocial: closed while a reconnect was pending
+      return
+    }
     this.open(true)
+  }
+
+  /**
+   * @ignore
+   */
+  _discardSocket () {
+    const ws = this.ws
+    if (ws && ws.readyState !== WebSocket.CLOSED) {
+      ws.onclose = ws.onerror = ws.onmessage = ws.onopen = null
+      ws.close()
+    }
   }
 
   /**
@@ -154,6 +172,7 @@ export class WebSocketClient {
     if (typeof code === 'undefined') { code = 1000 }
 
     this.reconnectEnabled = false
+    this.backoff.cancel()
 
     this.ws.close(code, reason)
   }
@@ -215,6 +234,7 @@ export class WebSocketClient {
    *
    */
   reconnect () {
+    this.backoff.cancel() // Zocial: the pending backoff would open yet another socket
     this.onBackoffReady()
   }
 }

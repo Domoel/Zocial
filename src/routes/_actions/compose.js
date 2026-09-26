@@ -11,9 +11,13 @@ import { formatIntl } from '../_utils/formatIntl.js'
 import { logActionError } from '../_utils/isNetworkError.js'
 import { rehydrateStatusOrNotification } from './rehydrateStatusOrNotification.js'
 
-export async function insertHandleForReply (realm, statusId) {
+export async function insertHandleForReply (realm, statusId, statusInHand) {
   const { currentInstance } = store.get()
-  const status = await database.getStatus(currentInstance, statusId)
+  // search results aren't stored in IndexedDB, so fall back to the status the reply box belongs to
+  const status = (await database.getStatus(currentInstance, statusId)) || statusInHand
+  if (!status) {
+    return
+  }
   const { currentVerifyCredentials } = store.get()
   const originalStatus = status.reblog || status
   let accounts = [originalStatus.account].concat(originalStatus.mentions || [])
@@ -40,19 +44,28 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
   text = text || ''
 
   const mediaMetadata = (mediaIds || []).map((mediaId, idx) => {
+    const focalPoint = ((mediaFocalPoints && mediaFocalPoints[idx]) || [0, 0]).slice() // copy: don't mutate stored data
     return {
-      description: mediaDescriptions && mediaDescriptions[idx],
-      focalPoint: mediaFocalPoints && mediaFocalPoints[idx]
+      description: (mediaDescriptions && mediaDescriptions[idx]) || '',
+      focalPoint: [focalPoint[0] || 0, focalPoint[1] || 0]
     }
   })
+  // Mastodon only lets PUT /media/:id change media that isn't attached yet (404 otherwise), so an
+  // edit has to send alt text and focal points along with the status.
+  const mediaAttributes = editId
+    ? (mediaIds || []).map((id, i) => {
+        const attributes = { id, description: mediaMetadata[i].description }
+        const rawFocalPoint = mediaFocalPoints && mediaFocalPoints[i]
+        if (rawFocalPoint && (typeof rawFocalPoint[0] === 'number' || typeof rawFocalPoint[1] === 'number')) {
+          attributes.focus = mediaMetadata[i].focalPoint.join(',') // only when set: "0,0" would re-center it
+        }
+        return attributes
+      })
+    : undefined
 
   store.set({ postingStatus: true })
   try {
     await Promise.all(mediaMetadata.map(async ({ description, focalPoint }, i) => {
-      description = description || ''
-      focalPoint = (focalPoint || [0, 0]).slice() // copy so we don't mutate stored focal-point data
-      focalPoint[0] = focalPoint[0] || 0
-      focalPoint[1] = focalPoint[1] || 0
       if (description || focalPoint[0] || focalPoint[1]) {
         // A failed metadata update (description / focal point) must not abort the whole post — the
         // media is already uploaded. Log it and post anyway.
@@ -65,11 +78,11 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
     }))
     if (editId) {
       const status = await putStatusToServer(currentInstance, accessToken, editId, text,
-        inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly)
+        inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, mediaAttributes)
       await database.insertStatus(currentInstance, status)
       await rehydrateStatusOrNotification({ status })
       emit('statusUpdated', status)
-      emit('postedStatus', realm, inReplyToUuid)
+      emit('postedStatus', { realm, inReplyToUuid }) // mitt passes a single payload
     } else {
       const result = await postStatusToServer(currentInstance, accessToken, text,
         inReplyToId, mediaIds, sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt)
@@ -80,7 +93,7 @@ export async function postStatus (realm, text, inReplyToId, mediaIds,
       } else {
         addStatusOrNotification(currentInstance, 'home', result)
       }
-      emit('postedStatus', realm, inReplyToUuid)
+      emit('postedStatus', { realm, inReplyToUuid }) // mitt passes a single payload
     }
     store.clearComposeData(realm)
     scheduleIdleTask(() => (mediaIds || []).forEach(mediaId => database.deleteCachedMediaFile(mediaId))) // clean up media cache

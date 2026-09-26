@@ -2,7 +2,7 @@ import { database } from '../_database/database.js'
 
 export async function getIdThatThisStatusReblogged (instanceName, statusId) {
   const status = await database.getStatus(instanceName, statusId)
-  return status.reblog && status.reblog.id
+  return status && status.reblog && status.reblog.id // status may not be stored
 }
 
 export async function getIdsThatTheseStatusesReblogged (instanceName, statusIds) {

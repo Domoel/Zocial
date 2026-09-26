@@ -203,10 +203,10 @@
 
   export default {
     oncreate () {
-      const { realm, replySpoiler, replyVisibility } = this.get()
+      const { realm, replySpoiler, replyVisibility, replyToStatus } = this.get()
       if (realm !== 'home' && realm !== 'dialog') {
         // if this is a reply, populate the handle immediately
-        /* no await */ insertHandleForReply(realm, realm)
+        /* no await */ insertHandleForReply(realm, realm, replyToStatus)
       }
 
       if (replySpoiler) {
@@ -243,7 +243,8 @@
       hideBottomBorder: false,
       hidden: false,
       dialogId: undefined,
-      aboutToPostStatus: false
+      aboutToPostStatus: false,
+      replyToStatus: undefined
     }),
     store: () => store,
     computed: {
@@ -300,8 +301,12 @@
     methods: {
       async doPostStatus () {
         const { aboutToPostStatus } = this.get()
-        const { postingStatus } = this.store.get()
+        const { postingStatus, uploadingMedia } = this.store.get()
         if (aboutToPostStatus || postingStatus) { // do nothing if the user rapidly taps the Ctrl-Enter key
+          return
+        }
+        if (uploadingMedia) { // Ctrl+Enter bypasses the disabled button
+          /* no await */ toast.say('intl.waitForMediaUpload')
           return
         }
         // The reason we add a scheduleIdleTask delay here is because we also use scheduleIdleTask

@@ -6,6 +6,7 @@
               replyVisibility={visibility}
               replySpoiler={spoilerText}
               inReplyToUuid={uuid}
+              replyToStatus={originalStatus}
   />
 </div>
 <style>
@@ -35,7 +36,7 @@
     },
     methods: {
       observe,
-      onPostedStatus (realm) {
+      onPostedStatus ({ realm }) {
         const { originalStatusId } = this.get()
         if (realm !== originalStatusId) {
           return

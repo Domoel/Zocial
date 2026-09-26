@@ -25,10 +25,13 @@ function filterItemIdsFromTimelines (instanceName, timelineFilter, idFilter) {
   })
 }
 
+// 'notifications' and 'notifications/mentions' hold notification ids; every other timeline holds status ids
+const isNotificationTimeline = timelineName => timelineName === 'notifications' || timelineName.startsWith('notifications/')
+const notNotificationTimeline = timelineName => !isNotificationTimeline(timelineName)
+
 function deleteStatusIdsFromStore (instanceName, idsToDelete) {
   const idsToDeleteSet = new Set(idsToDelete)
   const idWasNotDeleted = id => !idsToDeleteSet.has(id)
-  const notNotificationTimeline = timelineName => timelineName !== 'notifications'
 
   filterItemIdsFromTimelines(instanceName, notNotificationTimeline, idWasNotDeleted)
 }
@@ -36,9 +39,18 @@ function deleteStatusIdsFromStore (instanceName, idsToDelete) {
 function deleteNotificationIdsFromStore (instanceName, idsToDelete) {
   const idsToDeleteSet = new Set(idsToDelete)
   const idWasNotDeleted = id => !idsToDeleteSet.has(id)
-  const isNotificationTimeline = timelineName => timelineName === 'notifications'
 
   filterItemIdsFromTimelines(instanceName, isNotificationTimeline, idWasNotDeleted)
+}
+
+// A timeline item whose body is no longer in IndexedDB (age cleanup, a delete that reached the DB
+// first) can't be rendered: drop it from the in-memory timelines instead.
+export function removeUnstoredItemFromStore (instanceName, itemId, isNotification) {
+  if (isNotification) {
+    deleteNotificationIdsFromStore(instanceName, [itemId])
+  } else {
+    deleteStatusIdsFromStore(instanceName, [itemId])
+  }
 }
 
 async function deleteStatusesAndNotifications (instanceName, statusIdsToDelete, notificationIdsToDelete) {

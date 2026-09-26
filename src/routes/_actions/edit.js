@@ -1,4 +1,8 @@
 import { statusHtmlToPlainText } from '../_utils/statusHtmlToPlainText.ts'
+import { toast } from '../_components/toast/toast.js'
+import { formatIntl } from '../_utils/formatIntl.js'
+import { logActionError } from '../_utils/isNetworkError.js'
+import { confirmReplaceDialogDraft } from './composeDraft.js'
 import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/importShowComposeDialog.js'
 import { store } from '../_store/store.js'
 import { database } from '../_database/database.js'
@@ -6,14 +10,24 @@ import { getStatusSource } from '../_api/statuses.js'
 import { getQuoteHandle } from '../_utils/quotes.js'
 
 export async function edit (status) {
+  if (!(await confirmReplaceDialogDraft())) {
+    return
+  }
   const { currentInstance, accessToken } = store.get()
-  const sourcePromise = await getStatusSource(currentInstance, accessToken, status.id)
   const dialogPromise = importShowComposeDialog()
-  const source = await sourcePromise
+  let source
+  try {
+    source = await getStatusSource(currentInstance, accessToken, status.id)
+  } catch (e) {
+    // offline, timeout, or the post is gone: say so instead of a silent dead click
+    logActionError('load post source for editing', e)
+    /* no await */ toast.say(formatIntl('intl.unableToEdit', { error: (e.message || '') }))
+    return
+  }
   let inReplyToHandle = null
   if (status.in_reply_to_id) {
     const replyingTo = await database.getStatus(currentInstance, status.in_reply_to_id)
-    if (replyingTo) inReplyToHandle = '@' + replyingTo.account.acct
+    if (replyingTo && replyingTo.account) inReplyToHandle = '@' + replyingTo.account.acct
   }
   store.clearComposeData('dialog')
   store.setComposeData('dialog', {
@@ -24,6 +38,9 @@ export async function edit (status) {
     postPrivacy: status.visibility,
     media: status.media_attachments && status.media_attachments.map(_ => ({
       description: _.description || '',
+      // keep the existing focal point (edits send it back via media_attributes)
+      focusX: (_.meta && _.meta.focus && _.meta.focus.x) || 0,
+      focusY: (_.meta && _.meta.focus && _.meta.focus.y) || 0,
       data: _
     })),
     inReplyToId: status.in_reply_to_id,

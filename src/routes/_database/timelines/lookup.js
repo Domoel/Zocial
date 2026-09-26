@@ -3,8 +3,9 @@ import { STATUSES_STORE, STATUS_ID, REBLOG_ID, NOTIFICATIONS_STORE } from '../co
 
 export async function getReblogsForStatus (instanceName, id) {
   const db = await getDatabase(instanceName)
-  await dbPromise(db, STATUSES_STORE, 'readonly', (statusesStore, callback) => {
-    statusesStore.index(REBLOG_ID).getAll(IDBKeyRange.only(id)).onsuccess = e => {
+  // ids (primary keys) of the stored boosts, so deleting a status also removes its boosts
+  return dbPromise(db, STATUSES_STORE, 'readonly', (statusesStore, callback) => {
+    statusesStore.index(REBLOG_ID).getAllKeys(IDBKeyRange.only(id)).onsuccess = e => {
       callback(e.target.result)
     }
   })

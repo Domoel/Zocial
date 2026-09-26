@@ -22,43 +22,55 @@ async function doUpdateStatus (instanceName, statusId, updateFunc) {
     statusesStore.get(statusId).onsuccess = e => {
       let status = e.target.result
       status = updateFunc(status) || status
-      putStatus(statusesStore, status)
+      if (status) { // nothing stored and nothing to insert (see ifStored)
+        putStatus(statusesStore, status)
+      }
     }
   })
 }
 
+// The flag setters only change a stored status. One that isn't stored (a search result, or a body
+// removed by cleanup) is skipped — a throw inside onsuccess would abort the transaction.
+function ifStored (update) {
+  return status => {
+    if (status) {
+      update(status)
+    }
+  }
+}
+
 export async function setStatusFavorited (instanceName, statusId, favorited) {
-  return doUpdateStatus(instanceName, statusId, status => {
+  return doUpdateStatus(instanceName, statusId, ifStored(status => {
     const delta = (favorited ? 1 : 0) - (status.favourited ? 1 : 0)
     status.favourited = favorited
     status.favourites_count = (status.favourites_count || 0) + delta
-  })
+  }))
 }
 
 export async function setStatusReblogged (instanceName, statusId, reblogged) {
-  return doUpdateStatus(instanceName, statusId, status => {
+  return doUpdateStatus(instanceName, statusId, ifStored(status => {
     const delta = (reblogged ? 1 : 0) - (status.reblogged ? 1 : 0)
     status.reblogged = reblogged
     status.reblogs_count = (status.reblogs_count || 0) + delta
-  })
+  }))
 }
 
 export async function setStatusPinned (instanceName, statusId, pinned) {
-  return doUpdateStatus(instanceName, statusId, status => {
+  return doUpdateStatus(instanceName, statusId, ifStored(status => {
     status.pinned = pinned
-  })
+  }))
 }
 
 export async function setStatusMuted (instanceName, statusId, muted) {
-  return doUpdateStatus(instanceName, statusId, status => {
+  return doUpdateStatus(instanceName, statusId, ifStored(status => {
     status.muted = muted
-  })
+  }))
 }
 
 export async function setStatusBookmarked (instanceName, statusId, bookmarked) {
-  return doUpdateStatus(instanceName, statusId, status => {
+  return doUpdateStatus(instanceName, statusId, ifStored(status => {
     status.bookmarked = bookmarked
-  })
+  }))
 }
 
 // For the full list, see https://docs.joinmastodon.org/methods/statuses/#edit

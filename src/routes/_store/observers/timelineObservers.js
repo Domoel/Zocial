@@ -40,24 +40,32 @@ export function timelineObservers () {
   scheduleInterval(function () {
     const { mountedTimelines, currentTimeline } = store.get()
     if (mountedTimelines > 0 && currentTimeline) {
-      setupTimeline()
+      setupTimeline().catch(e => console.error('timeline poll failed', e))
     }
   }, 60000, false)
 
-  store.observe('currentTimeline', async (currentTimeline) => {
+  // Keyed on the instance too: logging out (or switching accounts) changes only currentInstance —
+  // the settings pages don't reset currentTimeline — and the old stream would otherwise keep running
+  // with the old token, writing the logged-out account's posts back into IndexedDB.
+  async function onTimelineOrInstanceChange () {
     if (!ZOCIAL_IS_BROWSER) {
       return
     }
 
     shutdownPreviousStream()
 
-    if (!shouldObserveTimeline(currentTimeline)) {
+    const { currentTimeline, currentInstance, accessToken } = store.get()
+    if (!shouldObserveTimeline(currentTimeline) || !currentInstance || !accessToken) {
       return
     }
 
-    const { currentInstance } = store.get()
-    const { accessToken } = store.get()
-    await updateInstanceInfo(currentInstance)
+    try {
+      await updateInstanceInfo(currentInstance)
+    } catch (e) {
+      // no cached info and the fetch failed: the 60 s poll still covers this timeline
+      console.warn('timeline stream: failed to load instance info:', (e && e.message) || e)
+      return
+    }
 
     const currentTimelineIsUnchanged = () => {
       const {
@@ -82,5 +90,8 @@ export function timelineObservers () {
     if (process.env.NODE_ENV !== 'production') {
       window.currentTimelineStream = currentTimelineStream
     }
-  })
+  }
+
+  store.observe('currentTimeline', onTimelineOrInstanceChange)
+  store.observe('currentInstance', onTimelineOrInstanceChange, { init: false })
 }

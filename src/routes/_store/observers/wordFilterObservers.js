@@ -67,6 +67,9 @@ export function wordFilterObservers () {
             ? database.getNotification(instanceName, summary.id)
             : database.getStatus(instanceName, summary.id)
           )
+          if (!item) {
+            return // not stored in the database anymore (age cleanup); createMakeProps drops it
+          }
           const newFilterContexts = computeFilterContextsForStatusOrNotification(item, contextsToRegex)
           if (!isEqual(summary.filterContexts, newFilterContexts)) {
             somethingChanged = true

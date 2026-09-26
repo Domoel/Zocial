@@ -684,6 +684,7 @@ export default {
   unableToPost: 'No se puede publicar el toot: {error}',
   statusDeleted: 'Toot borrado',
   unableToDelete: 'No se puede borrar el toot: {error}',
+  unableToEdit: 'No se puede editar el toot: {error}',
   cannotFavoriteOffline: 'No puedes marcar como favorito mientras estás sin conexión',
   cannotUnfavoriteOffline: 'No puedes quitar marca de favorito mientras estás sin conexión',
   // Custom emoji reactions
@@ -710,6 +711,9 @@ export default {
   accessTokenRevoked: 'El token de acceso fue anulado, se cerró sesión en {instance}',
   loggedOutOfInstance: 'Se cerró sesión en {instance}',
   failedToUploadMedia: 'Falló la subida del multimedia: {error}',
+  waitForMediaUpload: 'Espera a que termine la subida del archivo multimedia',
+  discardDraftConfirm: 'Tienes una publicación sin terminar que aún no se ha enviado. ¿Descartarla?',
+  discardDraft: 'Descartar',
   mutedAccount: 'Cuenta silenciada',
   unmutedAccount: 'Cuenta no silenciada',
   unableToMute: 'No se puede silenciar la cuenta: {error}',

@@ -6,8 +6,12 @@ import { ALL_PUSH_ALERTS } from '../_static/pushAlerts.js'
 const dummyApplicationServerKey = 'BImgAz4cF_yvNFp8uoBJCaGpCX4d0atNIFMHfBvAAXCyrnn9IMAFQ10DW_ZvBCzGeR4fZI5FnEi2JVcRE-L88jY='
 
 export async function updatePushSubscriptionForInstance (instanceName) {
-  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances, currentPushSubscription }) => {
+  return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
+    // This instance's stored subscription — not currentPushSubscription, which belongs to the
+    // *current* instance (they differ once the user switched accounts before this idle task ran, and
+    // the 404 path below would then unsubscribe the push account's shared subscription).
+    const currentPushSubscription = store.getInstanceData(instanceName, 'pushSubscriptions') || null
 
     // OS permission was revoked since we were last enabled. Nothing can deliver an OS notification
     // anymore (System A checks permission, System B won't receive pushes), so reconcile the stored
@@ -122,12 +126,22 @@ export async function updatePushSubscriptionForInstance (instanceName) {
 // explicitly enabled by the user.
 function canSilentlyReregister (instanceName) {
   const { pushNotificationsSupport, enableDesktopNotifications } = store.get()
-  return (
+  const wanted = (
     pushNotificationsSupport &&
     !!(enableDesktopNotifications && enableDesktopNotifications[instanceName]) &&
     typeof Notification !== 'undefined' &&
     Notification.permission === 'granted'
   )
+  if (wanted && otherPushInstances(instanceName).length) {
+    // Single-account model (§18): another logged-in account holds push now (e.g. this one had it,
+    // was logged out with its intent flag kept, and push was enabled for another account meanwhile).
+    // Re-registering would re-key the shared subscription and silently kill the other's push —
+    // retire this account's stale intent instead.
+    store.setInstanceData(instanceName, 'enableDesktopNotifications', false)
+    store.save()
+    return false
+  }
+  return wanted
 }
 
 // Byte-for-byte equality for two VAPID keys. Each argument may be an ArrayBuffer, a TypedArray,
@@ -192,52 +206,63 @@ export async function disablePushForInstance (instanceName) {
   })
 }
 
+// Create a browser subscription keyed to this server's VAPID key and register it there.
+async function subscribeWithServerKey (registration, instanceName, accessToken, alerts) {
+  // We need applicationServerKey in order to register a push subscription
+  // but the API doesn't expose it as a constant (as it should).
+  // So we need to register a subscription with a dummy applicationServerKey,
+  // send it to the backend saves it and return applicationServerKey, which
+  // we use to register a new subscription.
+  // https://github.com/tootsuite/mastodon/issues/8785
+  const dummySubscription = await registration.pushManager.subscribe({
+    applicationServerKey: urlBase64ToUint8Array(dummyApplicationServerKey),
+    userVisibleOnly: true
+  })
+  let serverKey
+  try {
+    serverKey = (await postSubscription(instanceName, accessToken, dummySubscription, alerts)).server_key
+  } finally {
+    // also when the POST failed (e.g. 403, token without the push scope): a dummy-keyed subscription
+    // left behind would later be reused and registered as if it were real
+    await dummySubscription.unsubscribe()
+  }
+
+  const subscription = await registration.pushManager.subscribe({
+    applicationServerKey: urlBase64ToUint8Array(serverKey),
+    userVisibleOnly: true
+  })
+  return postSubscription(instanceName, accessToken, subscription, alerts)
+}
+
 export async function updateAlerts (instanceName, alerts) {
   return store.runIfLoggedIn(instanceName, async ({ loggedInInstances }) => {
     const accessToken = loggedInInstances[instanceName].access_token
 
     const registration = await navigator.serviceWorker.ready
-    let subscription = await registration.pushManager.getSubscription()
+    const subscription = await registration.pushManager.getSubscription()
 
+    let backendSubscription
     if (subscription === null) {
-      // We need applicationServerKey in order to register a push subscription
-      // but the API doesn't expose it as a constant (as it should).
-      // So we need to register a subscription with a dummy applicationServerKey,
-      // send it to the backend saves it and return applicationServerKey, which
-      // we use to register a new subscription.
-      // https://github.com/tootsuite/mastodon/issues/8785
-      subscription = await registration.pushManager.subscribe({
-        applicationServerKey: urlBase64ToUint8Array(dummyApplicationServerKey),
-        userVisibleOnly: true
-      })
-
-      let backendSubscription = await postSubscription(instanceName, accessToken, subscription, alerts)
-
-      await subscription.unsubscribe()
-
-      subscription = await registration.pushManager.subscribe({
-        applicationServerKey: urlBase64ToUint8Array(backendSubscription.server_key),
-        userVisibleOnly: true
-      })
-
-      backendSubscription = await postSubscription(instanceName, accessToken, subscription, alerts)
-
-      store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
-      savePushAlerts(instanceName, alerts)
-      store.save()
+      backendSubscription = await subscribeWithServerKey(registration, instanceName, accessToken, alerts)
     } else {
       try {
-        const backendSubscription = await putSubscription(instanceName, accessToken, alerts)
-        store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
-        savePushAlerts(instanceName, alerts)
-        store.save()
+        backendSubscription = await putSubscription(instanceName, accessToken, alerts)
       } catch (e) {
-        const backendSubscription = await postSubscription(instanceName, accessToken, subscription, alerts)
-        store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
-        savePushAlerts(instanceName, alerts)
-        store.save()
+        backendSubscription = await postSubscription(instanceName, accessToken, subscription, alerts)
+      }
+      // The existing browser subscription may be keyed to another server (a logged-out push account)
+      // or be a leftover dummy: the push service would then reject every push this server signs,
+      // while the toggle shows "on". Re-key it.
+      if (backendSubscription && backendSubscription.server_key &&
+          !binaryKeysEqual(urlBase64ToUint8Array(backendSubscription.server_key), subscription.options.applicationServerKey)) {
+        await subscription.unsubscribe()
+        backendSubscription = await subscribeWithServerKey(registration, instanceName, accessToken, alerts)
       }
     }
+
+    store.setInstanceData(instanceName, 'pushSubscriptions', backendSubscription)
+    savePushAlerts(instanceName, alerts)
+    store.save()
   })
 }
 
@@ -279,7 +304,7 @@ export function otherPushInstances (instanceName) {
 
 // Best-effort: unsubscribe the browser's push subscription. Safe to call when there may be none;
 // never throws (callers are tearing push down and have nothing to do on failure).
-async function unsubscribeBrowserPush () {
+export async function unsubscribeBrowserPush () {
   try {
     const registration = await navigator.serviceWorker.ready
     const sub = await registration.pushManager.getSubscription()

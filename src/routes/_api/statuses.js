@@ -3,7 +3,7 @@ import { DEFAULT_TIMEOUT, get, post, put, WRITE_TIMEOUT } from '../_utils/ajax.j
 
 // post is create, put is edit
 async function postOrPutStatus (url, accessToken, method, text, inReplyToId, mediaIds,
-  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt) {
+  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, scheduledAt, mediaAttributes) {
   const body = {
     status: text,
     media_ids: mediaIds,
@@ -20,6 +20,10 @@ async function postOrPutStatus (url, accessToken, method, text, inReplyToId, med
       visibility,
       // ISO8601 timestamp; when set the server returns a ScheduledStatus instead of a Status
       scheduled_at: scheduledAt
+    }),
+    ...(method === 'put' && {
+      // alt text / focal point of already-attached media can only be changed here on edit
+      media_attributes: mediaAttributes
     })
   }
 
@@ -44,10 +48,10 @@ export async function postStatus (instanceName, accessToken, text, inReplyToId, 
 }
 
 export async function putStatus (instanceName, accessToken, id, text, inReplyToId, mediaIds,
-  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly) {
+  sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, mediaAttributes) {
   const url = `${basename(instanceName)}/api/v1/statuses/${id}`
   return postOrPutStatus(url, accessToken, 'put', text, inReplyToId, mediaIds,
-    sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly)
+    sensitive, spoilerText, visibility, poll, contentType, quoteId, localOnly, undefined, mediaAttributes)
 }
 
 export async function getStatusContext (instanceName, accessToken, statusId) {

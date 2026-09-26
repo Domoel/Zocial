@@ -18,7 +18,6 @@ export async function setFavorited (statusId, favorited) {
   store.setStatusFavorited(currentInstance, statusId, favorited) // optimistic update
   try {
     await networkPromise
-    await database.setStatusFavorited(currentInstance, statusId, favorited)
   } catch (e) {
     logActionError('favorite', e)
     /* no await */ toast.say(favorited
@@ -26,5 +25,12 @@ export async function setFavorited (statusId, favorited) {
       : formatIntl('intl.unableToUnfavorite', { error: (e.message || '') })
     )
     store.setStatusFavorited(currentInstance, statusId, !favorited) // undo optimistic update
+    return
+  }
+  // The server accepted it: a failed local write must not undo the optimistic update or show an error.
+  try {
+    await database.setStatusFavorited(currentInstance, statusId, favorited)
+  } catch (e) {
+    console.warn('failed to store favorite:', (e && e.message) || e)
   }
 }

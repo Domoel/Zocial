@@ -12,6 +12,10 @@ export async function cacheFirstUpdateAfter (networkFetcher, dbFetcher, dbUpdate
       stateSetter(dbResponse)
     }
     const fetchAndUpdatePromise = networkPromise.then(async networkResponse => {
+      if (networkResponse === undefined) {
+        // e.g. a 401 that logged the instance out: writing would re-create its just-deleted database
+        return
+      }
       await dbUpdater(networkResponse)
       stateSetter(networkResponse)
     })

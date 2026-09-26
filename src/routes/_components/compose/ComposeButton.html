@@ -66,7 +66,8 @@
   export default {
     store: () => store,
     computed: {
-      disabled: ({ $postingStatus, overLimit }) => $postingStatus || overLimit,
+      // posting mid-upload would publish the post without the file (and leave it behind as a draft)
+      disabled: ({ $postingStatus, $uploadingMedia, overLimit }) => $postingStatus || $uploadingMedia || overLimit,
       label: ({ editId, $messages }) => editId ? $messages.edit : $messages.postStatus
     },
     components: {

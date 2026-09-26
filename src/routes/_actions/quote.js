@@ -1,7 +1,11 @@
 import { importShowComposeDialog } from '../_components/dialog/asyncDialogs/importShowComposeDialog.js'
+import { confirmReplaceDialogDraft } from './composeDraft.js'
 import { store } from '../_store/store.js'
 
 export async function quoteStatus (status) {
+  if (!(await confirmReplaceDialogDraft())) {
+    return
+  }
   const showComposeDialog = await importShowComposeDialog()
   store.clearComposeData('dialog')
   const url = status.url || status.uri || ''

@@ -1,5 +1,6 @@
 import { formatIntl } from '../_utils/formatIntl.js'
 import { emojifyText } from '../_utils/emojifyText.js'
+import escapeHtml from 'escape-html'
 
 interface NotificationInfo {
   actionText: string
@@ -35,7 +36,7 @@ export const notificationInfos = {
         ? notification.emoji_reaction.name
         : notification.emoji
     const html = emojifyText(
-      emoji,
+      escapeHtml(emoji || ''),
       customEmoji
         ? [
             {
@@ -108,7 +109,7 @@ export const notificationInfos = {
     actionText: 'intl.reported',
     icon: '#fa-flag',
     standalone: false,
-    ariaLabel: `${name} ${'admin.report'}`,
+    ariaLabel: `${name} ${'intl.reported'}`,
   }),
   move: ({ notification, name }) => ({
     actionText: 'intl.moved',

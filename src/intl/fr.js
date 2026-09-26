@@ -661,6 +661,7 @@ export default {
   unableToPost: 'Impossible de poueter: {error}',
   statusDeleted: 'Pouet supprimé',
   unableToDelete: 'Impossible de supprimer: {error}',
+  unableToEdit: 'Impossible de modifier: {error}',
   cannotFavoriteOffline: 'Vous ne pouvez pas mettre en favori car vous êtes hors connexion',
   cannotUnfavoriteOffline: 'Vous ne pouvez pas enlever des favoris car vous êtes hors connexion',
   // Custom emoji reactions
@@ -687,6 +688,9 @@ export default {
   accessTokenRevoked: 'Authentication revoquée, déconnecté de {instance}',
   loggedOutOfInstance: 'Déconnecté de {instance}',
   failedToUploadMedia: "Impossible d'uploader: {error}",
+  waitForMediaUpload: "Veuillez patienter jusqu'à la fin de l'envoi du média",
+  discardDraftConfirm: "Vous avez un message inachevé qui n'a pas encore été envoyé. L'abandonner ?",
+  discardDraft: 'Abandonner',
   mutedAccount: 'Compte mis en sourdine',
   unmutedAccount: 'Compte ne plus mis en sourdine',
   unableToMute: 'Impossible de mettre en sourdine: {error}',

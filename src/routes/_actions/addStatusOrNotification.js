@@ -17,14 +17,55 @@ function removeDuplicates (instanceName, timelineName, updates) {
   return updates.filter(update => !existingItemIds.has(update.id))
 }
 
+// The merge keeps the existing summary for an id that is already listed, so flags derived from the
+// server's current view would never update in a session: a quote of an account muted (or unmuted)
+// since, or an edit that now (no longer) matches a filter. Take them from the fresh copy; the other
+// fields (thread structure) stay.
+export function refreshServerDerivedFlags (mergedSummaries, freshSummaries) {
+  const freshById = new Map(freshSummaries.map(summary => [summary.id, summary]))
+  return mergedSummaries.map(summary => {
+    const fresh = freshById.get(summary.id)
+    if (!fresh || fresh === summary ||
+        (fresh.quoteHidden === summary.quoteHidden && isEqual(fresh.filterContexts, summary.filterContexts))) {
+      return summary
+    }
+    return Object.assign({}, summary, { quoteHidden: fresh.quoteHidden, filterContexts: fresh.filterContexts })
+  })
+}
+
+// A refresh (poll, revisit) mostly returns posts that are already listed; they are dropped below,
+// but their fresh flags still apply to the listed copies.
+function refreshListedSummaries (instanceName, timelineName, updates) {
+  const summaries = store.getForTimeline(instanceName, timelineName, 'timelineItemSummaries')
+  if (!summaries || !summaries.length) {
+    return
+  }
+  const listedIds = new Set(summaries.map(_ => _.id))
+  const listedUpdates = updates.filter(update => listedIds.has(update.id))
+  if (!listedUpdates.length) {
+    return
+  }
+  const refreshed = refreshServerDerivedFlags(summaries, listedUpdates.map(item => timelineItemToSummary(item, instanceName)))
+  if (!isEqual(summaries, refreshed)) {
+    store.setForTimeline(instanceName, timelineName, { timelineItemSummaries: refreshed })
+  }
+}
+
 export async function insertUpdatesIntoTimeline (instanceName, timelineName, updates) {
+  refreshListedSummaries(instanceName, timelineName, updates)
   updates = removeDuplicates(instanceName, timelineName, updates)
 
   if (!updates.length) {
     return
   }
 
-  await database.insertTimelineItems(instanceName, timelineName, updates)
+  // insertTimelineItems fills the in-memory cache before its IndexedDB write, so the items still
+  // render if the write fails (quota, aborted transaction) — don't let that swallow the update.
+  try {
+    await database.insertTimelineItems(instanceName, timelineName, updates)
+  } catch (e) {
+    console.warn('failed to store timeline updates:', (e && e.message) || e)
+  }
 
   const itemSummariesToAdd = store.getForTimeline(instanceName, timelineName, 'timelineItemSummariesToAdd') || []
   const newItemSummariesToAdd = uniqById(
@@ -40,6 +81,11 @@ function isValidStatusForThread (thread, timelineName, itemSummariesToAdd) {
   const threadIdSet = new Set(thread.map(_ => _.id))
   const focusedStatusId = timelineName.split('/')[1] // e.g. "status/123456"
   const focusedStatusIdx = thread.findIndex(_ => _.id === focusedStatusId)
+  if (focusedStatusIdx === -1) {
+    // the thread failed to load (404) or its status was deleted: an unknown parent would compare
+    // -1 >= -1 below and every streamed reply would be collected into this thread
+    return () => false
+  }
   return status => {
     const repliedToStatusIdx = thread.findIndex(_ => _.id === status.in_reply_to_id)
     return (

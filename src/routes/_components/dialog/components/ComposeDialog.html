@@ -39,7 +39,7 @@
     methods: {
       show,
       close,
-      onPostedStatus (realm) {
+      onPostedStatus ({ realm }) {
         if (realm !== this.get().realm) {
           return
         }

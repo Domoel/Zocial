@@ -30,14 +30,26 @@ import { translateStatus } from '../../../_actions/translate.js'
 import { pickEmojiReaction } from '../../../_actions/react.js'
 import { quoteStatus } from '../../../_actions/quote.js'
 import { importShowWordFilterDialog } from '../../dialog/asyncDialogs/importShowWordFilterDialog.js'
+import { loadRelationship } from '../../../_actions/accounts.js'
 
 export default {
+  oncreate () {
+    // The post already carries its author; only the relationship has to be loaded. Both stay local to
+    // this dialog: reusing the profile page's store slots used to swap the header of the profile being
+    // viewed (and its follow button) to this post's author.
+    const { account } = this.get()
+    if (account && account.id) {
+      /* no await */ loadRelationship(account.id, relationship => {
+        try { this.set({ relationship }) } catch (e) { /* dialog already closed */ }
+      })
+    }
+  },
   data: () => ({
-    supportsWebShare: ZOCIAL_IS_BROWSER && typeof navigator.share === 'function'
+    supportsWebShare: ZOCIAL_IS_BROWSER && typeof navigator.share === 'function',
+    relationship: null
   }),
   computed: {
-    relationship: ({ $currentAccountRelationship }) => $currentAccountRelationship,
-    account: ({ $currentAccountProfile }) => $currentAccountProfile,
+    account: ({ status }) => (status && status.account) || null,
     verifyCredentials: ({ $currentVerifyCredentials }) => $currentVerifyCredentials,
     statusId: ({ status }) => status.id,
     pinned: ({ statusId, $currentStatusModifications, status }) => {

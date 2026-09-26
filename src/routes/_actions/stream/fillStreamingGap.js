@@ -29,6 +29,14 @@ export async function fillStreamingGap (instanceName, accessToken, timelineName,
         timelineName, maxId, firstTimelineItemId, batchSize)).items
       if (newTimelineItems.length) {
         addStatusesOrNotifications(instanceName, timelineName, newTimelineItems)
+        if (timelineName === 'notifications') {
+          // like processMessage: the Mentions tab is always-streaming and isn't refetched once warm,
+          // so mentions that arrived while the stream was down must reach it here
+          const mentions = newTimelineItems.filter(item => item.type === 'mention')
+          if (mentions.length) {
+            addStatusesOrNotifications(instanceName, 'notifications/mentions', mentions)
+          }
+        }
         maxId = newTimelineItems[newTimelineItems.length - 1].id
       }
     } while (numRequests < maxRequests && newTimelineItems.length === batchSize)

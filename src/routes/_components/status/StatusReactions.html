@@ -74,6 +74,7 @@
 <script>
   import { store } from '../../_store/store.js'
   import { emojifyText } from '../../_utils/emojifyText.js'
+  import escapeHtml from 'escape-html'
   import { animate } from '../../_utils/animate.js'
   import { scheduleIdleTask } from '../../_utils/scheduleIdleTask.js'
   import { setReacted } from '../../_actions/react.js'
@@ -128,7 +129,7 @@
           return {
             ...e,
             html: emojifyText(
-              e.url ? ':' + shortcode + ':' : e.name,
+              escapeHtml(e.url ? ':' + shortcode + ':' : e.name),
               e.url
                 ? [
                     {

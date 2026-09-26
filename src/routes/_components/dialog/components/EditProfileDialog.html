@@ -143,11 +143,20 @@
   import { updateProfile } from '../../../_actions/updateProfile.js'
   import { formatIntl } from '../../../_utils/formatIntl.js'
 
-  const FIELD_SLOTS = 4
+  // Saving sends fields_attributes, which REPLACES all fields — so never offer fewer rows than the
+  // account already has (truncating would delete the rest). Servers report their own limit
+  // (GoToSocial: 6; Mastodon 4.6+ in configuration.accounts), older Mastodon has 4.
+  const DEFAULT_FIELD_SLOTS = 4
 
-  function padFields (fields) {
-    const rows = (fields || []).slice(0, FIELD_SLOTS).map(f => ({ name: f.name || '', value: f.value || '' }))
-    while (rows.length < FIELD_SLOTS) {
+  function fieldSlots (fields, instanceInfo) {
+    const accountsConfig = instanceInfo && instanceInfo.configuration && instanceInfo.configuration.accounts
+    const configured = accountsConfig && accountsConfig.max_profile_fields
+    return Math.max((fields || []).length, configured > 0 ? configured : DEFAULT_FIELD_SLOTS)
+  }
+
+  function padFields (fields, slots) {
+    const rows = (fields || []).map(f => ({ name: f.name || '', value: f.value || '' }))
+    while (rows.length < slots) {
       rows.push({ name: '', value: '' })
     }
     return rows
@@ -160,7 +169,7 @@
       this.set({
         initialDisplayName: vc.display_name || '',
         initialNote: source.note || '',
-        fieldRows: padFields(source.fields),
+        fieldRows: padFields(source.fields, fieldSlots(source.fields, store.get().currentInstanceInfo)),
         avatarPreview: vc.avatar,
         headerPreview: vc.header
       })
@@ -175,7 +184,7 @@
     data: () => ({
       initialDisplayName: '',
       initialNote: '',
-      fieldRows: padFields([]),
+      fieldRows: padFields([], DEFAULT_FIELD_SLOTS),
       avatarPreview: '',
       headerPreview: '',
       avatarFile: null,
