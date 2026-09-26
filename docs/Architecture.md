@@ -257,6 +257,8 @@ State is split into two objects at startup:
 - A logout elsewhere (`crossTabObservers.js`): the instance is marked logged out in the database layer here too (no re-creation), and a tab showing that account reloads.
 - Push state is re-read right before every push operation (`store.reloadKeys`), which also runs under a cross-tab Web Lock (§18).
 
+See §21 [v1.12.5] for the reasoning and tradeoffs.
+
 ### Computations
 
 Files in `src/routes/_store/computations/`. Computed values are derived from store state reactively — when dependencies change, the computed value updates automatically.
@@ -603,6 +605,8 @@ fresh=false → maxId=undefined → falls through to lastTimelineItemId → post
 - When new posts are merged in at the top (`showMoreItemsForTimeline`), only the newest `MAX_TIMELINE_ITEMS` (500) stay. Infinite scroll continues from the last kept id, so nothing is skipped.
 - The buffer of not-yet-shown posts is capped the same way. On overflow it keeps the newest and sets `timelineItemSummariesToAddTruncated`; showing it then *replaces* the list instead of merging, because the dropped posts would otherwise leave a gap.
 - Only the 30 most recently visited timelines (plus home, notifications, mentions) keep their data (`visitedTimelineObservers.js`); pinned posts of evicted profiles go too. Revisiting loads them again; the virtual list only remembers 10 anyway.
+
+See §21 [v1.12.5] for the reasoning and tradeoffs.
 
 **Flags from the server are refreshed.** The merge keeps the existing summary for an id that is already listed; `quoteHidden` and `filterContexts` are now taken from the fresh copy (also for the duplicates a poll refresh drops), so muting or unmuting a quoted account applies on the next fetch.
 
@@ -1280,13 +1284,14 @@ This section captures significant design decisions, feature choices, and archite
 **Index** — entries appear in version order below; this groups them by topic (Ctrl+F the version tag to jump):
 
 - **Notifications & push** — 1.8.0 (unified device notifications), 1.8.1 (visible-tab dedup), 1.8.2 (self-healing, VAPID-compare fix, sound section, re-prompt, System-A filter), 1.8.3 (push-only + System-A removed), 1.8.4 (per-instance flag), 1.8.5 + 1.8.6 (single-account model + SW routing), 1.10.1 (in-app OS-notification fallback rejected)
-- **Timelines & lists** — 1.4.0 (list management), 1.7.0 (list-error fallback, 60 s poll gate, `alwaysStreaming`), 1.8.3 (list reliability), 1.8.4 (cache-first everywhere), 1.9.2 (unfollow/block cache purge), 1.10.1 (5xx cold-load retry, scroll-up re-mount), 1.10.4 (gap-fill hardening), 1.10.5 + 1.10.7 (exclusive lists + Manage-lists page + home purge), 1.11.3 (members overview), 1.12.2 (status cache holds found records only), 1.12.4 (drop items with an incomplete stored record) — see also §19
+- **Timelines & lists** — 1.4.0 (list management), 1.7.0 (list-error fallback, 60 s poll gate, `alwaysStreaming`), 1.8.3 (list reliability), 1.8.4 (cache-first everywhere), 1.9.2 (unfollow/block cache purge), 1.10.1 (5xx cold-load retry, scroll-up re-mount), 1.10.4 (gap-fill hardening), 1.10.5 + 1.10.7 (exclusive lists + Manage-lists page + home purge), 1.11.3 (members overview), 1.12.2 (status cache holds found records only), 1.12.4 (drop items with an incomplete stored record), 1.12.5 (bounded timelines) — see also §19
 - **i18n & translation** — 1.6.0 (LibreTranslate backend), 1.6.1/1.7.1 (language detection), 1.10.0 (runtime i18n), 1.10.2 (first-visit language)
 - **Accounts & social** — 1.3.0 (in-app profile editing), 1.9.0 (manage follows, graded empty-state), 1.9.1 (remove from followers)
 - **Compose & posting** — 1.3.0 (local-only), 1.5.0 (quote posts, background IDB writes), 1.12.1 (Mastodon quote wrapper, muted/blocked quoted author), 1.12.4 (ask before replacing a draft)
 - **UI, UX & accessibility** — 1.1.0 (profile stats bar), 1.8.2 (word-filter shortcut), 1.10.3 (`scrollbar-gutter`), 1.11.4 (keyboard tab reordering), 1.12.1 (filter warning blurs media, hide-filters on quotes), 1.12.3 (reply header via the replied-to account)
 - **Logs & auth** — 1.7.0 (log persistence), 1.7.1 (expected conditions as warnings), 1.8.11 (OAuth `state` CSRF), 1.12.4 (token revocation on logout)
 - **Security & deployment** — 1.12.4 (client-side HTML filter, nginx cache policy)
+- **State & tabs** — 1.12.5 (several tabs share the stored state)
 
 ---
 
@@ -1962,6 +1967,37 @@ Membership changes are routed through `addAccountToListAndPurge` / `removeAccoun
 
 ---
 
+### [v1.12.5] Several tabs share the stored state; only the current account stays per tab
+
+**Problem:** Each tab read localStorage once at load, and `save()` writes the tab's *whole* value of every key it changed. A tab opened earlier therefore reverted other tabs' changes the next time it saved: an account logged out elsewhere came back (with a token the server has since revoked), an account added elsewhere disappeared, a draft posted elsewhere reappeared (and could be posted twice), a push change was undone. The installed PWA next to a browser tab makes this the normal case, not an edge case.
+
+**Decision:** `LocalStorageStore` takes over other tabs' writes from the `storage` event (and re-reads after a back/forward-cache restore) and does *not* mark them for saving, so nothing stale is written back.
+- **`currentInstance` stays per tab.** Two windows may deliberately show different accounts; switching in one must not switch the other.
+- **`composeData` merges per draft.** The other tab's value wins, including a draft it posted and removed, except for drafts this tab changed since it last synced the key (`ts` > `_syncedAt`). Those are unsaved typing here and must not be overwritten.
+- **A logout elsewhere** marks the instance logged out in the database layer (no re-creation) and reloads a tab that shows that account. The reload is simpler and more robust than migrating a running tab to another account.
+- **Push** additionally re-reads its state right before each operation and runs under a cross-tab Web Lock, because the `storage` event can still be queued when the lock is granted.
+
+**Tradeoffs:** (a) All other settings now follow live across tabs (language, theme, toggles). That is intended, but a change is visible in every open window. (b) Two tabs typing in the *same* draft at the same moment: the later write wins; a real merge of text isn't attempted. (c) The draft rule relies on `ts` and the tab's own clock, so it is only exact per device. That is fine because localStorage is per device anyway. (d) BroadcastChannel wasn't needed: the `storage` event already carries the value, and it reaches exactly the other tabs of the same origin.
+
+**Files:** `_store/LocalStorageStore.js` (`storage`/`pageshow`, `_applyExternalChange`, `reloadKeys`, `PER_TAB_KEYS`), `_store/mixins/composeMixins.js` (`mergeExternal_composeData`), `_store/observers/crossTabObservers.js`, `_database/databaseLifecycle.ts` (`markInstanceLoggedOut`), `_actions/pushSubscription.js` (`withPushLock`). See §6, §18, §23.
+
+---
+
+### [v1.12.5] Bounded timelines: keep the newest 500, and restart the list when the buffer overflows
+
+**Problem:** A timeline kept every summary it ever received for the lifetime of the tab. A home tab left at the top for days, or a local/federated stream, reaches tens of thousands of items, and every streamed post costs several full passes over the array. Before v1.12.5 that included whole-array JSON comparisons, ~17 ms at 20k items on a desktop. The buffer of not-yet-shown posts grew the same way while the user was scrolled down or on another page.
+
+**Decision:**
+- **At the top, trim to the newest `MAX_TIMELINE_ITEMS` (500).** `showMoreItemsForTimeline` is the only place new posts are merged in at the top, and the view is at the top there by definition (chat-room mode, or "Show more", which scrolls up), so the removed tail is out of sight. Infinite scroll continues from the last kept id and reloads older posts contiguously.
+- **Cap the buffer the same way, and restart the list on overflow.** Dropping the oldest buffered posts would leave a gap between the buffer and the list, so the timeline is marked (`timelineItemSummariesToAddTruncated`), and showing the buffer then *replaces* the list with the newest posts instead of merging across the gap.
+- **Pagination is never trimmed.** Loading older posts at the bottom keeps everything the user scrolled to.
+
+**Tradeoffs:** (a) After a long absence with more than 500 new posts, "Show more" starts a fresh list: posts older than the newest 500 are no longer directly below and reload when scrolled to. This is the same as a fresh load, and there is no silent gap. (b) 500 is a judgement call: enough for any realistic read-back, small enough that a merge stays cheap; a constant in `_static/timelines.js`. (c) Virtual-list heights of trimmed items stay until their realm is evicted (small). (d) Related, same patch: only the 30 most recently visited timelines keep their data at all (`visitedTimelineObservers.js`).
+
+**Files:** `_static/timelines.js`, `_actions/timeline.js` (`showMoreItemsForTimeline`), `_actions/addStatusOrNotification.js` (`insertUpdatesIntoTimeline`), `_utils/lodash-lite.js` (`arraysEqual`). See §12, §23.
+
+---
+
 ## 22. Version History
 
 Brief changelog for understanding when features and architectural choices were introduced. Full per-release notes live in [`docs/release-notes/<version>.md`](release-notes/) (and on the [Gitea releases page](https://git.ztfr.eu/Dome/Zocial/releases)).
@@ -2017,7 +2053,7 @@ Brief changelog for understanding when features and architectural choices were i
 | **1.12.2** | 2026-09-26 | **Status-cache crash + emoji picker (dev patch / fixes, from production logs).** A cached IDB miss (`getStatus` stored `undefined`, most often from the reply-header parent lookup, or an in-flight read overwriting a fresh insert) made `doUpdateStatus` throw `TypeError … reading 'id'` on every streaming `status.update` for that post, which was the ⛔ flood in the 1.12.0 production log. Favourite, boost and bookmark on such a post also failed after the server call had succeeded. The status and notification caches now hold found records only (§7). The `<emoji-picker>` element's own `Database` instance gets the same `_lazyUpdate` guard as `emojiDatabase.js` (§10). See §21 [v1.12.2], §23 |
 | **1.12.3** | 2026-09-26 | **Reliable reply header (dev patch / UX).** The "reply to [avatar] Name" header resolves the replied-to **account** instead of loading the parent post: self-replies and replies to me need no lookup, other replies read the account by `in_reply_to_account_id` (stored far more often than the parent post). Before, the header only appeared if the parent post happened to be cached. It is also cheaper (one store, no clone, often no lookup at all). The account/relationship caches now follow the found-records-only rule from 1.12.2. See §7, §21 [v1.12.3] |
 | **1.12.4** | 2026-09-26 | **Hardening review (dev patch / fixes + security).** General code review of all neuralgic areas (six parallel passes, every finding verified against the code before fixing). **Security:** the inherited Pinafore test backdoor `/?accessToken=…&instanceName=…` (silent session takeover by link) is removed; post HTML gets a client-side element/attribute/URL filter; reaction names and login errors are escaped; nginx sends frame/nosniff/referrer headers; tag pushes can no longer move `:latest`. **Data loss:** GoToSocial profile fields 5–6 were deleted on save; posting mid-upload dropped the file; quote/mention/edit/redraft/share silently replaced a stored draft (now asks); redraft dropped a Mastodon quote; edits lost alt text on Mastodon. **Crashes / stuck states:** `::` vanished from rendered text; aborted IDB transactions hung forever; missing bodies/authors blanked items; favourites/bookmarks paged backwards on every poll and spun forever on errors; duplicate WebSocket connections after standby; the active stream survived logout and re-created the deleted database. Plus push lifecycle fixes, cache/header fixes for runtime config, and many smaller ones. The build stage moved to Node 24 LTS with `--frozen-lockfile` (verified: identical output to Node 20). Follow-ups from the open-points list: logout revokes the token on the server, `Idempotency-Key` against duplicate posts, the report dialog keeps its input on failure, and the unused `/migrate` page is removed. See §4, §7, §8, §9, §12, §17, §18, §21 [v1.12.4] ×4, §23 |
-| **1.12.5** | 2026-09-26 | **Stability groundwork (dev patch / fixes).** **Safety net:** the repo got a unit test suite (`test/`, `pnpm test`, 47 tests over the areas that broke before), `pnpm lint` passes for the first time, and the Docker build runs both before building, so a failing check never reaches Watchtower. **Several tabs:** tabs take over each other's stored changes instead of reverting them (logouts, new accounts, drafts, push), a logout elsewhere reloads a tab showing that account, push operations run one at a time across tabs, the notification sound plays once, and the service worker only suppresses a push when its account is on screen. **Long-running tabs:** streamed timelines and their buffers are capped at 500 posts, whole-array JSON comparisons on every streamed post are gone, only the 30 most recently visited timelines keep their data, and stored log entries are capped. **Notifications:** `quote`, `quoted_update`, `severed_relationships`, `moderation_warning` and `annual_report` render natively, and the Mentions tab no longer shows other types. The service worker precaches unhashed files with `cache: 'no-cache'`. See §4, §6, §12, §18, §20, §23 |
+| **1.12.5** | 2026-09-26 | **Stability groundwork (dev patch / fixes).** **Safety net:** the repo got a unit test suite (`test/`, `pnpm test`, 47 tests over the areas that broke before), `pnpm lint` passes for the first time, and the Docker build runs both before building, so a failing check never reaches Watchtower. **Several tabs:** tabs take over each other's stored changes instead of reverting them (logouts, new accounts, drafts, push), a logout elsewhere reloads a tab showing that account, push operations run one at a time across tabs, the notification sound plays once, and the service worker only suppresses a push when its account is on screen. **Long-running tabs:** streamed timelines and their buffers are capped at 500 posts, whole-array JSON comparisons on every streamed post are gone, only the 30 most recently visited timelines keep their data, and stored log entries are capped. **Notifications:** `quote`, `quoted_update`, `severed_relationships`, `moderation_warning` and `annual_report` render natively, and the Mentions tab no longer shows other types. The service worker precaches unhashed files with `cache: 'no-cache'`. See §4, §6, §12, §18, §20, §21 [v1.12.5] ×2, §23 |
 
 ---
 
