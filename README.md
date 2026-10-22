@@ -25,7 +25,7 @@ A beautifully refined fediverse client — built for the edges of the Mastodon e
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.12.0-blue?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.13.0-blue?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--v3-green?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/PWA-ready-purple?style=flat-square" alt="PWA">
   <img src="https://img.shields.io/badge/GoToSocial-supported-orange?style=flat-square" alt="GoToSocial">
@@ -179,7 +179,7 @@ Zocial ships as a Docker image and can be deployed in minutes. Images are built 
 |---|---|
 | `git.ztfr.eu/dome/zocial:latest` | production (`main`) |
 | `git.ztfr.eu/dome/zocial:dev` | development (`dev` branch) |
-| `git.ztfr.eu/dome/zocial:<version>` | a fixed release, e.g. `:1.12.0` |
+| `git.ztfr.eu/dome/zocial:<version>` | a fixed release, e.g. `:1.13.0` |
 
 ### Docker Compose
 

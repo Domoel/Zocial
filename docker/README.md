@@ -7,7 +7,7 @@ built from the `Dockerfile` and pushed to the Gitea container registry of this i
 |---|---|---|
 | push to `main` | `git.ztfr.eu/dome/zocial:latest`, `:main` | prod |
 | push to `dev` | `:dev` | dev |
-| release tag (e.g. `1.12.0`) | `:1.12.0`, a fixed rollback point | prod |
+| release tag (e.g. `1.13.0`) | `:1.13.0`, a fixed rollback point | prod |
 | every build | `:sha-<short commit>` | as above |
 
 Docs-only pushes (`docs/**`, `*.md`) don't trigger a build. A run can also be started by hand under
